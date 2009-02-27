@@ -33,5 +33,7 @@ public abstract class Frame extends Component {
 
         // Commented in order to allow abort with redirection from a frame.
         // throw new IllegalStateException("Can't return value.");
+
+        return null;
     }
 }
