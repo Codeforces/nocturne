@@ -27,8 +27,7 @@ public class DispatchFilter implements Filter {
             = new ApplicationContext();
 
     /** Freemarker configuration. */
-    private final TemplateEngineConfigurationPool templateEngineConfigurationPool
-            = new TemplateEngineConfigurationPool(applicationContext);
+    private TemplateEngineConfigurationPool templateEngineConfigurationPool;
 
     /** Page loader for production mode. */
     private PageLoader pageLoader
@@ -171,6 +170,9 @@ public class DispatchFilter implements Filter {
      * @throws ServletException when method fails.
      */
     public void init(FilterConfig config) throws ServletException {
+        templateEngineConfigurationPool
+                    = new TemplateEngineConfigurationPool(applicationContext, config);
+
         Properties properties = new Properties();
         filterConfig = config;
 
