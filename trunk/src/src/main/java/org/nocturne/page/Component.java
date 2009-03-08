@@ -69,7 +69,12 @@ public abstract class Component {
     }
 
     public boolean hasSession(String key) {
-        return session.getAttribute(key) != null;
+        try {
+            return session.getAttribute(key) != null;
+        } catch (Exception e) {
+            session.invalidate();
+            return false;
+        }
     }
 
     public void putSession(String key, Object value) {
@@ -86,6 +91,8 @@ public abstract class Component {
     }
 
     public void removeSession(String key) {
+        ensureSession();
+        
         ComponentLocator.getPage().removeRequestCache(key);
         session.removeAttribute(key);
     }
@@ -151,6 +158,14 @@ public abstract class Component {
     private void ensureSession() {
         if (session == null) {
             session = request.getSession();
+        }
+
+        try {
+            if (session.getAttributeNames() == null) {
+                session.invalidate();
+            }
+        } catch (Exception e) {
+            session.invalidate();
         }
     }
 
