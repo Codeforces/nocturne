@@ -49,9 +49,9 @@ public class DispatchFilter implements Filter {
 
         Page page = pageLoader.loadPage(path, parameterMap);
         Configuration templateEngineConfiguration = templateEngineConfigurationPool.getInstance();
+        ComponentLocator.setPage(page);
 
         try {
-            ComponentLocator.setPage(page);
             page.setApplicationContext(applicationContext);
             page.setTemplateEngineConfiguration(templateEngineConfiguration);
             page.setRequest(request);
@@ -60,6 +60,10 @@ public class DispatchFilter implements Filter {
             page.parseTemplate();
 
             response.getWriter().flush();
+        } catch (Throwable e) {
+            e.printStackTrace();
+            logger.fatal("Can't process " + request.getRequestURL() + ".", e);
+            throw new IllegalStateException(e);
         } finally {
             pageLoader.unloadPage(path, parameterMap, page);
             templateEngineConfigurationPool.release(templateEngineConfiguration);
@@ -88,6 +92,7 @@ public class DispatchFilter implements Filter {
             processPage(request, response, page);
         } catch (Throwable e) {
             e.printStackTrace();
+            logger.fatal("Can't process " + request.getRequestURL() + ".", e);
             throw new IllegalStateException(e);
         }
     }
@@ -111,8 +116,6 @@ public class DispatchFilter implements Filter {
             invoke(page, "setResponse", response);
             invoke(page, "setFilterConfig", getFilterConfig());
             invoke(page, "parseTemplate");
-
-            //response.getOutputStream().flush();
         } finally {
             templateEngineConfigurationPool.release(templateEngineConfiguration);
         }

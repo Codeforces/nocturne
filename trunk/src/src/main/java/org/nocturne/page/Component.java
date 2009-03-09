@@ -12,7 +12,6 @@ import org.nocturne.page.validation.Validator;
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Type;
@@ -23,8 +22,6 @@ public abstract class Component {
     private boolean initialized;
 
     private Gson gson = new Gson();
-
-    private HttpSession session;
 
     private Logger logger;
 
@@ -70,102 +67,98 @@ public abstract class Component {
 
     public boolean hasSession(String key) {
         try {
-            return session.getAttribute(key) != null;
-        } catch (Exception e) {
-            session.invalidate();
-            return false;
+            return request.getSession().getAttribute(key) != null;
+        } catch (IllegalStateException e) {
+            throw new SessionInvalidatedException();
         }
     }
 
-    public void putSession(String key, Object value) {
-        ensureSession();
-
+    private void internalPutSession(String key, Object value) {
         ComponentLocator.getPage().putRequestCache(key, value);
 
         if (applicationContext.isDebugMode()) {
             String json = gson.toJson(value);
-            session.setAttribute(key, json);
+            request.getSession().setAttribute(key, json);
         } else {
-            session.setAttribute(key, value);
+            request.getSession().setAttribute(key, value);
+        }
+    }
+
+    public void putSession(String key, Object value) {
+        try {
+            internalPutSession(key, value);
+        } catch (IllegalStateException e) {
+            throw new SessionInvalidatedException();
         }
     }
 
     public void removeSession(String key) {
-        ensureSession();
-        
-        ComponentLocator.getPage().removeRequestCache(key);
-        session.removeAttribute(key);
+        try {
+            ComponentLocator.getPage().removeRequestCache(key);
+            request.getSession().removeAttribute(key);
+        } catch (IllegalStateException e) {
+            throw new SessionInvalidatedException();
+        }
     }
 
     public <T> T getSession(String key, Class<T> clazz) {
-        ensureSession();
+        try {
+            Object fromRequestCache = ComponentLocator.getPage().getRequestCache(key);
 
-        Object fromRequestCache = ComponentLocator.getPage().getRequestCache(key);
+            if (fromRequestCache != null) {
+                return (T) fromRequestCache;
+            }
 
-        if (fromRequestCache != null) {
-            return (T) fromRequestCache;
-        }
+            T result;
 
-        T result;
-
-        if (applicationContext.isDebugMode()) {
-            String json = (String) session.getAttribute(key);
-            if (json != null) {
-                result = gson.fromJson(json, clazz);
+            if (applicationContext.isDebugMode()) {
+                String json = (String) request.getSession().getAttribute(key);
+                if (json != null) {
+                    result = gson.fromJson(json, clazz);
+                } else {
+                    result = null;
+                }
             } else {
-                result = null;
+                try {
+                    result = (T) request.getSession().getAttribute(key);
+                } catch (Exception e) {
+                    result = null;
+                }
             }
-        } else {
-            try {
-                result = (T) session.getAttribute(key);
-            } catch (Exception e) {
-                result = null;
-            }
+
+            ComponentLocator.getPage().putRequestCache(key, result);
+
+            return result;
+        } catch (IllegalStateException e) {
+            throw new SessionInvalidatedException();
         }
-
-        ComponentLocator.getPage().putRequestCache(key, result);
-
-        return result;
     }
 
     public <T> T getSession(String key, Type type) {
-        ensureSession();
-
-        Object fromRequestCache = ComponentLocator.getPage().getRequestCache(key);
-
-        if (fromRequestCache != null) {
-            return (T) fromRequestCache;
-        }
-
-        T result;
-
-        if (applicationContext.isDebugMode()) {
-            String json = (String) session.getAttribute(key);
-            if (json != null) {
-                result = gson.<T>fromJson(json, type);
-            } else {
-                result = null;
-            }
-        } else {
-            result = (T) session.getAttribute(key);
-        }
-
-        ComponentLocator.getPage().putRequestCache(key, result);
-
-        return result;
-    }
-
-    private void ensureSession() {
-        if (session == null) {
-            session = request.getSession();
-        }
-
         try {
-            if (session.getAttributeNames() == null) {
-                session.invalidate();
+            Object fromRequestCache = ComponentLocator.getPage().getRequestCache(key);
+
+            if (fromRequestCache != null) {
+                return (T) fromRequestCache;
             }
-        } catch (Exception e) {
-            session.invalidate();
+
+            T result;
+
+            if (applicationContext.isDebugMode()) {
+                String json = (String) request.getSession().getAttribute(key);
+                if (json != null) {
+                    result = gson.<T>fromJson(json, type);
+                } else {
+                    result = null;
+                }
+            } else {
+                result = (T) request.getSession().getAttribute(key);
+            }
+
+            ComponentLocator.getPage().putRequestCache(key, result);
+            return result;
+        } catch (IllegalStateException e) {
+            throw new SessionInvalidatedException();
         }
     }
 
@@ -355,7 +348,9 @@ public abstract class Component {
         initializeIfNeeded();
 
         getTemplateMap().clear();
+        skipTemplate = false;
         validators = new HashMap<String, List<Validator>>();
+        frameMap = new HashMap<String, String>();
 
         put("frame", FrameDirective.getInstance());
     }
