@@ -14,6 +14,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.OutputStream;
+import java.io.Writer;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -45,16 +47,30 @@ public abstract class Component {
 
     private Map<String, List<Validator>> validators;
 
+    private OutputStream outputStream;
+
+    public OutputStream getOutputStream() {
+        if (outputStream == null) {
+            try {
+                outputStream = getResponse().getOutputStream();
+            } catch (IOException e) {
+                throw new IllegalStateException("Can't get output stream.", e);
+            }
+        }
+
+        return outputStream;
+    }
+
+    public PrintWriter getWriter() {
+        return new PrintWriter(getOutputStream(), true);
+    }
+
     public void addCss(String css) {
         ComponentLocator.getPage().getCssSet().add(css);
     }
 
     public void addJs(String js) {
         ComponentLocator.getPage().getJsSet().add(js);
-    }
-
-    public PrintWriter getWriter() throws IOException {
-        return response.getWriter();
     }
 
     public Logger getLogger() {
@@ -349,6 +365,7 @@ public abstract class Component {
 
         getTemplateMap().clear();
         skipTemplate = false;
+        outputStream = null;
         validators = new HashMap<String, List<Validator>>();
         frameMap = new HashMap<String, String>();
 

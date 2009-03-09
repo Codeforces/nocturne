@@ -59,7 +59,7 @@ public class DispatchFilter implements Filter {
             page.setResponse(response);
             page.parseTemplate();
 
-            response.getWriter().flush();
+            page.getOutputStream().flush();
         } catch (Throwable e) {
             e.printStackTrace();
             logger.fatal("Can't process " + request.getRequestURL() + ".", e);
