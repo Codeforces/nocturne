@@ -1,5 +1,7 @@
 package org.nocturne.misc;
 
+import javax.servlet.ServletContext;
+
 /** @author Mike Mirzayanov */
 public class ApplicationContext {
     private String templatesPath;
@@ -9,6 +11,7 @@ public class ApplicationContext {
     private String skipRegex;
     private String reloadingClassLoaderPattern;
     private String reloadingClassLoaderClassesPath;
+    private ServletContext servletContext;
 
     public String getReloadingClassLoaderClassesPath() {
         return reloadingClassLoaderClassesPath;
@@ -64,5 +67,13 @@ public class ApplicationContext {
 
     public String getReloadingClassLoaderPattern() {
         return reloadingClassLoaderPattern;
+    }
+
+    public ServletContext getServletContext() {
+        return servletContext;
+    }
+
+    public void setServletContext(ServletContext servletContext) {
+        this.servletContext = servletContext;
     }
 }

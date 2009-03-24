@@ -14,9 +14,13 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Properties;
 
-/** @author Mike Mirzayanov */
+/**
+ * @author Mike Mirzayanov
+ */
 public class DispatchFilter implements Filter {
-    /** Logger. */
+    /**
+     * Logger.
+     */
     private static Logger logger = Logger.getLogger(DispatchFilter.class);
 
     /**
@@ -26,15 +30,28 @@ public class DispatchFilter implements Filter {
     private final ApplicationContext applicationContext
             = new ApplicationContext();
 
-    /** Freemarker configuration. */
+    /**
+     * Freemarker configuration.
+     */
     private TemplateEngineConfigurationPool templateEngineConfigurationPool;
 
-    /** Page loader for production mode. */
+    /**
+     * Page loader for production mode.
+     */
     private PageLoader pageLoader
             = new PageLoader(applicationContext);
 
-    /** Servlet config. */
+    /**
+     * Servlet config.
+     */
     private FilterConfig filterConfig;
+
+    /**
+     * @return ApplicationContext Nocturne's application context.
+     */
+    protected ApplicationContext getApplicationContext() {
+        return applicationContext;
+    }
 
     /**
      * Run production mode request handling.
@@ -70,7 +87,9 @@ public class DispatchFilter implements Filter {
         }
     }
 
-    /** @return filterConfig Retuns filter configuration instance. */
+    /**
+     * @return filterConfig Retuns filter configuration instance.
+     */
     private FilterConfig getFilterConfig() {
         return filterConfig;
     }
@@ -174,7 +193,7 @@ public class DispatchFilter implements Filter {
      */
     public void init(FilterConfig config) throws ServletException {
         templateEngineConfigurationPool
-                    = new TemplateEngineConfigurationPool(applicationContext, config);
+                = new TemplateEngineConfigurationPool(applicationContext, config);
 
         Properties properties = new Properties();
         filterConfig = config;
@@ -193,6 +212,7 @@ public class DispatchFilter implements Filter {
         applicationContext.setPageClassNameResolver(config.getInitParameter("nocturne.page-class-name-resolver"));
         applicationContext.setSkipRegex(config.getInitParameter("nocturne.skip-regex"));
         applicationContext.setReloadingClassLoaderPattern(config.getInitParameter("nocturne.reloading-class-loader-pattern"));
+        applicationContext.setServletContext(config.getServletContext());
 
         // Pass application context to servlet
         config.getServletContext().setAttribute("applicationContext", applicationContext);
@@ -236,7 +256,9 @@ public class DispatchFilter implements Filter {
         }
     }
 
-    /** Destroy filter. */
+    /**
+     * Destroy filter.
+     */
     public void destroy() {
         templateEngineConfigurationPool.close();
         pageLoader.close();
