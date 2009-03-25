@@ -59,14 +59,17 @@ public class DispatchFilter implements Filter {
      * @param request  Request.
      * @param response Response.
      * @throws IOException when Something wrong with IO.
+     * @return Page run result.
      */
-    private void runProductionService(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private RunResult runProductionService(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String path = request.getServletPath();
         Map<String, String> parameterMap = request.getParameterMap();
 
         Page page = pageLoader.loadPage(path, parameterMap);
         Configuration templateEngineConfiguration = templateEngineConfigurationPool.getInstance();
         ComponentLocator.setPage(page);
+
+        boolean processChain;
 
         try {
             page.setApplicationContext(applicationContext);
@@ -75,6 +78,7 @@ public class DispatchFilter implements Filter {
             page.setFilterConfig(getFilterConfig());
             page.setResponse(response);
             page.parseTemplate();
+            processChain = page.isProcessChain();
 
             page.getOutputStream().flush();
         } catch (Throwable e) {
@@ -85,6 +89,11 @@ public class DispatchFilter implements Filter {
             pageLoader.unloadPage(path, parameterMap, page);
             templateEngineConfigurationPool.release(templateEngineConfiguration);
         }
+
+        RunResult result = new RunResult();
+        result.setProcessChain(processChain);
+
+        return result;
     }
 
     /**
@@ -99,21 +108,26 @@ public class DispatchFilter implements Filter {
      *
      * @param request  Request.
      * @param response Response.
+     * @return RunResult page run result.
      */
-    private void runDebugService(HttpServletRequest request, HttpServletResponse response) {
+    private RunResult runDebugService(HttpServletRequest request, HttpServletResponse response) {
         ReloadingClassLoader loader = new ReloadingClassLoader(applicationContext);
+
+        RunResult runResult = new RunResult();
 
         try {
             Class pageLoaderClass = loader.loadClass("org.nocturne.page.PageLoader");
             Object pageLoader = pageLoaderClass.newInstance();
             invoke(pageLoader, "setApplicationContext", applicationContext);
             Object page = invoke(pageLoader, "loadPage", request.getServletPath(), request.getParameterMap());
-            processPage(request, response, page);
+            processPage(request, response, page, runResult);
         } catch (Throwable e) {
             e.printStackTrace();
             logger.fatal("Can't process " + request.getRequestURL() + ".", e);
             throw new IllegalStateException(e);
         }
+
+        return runResult;
     }
 
     /**
@@ -122,9 +136,10 @@ public class DispatchFilter implements Filter {
      * @param request  Request.
      * @param response Response.
      * @param page     Page instance.
+     * @param runResult Run result to be modified during processing.
      * @throws IOException when fails IO.
      */
-    private void processPage(HttpServletRequest request, HttpServletResponse response, Object page) throws IOException {
+    private void processPage(HttpServletRequest request, HttpServletResponse response, Object page, RunResult runResult) throws IOException {
         ComponentLocator.setPage((Page) page);
         Configuration templateEngineConfiguration = templateEngineConfigurationPool.getInstance();
 
@@ -135,6 +150,7 @@ public class DispatchFilter implements Filter {
             invoke(page, "setResponse", response);
             invoke(page, "setFilterConfig", getFilterConfig());
             invoke(page, "parseTemplate");
+            runResult.setProcessChain((Boolean)invoke(page, "isProcessChain"));
         } finally {
             templateEngineConfigurationPool.release(templateEngineConfiguration);
         }
@@ -243,13 +259,19 @@ public class DispatchFilter implements Filter {
                 response.setContentType("text/html");
                 ComponentLocator.clear();
 
+                RunResult runResult;
+
                 if (applicationContext.isDebugMode()) {
-                    runDebugService(request, response);
+                    runResult = runDebugService(request, response);
                 } else {
-                    runProductionService(request, response);
+                    runResult = runProductionService(request, response);
                 }
 
                 ComponentLocator.clear();
+
+                if (runResult.isProcessChain()) {
+                    filterChain.doFilter(servletRequest, servletResponse);
+                }
             }
         } else {
             filterChain.doFilter(servletRequest, servletResponse);
@@ -262,6 +284,18 @@ public class DispatchFilter implements Filter {
     public void destroy() {
         templateEngineConfigurationPool.close();
         pageLoader.close();
+    }
+
+    private static class RunResult {
+        private boolean processChain;
+
+        public boolean isProcessChain() {
+            return processChain;
+        }
+
+        public void setProcessChain(boolean processChain) {
+            this.processChain = processChain;
+        }
     }
 
     static {

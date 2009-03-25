@@ -19,6 +19,24 @@ public abstract class Page extends Component {
 
     private Map<String, Object> requestCache = new HashMap<String, Object>();
 
+    private boolean processChain;
+
+    public Map<String, Object> getRequestCache() {
+        return requestCache;
+    }
+
+    public void setRequestCache(Map<String, Object> requestCache) {
+        this.requestCache = requestCache;
+    }
+
+    public boolean isProcessChain() {
+        return processChain;
+    }
+
+    protected void setProcessChain(boolean processChain) {
+        this.processChain = processChain;
+    }
+
     void putRequestCache(String key, Object value) {
         requestCache.put(key, value);
     }
