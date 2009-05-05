@@ -4,10 +4,7 @@ import freemarker.template.TemplateException;
 import org.nocturne.misc.AbortException;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /** @author Mike Mirzayanov */
 public abstract class Page extends Component {
@@ -20,6 +17,16 @@ public abstract class Page extends Component {
     private Map<String, Object> requestCache = new HashMap<String, Object>();
 
     private boolean processChain;
+
+    private Locale locale;
+
+    public Locale getLocale() {
+        return locale;
+    }
+
+    public void setLocale(Locale locale) {
+        this.locale = locale;
+    }
 
     public Map<String, Object> getRequestCache() {
         return requestCache;

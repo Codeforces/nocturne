@@ -197,7 +197,7 @@ public abstract class Component {
     protected Template getTemplate() throws IOException {
         if (template == null) {
             String name = this.getClass().getSimpleName() + ".ftl";
-            template = getTemplateEngineConfiguration().getTemplate(name);
+            template = getTemplateEngineConfiguration().getTemplate(name, ComponentLocator.getPage().getLocale());
         }
         ComponentLocator.set(template, this);
         return template;
@@ -364,6 +364,7 @@ public abstract class Component {
         initializeIfNeeded();
 
         getTemplateMap().clear();
+        template = null;
         skipTemplate = false;
         outputStream = null;
         validators = new HashMap<String, List<Validator>>();
