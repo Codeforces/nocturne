@@ -49,6 +49,8 @@ public abstract class Component {
 
     private OutputStream outputStream;
 
+    private ParametersInjector parametersInjector = new ParametersInjector(this);
+
     public OutputStream getOutputStream() {
         if (outputStream == null) {
             try {
@@ -195,9 +197,13 @@ public abstract class Component {
     }
 
     protected Template getTemplate() throws IOException {
-        if (template == null) {
-            String name = this.getClass().getSimpleName() + ".ftl";
-            template = getTemplateEngineConfiguration().getTemplate(name, ComponentLocator.getPage().getLocale());
+        if (!skipTemplate) {
+            if (template == null) {
+                String name = this.getClass().getSimpleName() + ".ftl";
+                template = getTemplateEngineConfiguration().getTemplate(name, ComponentLocator.getPage().getLocale());
+            }
+        } else {
+            template = null;
         }
         ComponentLocator.set(template, this);
         return template;
@@ -236,7 +242,7 @@ public abstract class Component {
     }
 
     protected void setTemplateName(String name) throws IOException {
-        template = getTemplateEngineConfiguration().getTemplate(name);
+        template = getTemplateEngineConfiguration().getTemplate(name, ComponentLocator.getPage().getLocale());
     }
 
     boolean isSkipTemplate() {
@@ -370,6 +376,7 @@ public abstract class Component {
         validators = new HashMap<String, List<Validator>>();
         frameMap = new HashMap<String, String>();
 
+        parametersInjector.inject();
         put("frame", FrameDirective.getInstance());
     }
 
