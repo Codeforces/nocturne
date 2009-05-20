@@ -27,22 +27,12 @@ public class PageLoader {
         this.applicationContext = applicationContext;
     }
 
-    private Injector getInjector() {
-        return injector;
-    }
-
     private void initialize() {
         if (injector == null) {
-            String guiceModuleClassName = applicationContext.getGuiceModuleClassName();
-            Module module;
-            try {
-                module = (Module) getClass().getClassLoader().loadClass(
-                        guiceModuleClassName
-                ).newInstance();
-            } catch (Exception e) {
-                throw new IllegalStateException("Can't load application giuce module.", e);
-            }
-
+            setupInjector();
+        }
+        
+        if (pageClassNameResolver == null) {
             try {
                 pageClassNameResolver = (PageClassNameResolver) getClass().getClassLoader().loadClass(
                         applicationContext.getPageClassNameResolver()
@@ -50,8 +40,6 @@ public class PageLoader {
             } catch (Exception e) {
                 throw new IllegalStateException("Can't load application page class name resolver.", e);
             }
-
-            injector = Guice.createInjector(module);
         }
     }
 
@@ -83,11 +71,27 @@ public class PageLoader {
         return pool;
     }
 
+    private void setupInjector() {
+        String guiceModuleClassName = applicationContext.getGuiceModuleClassName();
+        Module module;
+
+        try {
+            module = (Module) getClass().getClassLoader().loadClass(
+                    guiceModuleClassName
+            ).newInstance();
+        } catch (Exception e) {
+            throw new IllegalStateException("Can't load application giuce module.", e);
+        }
+
+        injector = Guice.createInjector(module);
+        applicationContext.setInjector(injector);
+    }
+
     public synchronized Page loadPage(String pageClassName) {
         try {
             Class<Page> pageClass = (Class<Page>)
                     PageLoader.class.getClassLoader().loadClass(pageClassName);
-            return getInjector().getInstance(pageClass);
+            return injector.getInstance(pageClass);
         } catch (Exception e) {
             throw new IllegalStateException("Can't load page " +
                     pageClassName + ".", e);
@@ -95,7 +99,7 @@ public class PageLoader {
     }
 
     public synchronized void close() {
-        for (String clazz: pagePoolMap.keySet()) {
+        for (String clazz : pagePoolMap.keySet()) {
             PagePool pool = pagePoolMap.get(clazz);
             pool.close();
         }

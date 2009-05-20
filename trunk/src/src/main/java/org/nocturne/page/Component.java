@@ -366,6 +366,11 @@ public abstract class Component {
         frameMap.put(key, frame.parseTemplate());
     }
 
+    public String parse(Frame frame) throws IOException {
+        setup(frame);
+        return frame.parseTemplate();
+    }
+
     void prepareForRender() {
         initializeIfNeeded();
 

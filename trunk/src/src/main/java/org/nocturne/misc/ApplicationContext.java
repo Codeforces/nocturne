@@ -1,5 +1,7 @@
 package org.nocturne.misc;
 
+import com.google.inject.Injector;
+
 import javax.servlet.ServletContext;
 
 /** @author Mike Mirzayanov */
@@ -12,6 +14,7 @@ public class ApplicationContext {
     private String reloadingClassLoaderPattern;
     private String reloadingClassLoaderClassesPath;
     private ServletContext servletContext;
+    private Injector injector;
 
     public String getReloadingClassLoaderClassesPath() {
         return reloadingClassLoaderClassesPath;
@@ -75,5 +78,13 @@ public class ApplicationContext {
 
     public void setServletContext(ServletContext servletContext) {
         this.servletContext = servletContext;
+    }
+
+    public Injector getInjector() {
+        return injector;
+    }
+
+    public void setInjector(Injector injector) {
+        this.injector = injector;
     }
 }

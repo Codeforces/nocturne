@@ -14,13 +14,9 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Properties;
 
-/**
- * @author Mike Mirzayanov
- */
+/** @author Mike Mirzayanov */
 public class DispatchFilter implements Filter {
-    /**
-     * Logger.
-     */
+    /** Logger. */
     private static Logger logger = Logger.getLogger(DispatchFilter.class);
 
     /**
@@ -30,25 +26,17 @@ public class DispatchFilter implements Filter {
     private final ApplicationContext applicationContext
             = new ApplicationContext();
 
-    /**
-     * Freemarker configuration.
-     */
+    /** Freemarker configuration. */
     private TemplateEngineConfigurationPool templateEngineConfigurationPool;
 
-    /**
-     * Page loader for production mode.
-     */
+    /** Page loader for production mode. */
     private PageLoader pageLoader
             = new PageLoader(applicationContext);
 
-    /**
-     * Servlet config.
-     */
+    /** Servlet config. */
     private FilterConfig filterConfig;
 
-    /**
-     * @return ApplicationContext Nocturne's application context.
-     */
+    /** @return ApplicationContext Nocturne's application context. */
     protected ApplicationContext getApplicationContext() {
         return applicationContext;
     }
@@ -58,9 +46,10 @@ public class DispatchFilter implements Filter {
      *
      * @param request  Request.
      * @param response Response.
-     * @throws IOException when Something wrong with IO.
      * @return Page run result.
+     * @throws IOException when Something wrong with IO.
      */
+    @SuppressWarnings({"unchecked"})
     private RunResult runProductionService(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String path = request.getServletPath();
         Map<String, String> parameterMap = request.getParameterMap();
@@ -96,9 +85,7 @@ public class DispatchFilter implements Filter {
         return result;
     }
 
-    /**
-     * @return filterConfig Retuns filter configuration instance.
-     */
+    /** @return filterConfig Retuns filter configuration instance. */
     private FilterConfig getFilterConfig() {
         return filterConfig;
     }
@@ -112,7 +99,6 @@ public class DispatchFilter implements Filter {
      */
     private RunResult runDebugService(HttpServletRequest request, HttpServletResponse response) {
         ReloadingClassLoader loader = new ReloadingClassLoader(applicationContext);
-
         RunResult runResult = new RunResult();
 
         try {
@@ -127,15 +113,17 @@ public class DispatchFilter implements Filter {
             throw new IllegalStateException(e);
         }
 
+        applicationContext.setInjector(null);
+
         return runResult;
     }
 
     /**
      * Setups page fields and calls specific methods.
      *
-     * @param request  Request.
-     * @param response Response.
-     * @param page     Page instance.
+     * @param request   Request.
+     * @param response  Response.
+     * @param page      Page instance.
      * @param runResult Run result to be modified during processing.
      * @throws IOException when fails IO.
      */
@@ -150,7 +138,7 @@ public class DispatchFilter implements Filter {
             invoke(page, "setResponse", response);
             invoke(page, "setFilterConfig", getFilterConfig());
             invoke(page, "parseTemplate");
-            runResult.setProcessChain((Boolean)invoke(page, "isProcessChain"));
+            runResult.setProcessChain((Boolean) invoke(page, "isProcessChain"));
         } finally {
             templateEngineConfigurationPool.release(templateEngineConfiguration);
         }
@@ -278,9 +266,7 @@ public class DispatchFilter implements Filter {
         }
     }
 
-    /**
-     * Destroy filter.
-     */
+    /** Destroy filter. */
     public void destroy() {
         templateEngineConfigurationPool.close();
         pageLoader.close();
