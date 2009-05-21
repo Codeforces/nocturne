@@ -14,7 +14,16 @@ public class ApplicationContext {
     private String reloadingClassLoaderPattern;
     private String reloadingClassLoaderClassesPath;
     private ServletContext servletContext;
+    private String pageRequestListenerClassName;
     private Injector injector;
+
+    public String getPageRequestListenerClassName() {
+        return pageRequestListenerClassName;
+    }
+
+    public void setPageRequestListenerClassName(String pageRequestListenerClassName) {
+        this.pageRequestListenerClassName = pageRequestListenerClassName;
+    }
 
     public String getReloadingClassLoaderClassesPath() {
         return reloadingClassLoaderClassesPath;

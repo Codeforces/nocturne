@@ -36,6 +36,9 @@ public class DispatchFilter implements Filter {
     /** Servlet config. */
     private FilterConfig filterConfig;
 
+    /** Listens requests for pages. */
+    private PageRequestListener pageRequestListener;
+
     /** @return ApplicationContext Nocturne's application context. */
     protected ApplicationContext getApplicationContext() {
         return applicationContext;
@@ -66,9 +69,10 @@ public class DispatchFilter implements Filter {
             page.setRequest(request);
             page.setFilterConfig(getFilterConfig());
             page.setResponse(response);
+
+            usePageRequestListener(page);
             page.parseTemplate();
             processChain = page.isProcessChain();
-
             page.getOutputStream().flush();
         } catch (Throwable e) {
             e.printStackTrace();
@@ -83,6 +87,19 @@ public class DispatchFilter implements Filter {
         result.setProcessChain(processChain);
 
         return result;
+    }
+
+    private void usePageRequestListener(Page page) throws ClassNotFoundException {
+        if (pageRequestListener == null || applicationContext.isDebugMode()) {
+            if (applicationContext.getPageRequestListenerClassName() != null) {
+                ClassLoader loader = page.getClass().getClassLoader();
+                Class<?> clazz = loader.loadClass(applicationContext.getPageRequestListenerClassName());
+                pageRequestListener = (PageRequestListener) applicationContext.getInjector().getInstance(clazz);
+            }
+        }
+        if (pageRequestListener != null) {
+            pageRequestListener.onPageRequest(page);
+        }
     }
 
     /** @return filterConfig Retuns filter configuration instance. */
@@ -126,8 +143,9 @@ public class DispatchFilter implements Filter {
      * @param page      Page instance.
      * @param runResult Run result to be modified during processing.
      * @throws IOException when fails IO.
+     * @throws ClassNotFoundException If requested classes not found.
      */
-    private void processPage(HttpServletRequest request, HttpServletResponse response, Object page, RunResult runResult) throws IOException {
+    private void processPage(HttpServletRequest request, HttpServletResponse response, Object page, RunResult runResult) throws IOException, ClassNotFoundException {
         ComponentLocator.setPage((Page) page);
         Configuration templateEngineConfiguration = templateEngineConfigurationPool.getInstance();
 
@@ -137,6 +155,8 @@ public class DispatchFilter implements Filter {
             invoke(page, "setRequest", request);
             invoke(page, "setResponse", response);
             invoke(page, "setFilterConfig", getFilterConfig());
+
+            usePageRequestListener(ComponentLocator.getPage());
             invoke(page, "parseTemplate");
             runResult.setProcessChain((Boolean) invoke(page, "isProcessChain"));
         } finally {
@@ -217,6 +237,10 @@ public class DispatchFilter implements Filter {
         applicationContext.setSkipRegex(config.getInitParameter("nocturne.skip-regex"));
         applicationContext.setReloadingClassLoaderPattern(config.getInitParameter("nocturne.reloading-class-loader-pattern"));
         applicationContext.setServletContext(config.getServletContext());
+
+        if (properties.containsKey("nocturne.page-request-listener")) {
+            applicationContext.setPageRequestListenerClassName(properties.getProperty("nocturne.page-request-listener"));
+        }
 
         // Pass application context to servlet
         config.getServletContext().setAttribute("applicationContext", applicationContext);
