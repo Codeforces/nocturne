@@ -15,7 +15,8 @@ public class ApplicationContext {
     private String reloadingClassLoaderClassesPath;
     private ServletContext servletContext;
     private String pageRequestListenerClassName;
-    private Injector injector;
+    private Injector injectorForProduction;
+    private ThreadLocal<Injector> injector = new ThreadLocal<Injector>();
 
     public String getPageRequestListenerClassName() {
         return pageRequestListenerClassName;
@@ -90,10 +91,20 @@ public class ApplicationContext {
     }
 
     public Injector getInjector() {
-        return injector;
+        if (isDebugMode()) {
+            return injector.get();
+        } else {
+            return injectorForProduction;
+        }
     }
 
     public void setInjector(Injector injector) {
-        this.injector = injector;
+        if (isDebugMode()) {
+            this.injector.set(injector);
+        } else {
+            synchronized (this) {
+                injectorForProduction = injector;
+            }
+        }
     }
 }
