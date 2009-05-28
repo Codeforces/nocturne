@@ -10,6 +10,7 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.File;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Properties;
@@ -38,6 +39,18 @@ public class DispatchFilter implements Filter {
 
     /** Listens requests for pages. */
     private PageRequestListener pageRequestListener;
+
+    /** When application has been accessed in the debug mode. */
+    private long lastDebugModeAccess = 0;
+
+    /**
+     * Hash code of all directories in the reloading class path
+     * used when application has been accessed in the debug mode.
+     */
+    private long lastDebugModeAccessReloadingClassPathHashCode = 0;
+
+    /** Class loader used when application has been accessed in the debug mode. */
+    private ClassLoader lastDebugModeClassLoader;
 
     /** @return ApplicationContext Nocturne's application context. */
     protected ApplicationContext getApplicationContext() {
@@ -73,7 +86,16 @@ public class DispatchFilter implements Filter {
             usePageRequestListener(page);
             page.parseTemplate();
             processChain = page.isProcessChain();
-            page.getOutputStream().flush();
+
+            try {
+                page.getOutputStream().flush();
+            } catch (Exception e) {
+                try {
+                    page.getOutputStream().close();
+                } catch (Exception t) {
+                    // No operations.
+                }
+            }
         } catch (Throwable e) {
             e.printStackTrace();
             logger.fatal("Can't process " + request.getRequestURL() + ".", e);
@@ -115,7 +137,23 @@ public class DispatchFilter implements Filter {
      * @return RunResult page run result.
      */
     private RunResult runDebugService(HttpServletRequest request, HttpServletResponse response) {
-        ReloadingClassLoader loader = new ReloadingClassLoader(applicationContext);
+        ClassLoader loader;
+
+        if (System.currentTimeMillis() - lastDebugModeAccess < 1000 && lastDebugModeClassLoader != null) {
+            loader = lastDebugModeClassLoader;
+        } else {
+            long hashCode = hashCode(applicationContext.getReloadingClassLoaderClassesPath());
+
+            if (hashCode == lastDebugModeAccessReloadingClassPathHashCode) {
+                loader = lastDebugModeClassLoader;
+            } else {
+                loader = new ReloadingClassLoader(applicationContext);
+                lastDebugModeAccess = System.currentTimeMillis();
+                lastDebugModeAccessReloadingClassPathHashCode = hashCode;
+                lastDebugModeClassLoader = loader;
+            }
+        }
+
         RunResult runResult = new RunResult();
 
         try {
@@ -142,7 +180,7 @@ public class DispatchFilter implements Filter {
      * @param response  Response.
      * @param page      Page instance.
      * @param runResult Run result to be modified during processing.
-     * @throws IOException when fails IO.
+     * @throws IOException            when fails IO.
      * @throws ClassNotFoundException If requested classes not found.
      */
     private void processPage(HttpServletRequest request, HttpServletResponse response, Object page, RunResult runResult) throws IOException, ClassNotFoundException {
@@ -306,6 +344,31 @@ public class DispatchFilter implements Filter {
         public void setProcessChain(boolean processChain) {
             this.processChain = processChain;
         }
+    }
+
+    private long hashCode(String paths) {
+        long result = 0;
+        String[] tokens = paths.split(";");
+        for (String token : tokens) {
+            if (token.length() > 0) {
+                File dir = new File(token);
+                result += token.hashCode() * hashCode(dir, 0);
+            }
+        }
+        return result;
+    }
+
+    private long hashCode(File file, long depth) {
+        long result = 0;
+        if (file.isFile()) {
+            result += file.getName().hashCode() * file.lastModified() * (depth + 1);
+        } else {
+            File[] files = file.listFiles();
+            for (File nested : files) {
+                result += hashCode(nested, depth + 1);
+            }
+        }
+        return result;
     }
 
     static {
