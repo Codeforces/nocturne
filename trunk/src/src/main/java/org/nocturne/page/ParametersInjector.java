@@ -10,20 +10,24 @@ import java.lang.reflect.Field;
 /**
  * Each component has an instance of ParametersInjector.
  * It will process @Parameter annotations.
+ * <p/>
+ * Also this class can be used if you want to
+ * inject parameters into some object.
  *
  * @author Mike Mirzayanov
  */
 public class ParametersInjector {
-    private Component component;
+    private Object component;
+
     private Set<InjectField> fields;
 
-    public ParametersInjector(Component component) {
+    /** @param component Object which has fields with @Parameter annotation. */
+    public ParametersInjector(Object component) {
         this.component = component;
     }
 
-    public void inject() {
-        HttpServletRequest request = component.getRequest();
-
+    /** @param request Request to be analyzed to find parameters for injection. */
+    public void inject(HttpServletRequest request) {
         if (fields == null) {
             scanFields();
         }

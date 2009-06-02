@@ -15,7 +15,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.OutputStream;
-import java.io.Writer;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -381,7 +380,7 @@ public abstract class Component {
         validators = new HashMap<String, List<Validator>>();
         frameMap = new HashMap<String, String>();
 
-        parametersInjector.inject();
+        parametersInjector.inject(getRequest());
         put("frame", FrameDirective.getInstance());
     }
 
