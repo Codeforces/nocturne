@@ -24,9 +24,8 @@ public class FrameDirective implements TemplateDirectiveModel {
         Object name = map.get("name");
 
         if (name instanceof SimpleScalar) {
-            //Component component = ComponentLocator.get(environment.getTemplate());
-            Component component = ComponentLocator.getPage();
-    
+            Component component = ComponentLocator.getCurrentComponent();
+
             String s = ((SimpleScalar) name).getAsString();
             try {
                 String html = component.getFrameHtml(s);

@@ -13,18 +13,51 @@ public class ComponentLocator {
         }
     };
 
-    private static ThreadLocal<Page> page = new ThreadLocal<Page>();
+    private static ThreadLocal<Page> currentPage = new ThreadLocal<Page>();
+    private static ThreadLocal<Component> currentComponent = new ThreadLocal<Component>();
 
     public static void clear() {
         maps.get().clear();
     }
 
+    @Deprecated
     public static void setPage(Page page) {
-        ComponentLocator.page.set(page);
+        setCurrentPage(page);
     }
 
+    @Deprecated
     public static Page getPage() {
-        return ComponentLocator.page.get();
+        return getCurrentPage();
+    }
+
+    /**
+     * Do not call this method. It will be invoked
+     * automatically by nocturne.
+     *
+     * @param page Current rendering page.
+     */
+    public static void setCurrentPage(Page page) {
+        ComponentLocator.currentPage.set(page);
+    }
+
+    /** @return Current rendering page instance. */
+    public static Page getCurrentPage() {
+        return ComponentLocator.currentPage.get();
+    }
+
+    /**
+     * Do not call this method. It will be invoked
+     * automatically by nocturne.
+     *
+     * @param component Current rendering component.
+     */
+    public static void setCurrentComponent(Component component) {
+        ComponentLocator.currentComponent.set(component);
+    }
+
+    /** @return Current rendering frame or page. */
+    public static Component getCurrentComponent() {
+        return currentComponent.get();
     }
 
     public static Component get(Template template) {

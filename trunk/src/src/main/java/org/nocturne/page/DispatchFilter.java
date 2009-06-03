@@ -72,7 +72,6 @@ public class DispatchFilter implements Filter {
 
         Page page = pageLoader.loadPage(path, parameterMap);
         Configuration templateEngineConfiguration = templateEngineConfigurationPool.getInstance();
-        ComponentLocator.setPage(page);
 
         boolean processChain;
 
@@ -160,7 +159,7 @@ public class DispatchFilter implements Filter {
             Class pageLoaderClass = loader.loadClass("org.nocturne.page.PageLoader");
             Object pageLoader = pageLoaderClass.newInstance();
             invoke(pageLoader, "setApplicationContext", applicationContext);
-            Object page = invoke(pageLoader, "loadPage", request.getServletPath(), request.getParameterMap());
+            Page page = (Page) invoke(pageLoader, "loadPage", request.getServletPath(), request.getParameterMap());
             processPage(request, response, page, runResult);
         } catch (Throwable e) {
             e.printStackTrace();
@@ -183,8 +182,7 @@ public class DispatchFilter implements Filter {
      * @throws IOException            when fails IO.
      * @throws ClassNotFoundException If requested classes not found.
      */
-    private void processPage(HttpServletRequest request, HttpServletResponse response, Object page, RunResult runResult) throws IOException, ClassNotFoundException {
-        ComponentLocator.setPage((Page) page);
+    private void processPage(HttpServletRequest request, HttpServletResponse response, Page page, RunResult runResult) throws IOException, ClassNotFoundException {
         Configuration templateEngineConfiguration = templateEngineConfigurationPool.getInstance();
 
         try {
@@ -194,7 +192,7 @@ public class DispatchFilter implements Filter {
             invoke(page, "setResponse", response);
             invoke(page, "setFilterConfig", getFilterConfig());
 
-            usePageRequestListener(ComponentLocator.getPage());
+            usePageRequestListener(page);
             invoke(page, "parseTemplate");
             runResult.setProcessChain((Boolean) invoke(page, "isProcessChain"));
         } finally {

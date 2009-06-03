@@ -24,6 +24,8 @@ public abstract class Frame extends Component {
             return writer.getBuffer().toString();
         } catch (TemplateException e) {
             throw new IllegalStateException("Can't parse frame " + getClass().getSimpleName() + ".", e);
+        } finally {
+            finalizeAfterRender();
         }
     }
 }

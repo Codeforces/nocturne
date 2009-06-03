@@ -50,6 +50,8 @@ public abstract class Component {
 
     private ParametersInjector parametersInjector = new ParametersInjector(this);
 
+    private Component parentComponent;
+
     public OutputStream getOutputStream() {
         if (outputStream == null) {
             try {
@@ -373,6 +375,9 @@ public abstract class Component {
     void prepareForRender() {
         initializeIfNeeded();
 
+        parentComponent = ComponentLocator.getCurrentComponent();
+        ComponentLocator.setCurrentComponent(this);
+
         getTemplateMap().clear();
         template = null;
         skipTemplate = false;
@@ -382,6 +387,10 @@ public abstract class Component {
 
         parametersInjector.inject(getRequest());
         put("frame", FrameDirective.getInstance());
+    }
+
+    void finalizeAfterRender() {
+        ComponentLocator.setCurrentComponent(parentComponent);
     }
 
     void initializeIfNeeded() {

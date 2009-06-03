@@ -87,10 +87,13 @@ public abstract class Page extends Component {
             }
         } catch (AbortException e) {
             // No operations.
-        }
+        } finally {
+            finalizeAfterRender();
+}
     }
 
     void prepareForRender() {
+        ComponentLocator.setCurrentPage(this);
         super.prepareForRender();
 
         put("css", getCssSet());
