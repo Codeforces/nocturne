@@ -14,7 +14,7 @@
   <groupId>nocturne</groupId>
   <artifactId>nocturne</artifactId>
   <name>nocturne</name>
-  <version>0.0.19-SNAPSHOT</version>
+  <version>0.0.21-SNAPSHOT</version>
   <build>
     <plugins>
       <plugin>

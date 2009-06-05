@@ -26,13 +26,13 @@ public class FrameDirective implements TemplateDirectiveModel {
         if (name instanceof SimpleScalar) {
             Component component = ComponentLocator.getCurrentComponent();
 
-            String s = ((SimpleScalar) name).getAsString();
-            try {
-                String html = component.getFrameHtml(s);
-                environment.getOut().write(html);
-            } catch (Throwable e) {
-                System.out.println(e);
+            String frameName = ((SimpleScalar) name).getAsString();
+            String html = component.getFrameHtml(frameName);
+            if (html == null) {
+                throw new TemplateException("Frame directive expected parsed frame '" + frameName + "', but didn't find.", environment);
             }
+            
+            environment.getOut().write(html);
             environment.getOut().flush();
         } else {
             throw new TemplateException("Frame directive parameter 'name' should be a String.", environment);
