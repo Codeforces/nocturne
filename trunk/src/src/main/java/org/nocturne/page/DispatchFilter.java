@@ -74,6 +74,7 @@ public class DispatchFilter implements Filter {
         Configuration templateEngineConfiguration = templateEngineConfigurationPool.getInstance();
 
         boolean processChain;
+        Throwable pageThrowable = null;
 
         try {
             page.setApplicationContext(applicationContext);
@@ -82,7 +83,9 @@ public class DispatchFilter implements Filter {
             page.setFilterConfig(getFilterConfig());
             page.setResponse(response);
 
-            usePageRequestListener(page);
+            setupPageRequestListener(page);
+            handleBeforeProcessPage(page);
+
             page.parseTemplate();
             processChain = page.isProcessChain();
 
@@ -96,10 +99,12 @@ public class DispatchFilter implements Filter {
                 }
             }
         } catch (Throwable e) {
+            pageThrowable = e;
             e.printStackTrace();
             logger.fatal("Can't process " + request.getRequestURL() + ".", e);
             throw new IllegalStateException(e);
         } finally {
+            handleAfterProcessPage(page, pageThrowable);
             pageLoader.unloadPage(path, parameterMap, page);
             templateEngineConfigurationPool.release(templateEngineConfiguration);
         }
@@ -110,7 +115,7 @@ public class DispatchFilter implements Filter {
         return result;
     }
 
-    private void usePageRequestListener(Page page) throws ClassNotFoundException {
+    private void setupPageRequestListener(Page page) throws ClassNotFoundException {
         if (pageRequestListener == null || applicationContext.isDebugMode()) {
             if (applicationContext.getPageRequestListenerClassName() != null) {
                 ClassLoader loader = page.getClass().getClassLoader();
@@ -118,8 +123,17 @@ public class DispatchFilter implements Filter {
                 pageRequestListener = (PageRequestListener) applicationContext.getInjector().getInstance(clazz);
             }
         }
+    }
+
+    private void handleBeforeProcessPage(Page page) {
         if (pageRequestListener != null) {
-            pageRequestListener.onPageRequest(page);
+            pageRequestListener.beforeProcessPage(page);
+        }
+    }
+
+    private void handleAfterProcessPage(Page page, Throwable t) {
+        if (pageRequestListener != null) {
+            pageRequestListener.afterProcessPage(page, t);
         }
     }
 
@@ -155,16 +169,24 @@ public class DispatchFilter implements Filter {
 
         RunResult runResult = new RunResult();
 
+        Page page = null;
+        Throwable pageThrowable = null;
+
         try {
             Class pageLoaderClass = loader.loadClass("org.nocturne.page.PageLoader");
             Object pageLoader = pageLoaderClass.newInstance();
             invoke(pageLoader, "setApplicationContext", applicationContext);
-            Page page = (Page) invoke(pageLoader, "loadPage", request.getServletPath(), request.getParameterMap());
+            page = (Page) invoke(pageLoader, "loadPage", request.getServletPath(), request.getParameterMap());
             processPage(request, response, page, runResult);
         } catch (Throwable e) {
+            pageThrowable = e;
             e.printStackTrace();
             logger.fatal("Can't process " + request.getRequestURL() + ".", e);
             throw new IllegalStateException(e);
+        } finally {
+            if (page != null) {
+                handleAfterProcessPage(page, pageThrowable);
+            }
         }
 
         applicationContext.setInjector(null);
@@ -192,7 +214,8 @@ public class DispatchFilter implements Filter {
             invoke(page, "setResponse", response);
             invoke(page, "setFilterConfig", getFilterConfig());
 
-            usePageRequestListener(page);
+            setupPageRequestListener(page);
+            handleBeforeProcessPage(page);
             invoke(page, "parseTemplate");
             runResult.setProcessChain((Boolean) invoke(page, "isProcessChain"));
         } finally {
