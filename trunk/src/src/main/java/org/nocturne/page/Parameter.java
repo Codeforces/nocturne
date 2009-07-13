@@ -31,7 +31,7 @@ public @interface Parameter {
             }
         },
 
-        /** Leave only safe chars: strip slashes, quotes and low-code chars. */
+        /** Leave only safe chars: strip slashes, quotes and low-code chars. Also makes trim(). */
         SAFE {
             String strip(String value) {
                 if (value != null) {
@@ -42,7 +42,7 @@ public @interface Parameter {
                             sb.append(c);
                         }
                     }
-                    return sb.toString();
+                    return sb.toString().trim();
                 } else {
                     return value;
                 }
@@ -51,12 +51,18 @@ public @interface Parameter {
 
         /** Leave only chars which can be part of java ID (see Character.isJavaIdentifierPart). */
         ID {
+            private boolean isValidChar(char c) {
+                return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')
+                        || ('0' <= c && c <= '9') || (c == '_')
+                        || (c == '-')
+                        || (c == '.');
+            }
             String strip(String value) {
                 if (value != null) {
                     char[] chars = value.toCharArray();
                     StringBuilder sb = new StringBuilder(chars.length);
                     for (char c : chars) {
-                        if (Character.isJavaIdentifierPart(c)) {
+                        if (isValidChar(c)) {
                             sb.append(c);
                         }
                     }

@@ -13,7 +13,7 @@ public abstract class Validator {
 
     public static final Validator EMAIL = new Validator() {
         public void run(String value) throws ValidationException {
-            if (value == null || !value.matches("[^@]+@[^@]+\\.[a-z]+")) {
+            if (value == null || !value.matches("[^@<>&\"\'/\\\\\\s]+@[^@<>&\"\'/\\\\\\s]+\\.[a-z]+")) {
                 throw new ValidationException("Field should contain valid email");
             }
         }
