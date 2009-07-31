@@ -2,11 +2,14 @@ package org.nocturne.page;
 
 import freemarker.template.TemplateException;
 import org.nocturne.misc.AbortException;
+import org.nocturne.exception.FreemarkerException;
 
 import java.io.IOException;
 import java.util.*;
 
-/** @author Mike Mirzayanov */
+/**
+ * @author Mike Mirzayanov
+ */
 public abstract class Page extends Component {
     private Map<String, Object> globalTemplateMap = new HashMap<String, Object>();
 
@@ -68,7 +71,7 @@ public abstract class Page extends Component {
         return globalTemplateMap;
     }
 
-    public void parseTemplate() throws IOException {
+    public void parseTemplate() {
         try {
             prepareForRender();
             beforeRender();
@@ -76,20 +79,22 @@ public abstract class Page extends Component {
             afterRender();
 
             if (!isSkipTemplate()) {
-                try {
-                    Map<String, Object> params = new HashMap<String, Object>(getTemplateMap());
-                    params.putAll(getGlobalTemplateMap());
+                Map<String, Object> params = new HashMap<String, Object>(getTemplateMap());
+                params.putAll(getGlobalTemplateMap());
 
+                try {
                     getTemplate().process(params, getWriter());
                 } catch (TemplateException e) {
-                    throw new IllegalStateException(e);
+                    throw new FreemarkerException("Can't parse template for page " + getClass().getName() + ".", e);
+                } catch (IOException e) {
+                    throw new FreemarkerException("Can't parse template for page " + getClass().getName() + ".", e);
                 }
             }
         } catch (AbortException e) {
             // No operations.
         } finally {
             finalizeAfterRender();
-}
+        }
     }
 
     void prepareForRender() {

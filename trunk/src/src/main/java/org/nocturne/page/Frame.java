@@ -7,9 +7,11 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.nocturne.exception.FreemarkerException;
+
 /** @author Mike Mirzayanov */
 public abstract class Frame extends Component {
-    String parseTemplate() throws IOException {
+    String parseTemplate() {
         prepareForRender();
         beforeRender();
         render();
@@ -18,12 +20,14 @@ public abstract class Frame extends Component {
         try {
             StringWriter writer = new StringWriter(128);
             Map<String, Object> params = new HashMap<String, Object>(getTemplateMap());
-            params.putAll(ComponentLocator.getPage().getGlobalTemplateMap());
+            params.putAll(ComponentLocator.getCurrentPage().getGlobalTemplateMap());
 
             getTemplate().process(params, writer);
             return writer.getBuffer().toString();
         } catch (TemplateException e) {
-            throw new IllegalStateException("Can't parse frame " + getClass().getSimpleName() + ".", e);
+            throw new FreemarkerException("Can't parse frame " + getClass().getSimpleName() + ".", e);
+        } catch (IOException e) {
+            throw new FreemarkerException("Can't parse frame " + getClass().getSimpleName() + ".", e);
         } finally {
             finalizeAfterRender();
         }

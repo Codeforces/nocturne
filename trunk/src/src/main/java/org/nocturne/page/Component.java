@@ -8,6 +8,8 @@ import org.nocturne.misc.AbortException;
 import org.nocturne.misc.ApplicationContext;
 import org.nocturne.page.validation.ValidationException;
 import org.nocturne.page.validation.Validator;
+import org.nocturne.exception.FreemarkerException;
+import org.nocturne.exception.ServletException;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
@@ -197,11 +199,15 @@ public abstract class Component {
         this.templateEngineConfiguration = templateEngineConfiguration;
     }
 
-    protected Template getTemplate() throws IOException {
+    protected Template getTemplate() {
         if (!skipTemplate) {
             if (template == null) {
                 String name = this.getClass().getSimpleName() + ".ftl";
-                template = getTemplateEngineConfiguration().getTemplate(name, ComponentLocator.getPage().getLocale());
+                try {
+                    template = getTemplateEngineConfiguration().getTemplate(name, ComponentLocator.getCurrentPage().getLocale());
+                } catch (IOException e) {
+                    throw new FreemarkerException("Can't get freemarker template [name=" + name + "].", e);
+                }
             }
         } else {
             template = null;
@@ -242,8 +248,15 @@ public abstract class Component {
         return getTemplateMap().get(key);
     }
 
-    protected void setTemplateName(String name) throws IOException {
-        template = getTemplateEngineConfiguration().getTemplate(name, ComponentLocator.getPage().getLocale());
+    protected void setTemplateName(String name) {
+        try {
+            template = getTemplateEngineConfiguration().getTemplate(
+                    name,
+                    ComponentLocator.getCurrentPage().getLocale()
+            );
+        } catch (IOException e) {
+            throw new FreemarkerException("Can't get freemarker template [name=" + name + "].", e);
+        }
     }
 
     boolean isSkipTemplate() {
@@ -342,12 +355,12 @@ public abstract class Component {
         // No operations.        
     }
 
-    public void beforeRender() throws IOException {
+    public void beforeRender() {
     }
 
-    public abstract void render() throws IOException;
+    public abstract void render();
 
-    public void afterRender() throws IOException {
+    public void afterRender() {
     }
 
     void setup(Frame frame) {
@@ -362,12 +375,12 @@ public abstract class Component {
         return frameMap.get(key);
     }
 
-    public void parse(String key, Frame frame) throws IOException {
+    public void parse(String key, Frame frame) {
         setup(frame);
         frameMap.put(key, frame.parseTemplate());
     }
 
-    public String parse(Frame frame) throws IOException {
+    public String parse(Frame frame) {
         setup(frame);
         return frame.parseTemplate();
     }
@@ -404,13 +417,21 @@ public abstract class Component {
         }
     }
 
-    public void abortWithRedirect(String target) throws IOException {
-        getResponse().sendRedirect(target);
+    public void abortWithRedirect(String target) {
+        try {
+            getResponse().sendRedirect(target);
+        } catch (IOException e) {
+            throw new ServletException("Can't redirect to " + target + ".", e);
+        }
         throw new AbortException("Redirected to " + target + ".");
     }
 
-    public void abortWithError(int code) throws IOException {
-        getResponse().sendError(code);
+    public void abortWithError(int code) {
+        try {
+            getResponse().sendError(code);
+        } catch (IOException e) {
+            throw new ServletException("Can't send error " + code + ".", e);
+        }
         throw new AbortException("Send error [code = " + code + "].");
     }
 
