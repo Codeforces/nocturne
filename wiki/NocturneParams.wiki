@@ -16,4 +16,4 @@ Parameters description
 || nocturne.skip-regex || Default value is empty string (do not skip) || Example: /(css|image|js)/.* || Regex to describe URLs to be skipped by nocturne  || {{{Pattern}}} ||
 || nocturne.class-reloading-packages || Default value is empty string (do not reload) || You can specify several packages separated with ";" || All classes in specified packages will be reloaded || {{{List<String>}}} ||
 || nocturne.class-reloading-exceptions || Default value is empty string (no exceptions) || You can specify several packages or class names separated with ";" || Exceptions for nocturne.class-reloading-package: specified classes (or classes in specified directories) will not be reloaded  || {{{List<String>}}} ||
-|| nocturne.page-class-name-resolver || Required || Class name (extends org.nocturne.main.PageClassNameResolver) || Class to route request to pages  || {{{String}}} ||
+|| nocturne.request-router || Required || Class name (extends org.nocturne.main.RequestRouter|| Class to route request to page  || {{{String}}} ||
