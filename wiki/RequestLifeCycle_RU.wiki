@@ -22,4 +22,4 @@
  # Вызываются методы afterProcessPage() у зарегистрированных PageRequestListener-ов.
  # Если на странице был вызван метод setProcessChain(true), то пара request-response передается в filterChain.
 
-При выпадении exception - управление передается на пункт 10, но пункт 11 игнорируется. Методы abort*() инициируют AbortException, предварительно записывая в response соответствующий redirection.
+При выпадении exception - управление передается на пункт 10, но пункт 11 игнорируется. Методы abortXXX() инициируют AbortException, предварительно записывая в response соответствующий redirection.
