@@ -14,3 +14,5 @@ Parameters description
 || nocturne.page-request-listener || Default value is empty string (no request listeners) || Classes separated with ";" || Listener classes for requests dispatching by nocturne ||
 || nocturne.guice-module-class-name || Default value is empty string (no module specified) || Class name implementing com.google.inject.Module || Nocturne uses google-guice as default IoC container ||
 || nocturne.skip-regex || Default value is empty string (do not skip) || Example: /(css|image|js)/.* || Regex to describe URLs to be skipped by nocturne  ||
+|| nocturne.class-reloading-package || Default value is empty string (do not reload) || You can specify several packages separated with ";" || All classes in specified packages will be reloaded ||
+|| nocturne.class-reloading-exceptions || Default value is empty string (no exceptions) || You can specify several packages or class names separated with ";" || Exceptions for nocturne.class-reloading-package: specified classes (or classes in specified directories) will not be reloaded  ||
