@@ -9,7 +9,7 @@ Parameters description
 
 || *Parameter name* || *Default* || *Values / example* || *Meaning* || *Type in Java* ||
 || nocturne.debug || Default value is "false" || "true" or "false" || Use it in the development mode to switch on nocturne main feature: class reloading ||  {{{boolean}}} ||
-|| nocturne.templates-path || Default value is empty string (no template directories) || WEB-INF/templates;WEB-INF/templates-for-login || directory (or directories) where to find templates in the deployed application, all the freemarker templates for view layer should be in it || {{{List<File>}}} ||
+|| nocturne.templates-paths || Default value is empty string (no template directories) || WEB-INF/templates;WEB-INF/templates-for-login || directory (or directories) where to find templates in the deployed application, all the freemarker templates for view layer should be in it || {{{List<File>}}} ||
 || nocturne.reloading-class-paths || Default value is empty string (no directories for class reloading) || Values depends on development home directory and IDEA you are using || In the debug mode the application will load classes from specified directories on each request || {{{List<File>}}} ||
 || nocturne.page-request-listeners || Default value is empty string (no request listeners) || Classes separated with ";" || Listener classes for requests dispatching by nocturne || {{{?}}} ||
 || nocturne.guice-module-class-name || Default value is empty string (no module specified) || Class name implementing com.google.inject.Module || Nocturne uses google-guice as default IoC container || {{{Class<? com.google.inject.Module>}}} ||
