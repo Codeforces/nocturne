@@ -13,4 +13,4 @@ Parameters description
 || nocturne.reloading-class-loader-classes-path || Default value is empty string (no directories for class reloading) || Values depends on development home directory and IDEA you are using || In the debug mode the application will load classes from specified directories on each request ||
 || nocturne.page-request-listener || Default value is empty string (no request listeners) || Classes separated with ";" || Listener classes for requests dispatching by nocturne ||
 || nocturne.guice-module-class-name || Default value is empty string (no module specified) || Class name implementing com.google.inject.Module || Nocturne uses google-guice as default IoC container ||
-
+|| nocturne.skip-regex || Default value is empty string (do not skip) || Example: /(css|image|js)/.* || Regex to describe URLs to be skipped by nocturne  ||
