@@ -7,6 +7,8 @@ Parameters description
 
 = Details =
 
-|| *Parameter name* || *Required?* || *Values / example* || *Meaning* ||
-|| nocturne.debug || Optional, default value is "false" || "true" or "false" || Use it in the development mode to switch on nocturne main feature: class reloading ||
-|| nocturne.templates-path || Required || WEB-INF/templates || directory where to find templates in the deployed application, typically all the templates should be in it ||
+|| *Parameter name* || *Default* || *Values / example* || *Meaning* ||
+|| nocturne.debug || Default value is "false" || "true" or "false" || Use it in the development mode to switch on nocturne main feature: class reloading ||
+|| nocturne.templates-path || Default value is empty string (no template directories) || WEB-INF/templates;WEB-INF/templates-for-login || directory (or directories) where to find templates in the deployed application, all the freemarker templates for view layer should be in it ||
+|| nocturne.reloading-class-loader-classes-path || Default value is empty string (no directories for class reloading) || Values depends on development home directory and IDEA you are using || In the debug mode the application will load classes from specified directories on each request ||
+|| nocturne.page-request-listener || Default value is empty string (no request listeners) || Classes separated with ";" || Listener classes for requests dispatching by nocturne ||
