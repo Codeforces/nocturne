@@ -1,4 +1,5 @@
 #summary Описывает жизненный цикл одного HTTP-запроса.
+#labels Featured
 
 Ноктюрн обращает внимание только на те запросы, которые соответствуют url-pattern для
 фильтра org.nocturne.main.DispatchFilter.
