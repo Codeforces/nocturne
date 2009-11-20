@@ -34,3 +34,28 @@ validation метод выглядит так:
 
 В коде как выше, в случае невалидной формы значение поля будет сохранено, а в случае, если 
 это поле невалидно, то будет к нему добавлено сообщение об ошибке.
+
+Вот полный код простого контроллера для формы добавления пользователя по заданному имени и возрасту, action ожидается для этого действия равным "add": 
+
+{{{
+@Link(";user/{action}")
+public class IndexPage extends Page {
+    @Parameter(stripMode = Parameter.StripMode.SAFE)
+    private String name;
+    
+    @Parameter
+    private int age;
+
+    @Validate("add")
+    public boolean validateAddUser() {
+        addValidator("name", new LengthValidator(2, 32));
+        addValidator("age", new IntegerValidator(1, 200));
+        return runValidation();
+    }
+    
+    @Action("add")
+    public void onAddUser() {
+        userDao.add(new User(name, age));
+    }
+}
+}}}
