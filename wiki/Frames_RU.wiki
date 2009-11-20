@@ -13,3 +13,27 @@
  # finalizeAction()
 
 Тот компонент, что вызвал parse("parsedFrame", someFrame) теперь имеет результат того, что отрендерил фрейм во внутреннем мэпе по ключу "parsedFrame". Теперь, если в шаблоне этого компонента написано <@frame name="parsedFrame"/>, то на это место вставится результат рендеринга фрейма. Таким образом, включать в себя фреймы могут страницы и другие фреймы.
+
+= Пример работы с фреймом =
+{{{
+@Link(";home")
+public class IndexPage extends Page {
+    @Inject
+    private LoginFormFrame loginForm;
+
+    public void action() {
+        parse("loginForm", loginForm);
+    }
+}
+}}}
+И шаблон IndexPage.ftl:
+{{{
+<#import "macros/common.ftl" as common>
+
+<@common.page>
+    <@frame name="loginFrame"/>
+    <div>
+        ...
+    </div>
+</@common.page>
+}}}
