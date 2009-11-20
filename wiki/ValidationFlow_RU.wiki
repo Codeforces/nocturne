@@ -38,8 +38,8 @@ validation метод выглядит так:
 Вот полный код простого контроллера для формы добавления пользователя по заданному имени и возрасту, action ожидается для этого действия равным "add": 
 
 {{{
-@Link(";user/{action}")
-public class IndexPage extends Page {
+@Link("user/{action}")
+public class UserChangePage extends Page {
     @Parameter(stripMode = Parameter.StripMode.SAFE)
     private String name;
     
