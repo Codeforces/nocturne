@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF8"?>
+<profilesXml>
+    <profiles>
+        <profile>
+            <id>development-settings</id>
+            <properties>
+                <development.home>Z:/Projects/nocturne/samples/helloworld</development.home>
+                <nocturne.debug>false</nocturne.debug>
+                <logging.path>${development.home}/helloworld.log</logging.path>
+            </properties>
+        </profile>
+    </profiles>
+    <activeProfiles>
+        <activeProfile>development-settings</activeProfile>
+    </activeProfiles>
+</profilesXml>

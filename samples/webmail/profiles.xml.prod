@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF8"?>
+<profilesXml>
+    <profiles>
+        <profile>
+            <id>production-settings</id>
+            <properties>
+                <development.home/>
+                <nocturne.debug>false</nocturne.debug>
+                <logging.path>webmail.log</logging.path>
+
+                <database.url>jdbc:mysql://localhost/webmail?useUnicode=true&amp;characterSetResults=UTF-8&amp;characterEncoding=UTF-8</database.url>
+                <database.driver>com.mysql.jdbc.Driver</database.driver>
+                <database.user>webmail</database.user>
+                <database.password>webmail</database.password>
+            </properties>
+        </profile>
+    </profiles>
+    <activeProfiles>
+        <activeProfile>production-settings</activeProfile>
+    </activeProfiles>
+</profilesXml>
