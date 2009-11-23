@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.nocturne</groupId>
+    <artifactId>nocturne</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <url>http://code.google.com/p/nocturne/</url>
+    <issueManagement>
+        <system>Google Code</system>
+        <url>http://code.google.com/p/nocturne/issues/list</url>
+    </issueManagement>
+    <inceptionYear>2009</inceptionYear>
+    <name>Nocturne web framework</name>
+    <description>Nocturne is a lightweight Java MVC framework with hot-swap any code feature out of the box
+    </description>
+
+    <developers>
+        <developer>
+            <id>MikeMirzayanov</id>
+            <name>Mike Mirzayanov</name>
+            <email>mirzayanovmr@gmail.com</email>
+            <roles>
+                <role>owner, author</role>
+            </roles>
+            <timezone>+3</timezone>
+            <properties/>
+        </developer>
+    </developers>
+    <contributors>
+        <contributor>
+            <name>Andrew Lazarev</name>
+        </contributor>
+    </contributors>
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <dependencies>
+        <dependency>
+            <groupId>cglib</groupId>
+            <artifactId>cglib</artifactId>
+            <version>2.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.guice</groupId>
+            <artifactId>guice</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
+            <version>2.3.14</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.14</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.mime-util</groupId>
+            <artifactId>mime-util</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.5</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.5</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.14</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>nocturne</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.0.2</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
