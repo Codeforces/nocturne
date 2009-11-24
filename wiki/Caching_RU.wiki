@@ -1,0 +1,32 @@
+#summary Предложение по кэшированию
+
+= Предложение по осуществлению кэширования =
+
+Предлагается ввести аннотации @Cacheable и @CacheFlush, которые типично применяются в двух случаях:
+ # Кэширование методов DAO. Например, так:
+{{{
+public class UserDaoImpl extends ApplicationDaoImpl<User> implements UserDao {
+    ...
+    @Cacheable(cacheName = "User")
+    public User find(long id) {
+        ...
+    }
+    ...
+    @CacheFlush(cacheName = "User")
+    public void updatePassword(User user, String password) {
+        ...
+    }
+    ...
+}
+}}} 
+ # Кэширование action-методов компонентов (контроллеров):
+{{{
+public class UserPage extends Page {
+    ...
+    @Cacheable(cacheName = "User")
+    public void onShowStatus() {
+        ...
+    }
+    ...
+}
+}}} 
