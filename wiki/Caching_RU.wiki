@@ -23,7 +23,7 @@ public class UserDaoImpl extends ApplicationDaoImpl<User> implements UserDao {
 {{{
 public class UserPage extends Page {
     ...
-    @Cacheable(cacheName = "User")
+    @Cacheable
     public void onShowStatus() {
         ...
     }
