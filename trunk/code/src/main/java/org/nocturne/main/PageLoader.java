@@ -32,7 +32,7 @@ public class PageLoader {
         if (injector == null) {
             setupInjector();
         }
-        
+
         if (requestRouter == null) {
             try {
                 requestRouter = (RequestRouter) getClass().getClassLoader().loadClass(
@@ -48,12 +48,23 @@ public class PageLoader {
         initialize();
 
         RequestRouter.Resolution resolution = requestRouter.route(path, parameterMap);
+        if (resolution == null && ApplicationContext.getInstance().getDefaultPageClassName() != null) {
+            resolution = new RequestRouter.Resolution(ApplicationContext.getInstance().getDefaultPageClassName(), "");
+        }
 
         if (resolution == null) {
             return null;
         } else {
             ApplicationContext.getInstance().setRequestAction(resolution.getAction());
             ApplicationContext.getInstance().setRequestPageClassName(resolution.getPageClassName());
+            
+            Map<String, String> overrideParameters = resolution.getOverrideParameters();
+            if (overrideParameters != null) {
+                for (Map.Entry<String, String> entry : overrideParameters.entrySet()) {
+                    ApplicationContext.getInstance().addRequestOverrideParameter(entry.getKey(), entry.getValue());
+                }
+            }
+
             PagePool pool = getPoolByClassName(resolution.getPageClassName());
             return pool.getInstance();
         }

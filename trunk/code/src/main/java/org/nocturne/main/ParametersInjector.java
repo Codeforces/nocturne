@@ -4,12 +4,13 @@
 
 package org.nocturne.main;
 
-import org.nocturne.exception.ConfigurationException;
 import org.nocturne.annotation.Parameter;
+import org.nocturne.exception.ConfigurationException;
 
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Field;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -25,7 +26,7 @@ public class ParametersInjector {
     /** Injection target object. */
     private Object component;
 
-    /** Stores information about  */
+    /** Stores information about */
     private Set<InjectField> fields;
 
     /** @param component Object which has fields with @Parameter annotation. */
@@ -33,25 +34,37 @@ public class ParametersInjector {
         this.component = component;
     }
 
-    /** @param request Request to be analyzed to find parameters for injection. */
+    /**
+     * @param request Request to be analyzed to find parameters for injection.
+     *                Also more priority parameters are retrieved from ApplicationContext.getInstance().getRequestOverrideParameters().
+     */
     public void inject(HttpServletRequest request) {
         if (fields == null) {
             scanFields();
         }
 
+        Map<String, String> overrideParameters =
+                ApplicationContext.getInstance().getRequestOverrideParameters();
+
         for (InjectField field : fields) {
             String key = field.parameter.name().isEmpty()
                     ? field.field.getName() : field.parameter.name();
 
-            String value = request.getParameter(key);
-            if (value == null) {
-                Object attr = request.getAttribute(ApplicationContext.getInstance().getAdditionalParamsRequestAttributePrefix() + key);
-                if (attr != null) {
-                    value = attr.toString();
-                }
+            String value;
+            if (overrideParameters.containsKey(key)) {
+                value = overrideParameters.get(key);
+            } else {
+                value = request.getParameter(key);
             }
 
             setupField(field, value);
+        }
+
+        if (component instanceof Component) {
+            Component comp = (Component) component;
+            for (Map.Entry<String, String> entry : overrideParameters.entrySet()) {
+                comp.addOverrideParameter(entry.getKey(), entry.getValue());
+            }
         }
     }
 
@@ -148,8 +161,8 @@ public class ParametersInjector {
             assign = null;
         }
 
-        if (clazz.equals(Boolean.class) || clazz.equals(Integer.class) 
-                || clazz.equals(Long.class) || clazz.equals(Double.class) 
+        if (clazz.equals(Boolean.class) || clazz.equals(Integer.class)
+                || clazz.equals(Long.class) || clazz.equals(Double.class)
                 || clazz.equals(Float.class)) {
             assign = null;
         }
