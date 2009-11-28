@@ -18,10 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -73,6 +70,9 @@ public class ApplicationContext {
 
     /** Servlet context. */
     private ServletContext servletContext;
+
+    /** What page to show if RequestRouter returns {@code null}. */
+    private String defaultPageClassName;
 
     /**
      * Pattern: if request.getServletPath() (example: /some/path) matches it, request
@@ -164,6 +164,14 @@ public class ApplicationContext {
     }
 
     /**
+     * @return What page to show if RequestRouter returns {@code null}.
+     *         Returns {@code null} if application should return 404 on it.
+     */
+    public String getDefaultPageClassName() {
+        return defaultPageClassName;
+    }
+
+    /**
      * @return Encoding for caption files if
      *         naive org.nocturne.caption.CaptionsImpl backed used.
      */
@@ -188,6 +196,10 @@ public class ApplicationContext {
      */
     public static ApplicationContext getInstance() {
         return INSTANCE;
+    }
+
+    void setDefaultPageClassName(String defaultPageClassName) {
+        this.defaultPageClassName = defaultPageClassName;
     }
 
     void setCurrentPage(Page page) {
@@ -227,6 +239,14 @@ public class ApplicationContext {
     /** @return List of listener class names. Setup it by nocturne.page-request-listeners. */
     public List<String> getPageRequestListeners() {
         return pageRequestListeners;
+    }
+
+    void addRequestOverrideParameter(String name, String value) {
+        requestsPerThread.get().addOverrideParameter(name, value);
+    }
+
+    Map<String, String> getRequestOverrideParameters() {
+        return requestsPerThread.get().getOverrideParameters();
     }
 
     void setDebug(boolean debug) {
@@ -421,7 +441,7 @@ public class ApplicationContext {
     @SuppressWarnings({"unchecked"})
     public String $(String shortcut, Object... args) {
         shortcut = shortcut.trim();
-        
+
         if (captions == null) {
             synchronized (this) {
                 try {
@@ -499,6 +519,9 @@ public class ApplicationContext {
         /** Locale for current request. */
         private Locale locale;
 
+        /** Parameters which override request params. */
+        private Map<String, String> overrideParameters;
+
         private RequestContext(HttpServletRequest request, HttpServletResponse response) {
             this.request = request;
             this.response = response;
@@ -540,7 +563,7 @@ public class ApplicationContext {
             if (lang == null) {
                 HttpSession session = request.getSession(false);
                 if (session != null) {
-                lang = (String) session.getAttribute("nocturne.language");
+                    lang = (String) session.getAttribute("nocturne.language");
                 }
                 locale = localeByLanguage(lang);
             } else {
@@ -555,6 +578,18 @@ public class ApplicationContext {
             } else {
                 return ApplicationContext.getInstance().getDefaultLocale();
             }
+        }
+
+        private void addOverrideParameter(String name, String value) {
+            if (overrideParameters == null) {
+                overrideParameters = new HashMap<String, String>();
+            }
+
+            overrideParameters.put(name, value);
+        }
+
+        private Map<String, String> getOverrideParameters() {
+            return overrideParameters;
         }
     }
 }

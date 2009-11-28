@@ -92,6 +92,9 @@ public abstract class Component {
     /** Template file name: simple class name + ".ftl" by default. */
     private String templateFileName = getClass().getSimpleName() + ".ftl";
 
+    /** Map, containing parameters, which will be checked before request.getParameter(). */
+    private Map<String, String> overrideParameters = new HashMap<String, String>();
+
     /** @return Action name or empty string if not specified. */
     protected String getActionName() {
         return ApplicationContext.getInstance().getRequestAction();
@@ -359,6 +362,10 @@ public abstract class Component {
         }
     }
 
+    void addOverrideParameter(String name, String value) {
+        overrideParameters.put(name, value);
+    }
+
     /** @return Http filter config. */
     public FilterConfig getFilterConfig() {
         return filterConfig;
@@ -442,7 +449,8 @@ public abstract class Component {
     }
 
     /**
-     * Inverse operation to put(String, Object).
+     * Inverse operation to put(String, Object). Doesn't get from parameters, but
+     * gets from the template variables map!
      *
      * @param key Template variable name.
      * @return Template variable value or {@code null} if not found.
@@ -538,7 +546,11 @@ public abstract class Component {
      * @return Gets parameter as string.
      */
     public String getString(String key) {
-        return request.getParameter(key);
+        if (overrideParameters.containsKey(key)) {
+            return overrideParameters.get(key);
+        } else {
+            return request.getParameter(key);
+        }
     }
 
     /**
@@ -703,6 +715,7 @@ public abstract class Component {
         writer = null;
         validators = new LinkedHashMap<String, List<Validator>>();
         frameMap = new HashMap<String, String>();
+        overrideParameters.clear();
 
         parametersInjector.inject(getRequest());
 
