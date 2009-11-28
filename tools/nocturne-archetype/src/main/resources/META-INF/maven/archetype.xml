@@ -1,0 +1,24 @@
+<archetype>
+  <id>nocturne-archetype</id>
+  
+  <sources>
+    <source>src/main/java/page/IndexPage.java</source>
+    <source>src/main/java/ApplicationRequestRouter.java</source>
+    <source>src/main/java/ApplicationModule.java</source>
+  </sources>
+
+  <resources>
+    <resource>src/main/resources/log4j.properties</resource>
+    <resource>src/main/resources/nocturne.properties</resource>
+
+    <resource>src/main/webapp/WEB-INF/web.xml</resource>
+    <resource>src/main/webapp/WEB-INF/templates/IndexPage.ftl</resource>
+    <resource>src/main/webapp/css/reset.css</resource>
+
+    <resource>build.bat</resource>
+    <resource>build-dev.bat</resource>
+    <resource>build-production.bat</resource>
+    <resource>profiles.xml.dev</resource>
+    <resource>profiles.xml.prod</resource>
+  </resources>
+</archetype>
