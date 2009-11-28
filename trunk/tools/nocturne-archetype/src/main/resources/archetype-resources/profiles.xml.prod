@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF8"?>
+<profilesXml>
+    <profiles>
+        <profile>
+            <id>production-settings</id>
+            <properties>
+                <!-- Not used in the production mode. -->
+                <development.home/>
+
+                <!-- Do not use debug mode. -->
+                <nocturne.debug>false</nocturne.debug>
+
+                <!-- Path to write log file. -->
+                <logging.path>${artifactId}.log</logging.path>
+            </properties>
+        </profile>
+    </profiles>
+    <activeProfiles>
+        <activeProfile>production-settings</activeProfile>
+    </activeProfiles>
+</profilesXml>
