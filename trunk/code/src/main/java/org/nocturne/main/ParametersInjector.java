@@ -51,7 +51,7 @@ public class ParametersInjector {
                     ? field.field.getName() : field.parameter.name();
 
             String value;
-            if (overrideParameters.containsKey(key)) {
+            if (overrideParameters != null && overrideParameters.containsKey(key)) {
                 value = overrideParameters.get(key);
             } else {
                 value = request.getParameter(key);
@@ -62,8 +62,10 @@ public class ParametersInjector {
 
         if (component instanceof Component) {
             Component comp = (Component) component;
-            for (Map.Entry<String, String> entry : overrideParameters.entrySet()) {
-                comp.addOverrideParameter(entry.getKey(), entry.getValue());
+            if (overrideParameters != null) {
+                for (Map.Entry<String, String> entry : overrideParameters.entrySet()) {
+                    comp.addOverrideParameter(entry.getKey(), entry.getValue());
+                }
             }
         }
     }
