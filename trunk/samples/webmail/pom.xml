@@ -64,7 +64,7 @@
         <dependency>
             <groupId>jacuzzi</groupId>
             <artifactId>jacuzzi</artifactId>
-            <version>0.0.24-SNAPSHOT</version>
+            <version>0.0.26-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>c3p0</groupId>
