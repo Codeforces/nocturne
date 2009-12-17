@@ -5,7 +5,7 @@
             <id>development-settings</id>
             <properties>
                 <development.home>Z:/Projects/nocturne/samples/webmail</development.home>
-                <nocturne.debug>false</nocturne.debug>
+                <nocturne.debug>true</nocturne.debug>
                 <logging.path>${development.home}/webmail.log</logging.path>
 
                 <database.url>jdbc:mysql://localhost/webmail?useUnicode=true&amp;characterSetResults=UTF-8&amp;characterEncoding=UTF-8</database.url>
