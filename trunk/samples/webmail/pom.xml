@@ -8,14 +8,14 @@
     <name>webmail</name>
     <repositories>
         <repository>
-            <id>codegame.sgu.ru-snapshots</id>
-            <name>codegame.sgu.ru-snapshots</name>
-            <url>http://codegame.sgu.ru:8081/artifactory/libs-snapshots-local</url>
+            <id>codecenter.sgu.ru-snapshots</id>
+            <name>codecenter.sgu.ru-snapshots</name>
+            <url>http://codecenter.sgu.ru:8081/artifactory/libs-snapshots-local</url>
         </repository>
         <repository>
-            <id>codegame.sgu.ru-releases</id>
-            <name>codegame.sgu.ru-releases</name>
-            <url>http://codegame.sgu.ru:8081/artifactory/libs-releases-local</url>
+            <id>codecenter.sgu.ru-releases</id>
+            <name>codecenter.sgu.ru-releases</name>
+            <url>http://codecenter.sgu.ru:8081/artifactory/libs-releases-local</url>
         </repository>
     </repositories>
     <build>
