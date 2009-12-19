@@ -132,6 +132,8 @@ public abstract class Component {
             if (!(e.getCause() instanceof AbortException)) {
                 throw new NocturneException("Can't invoke validate or action method for component class "
                         + getClass().getName() + " [action=" + actionParameter + "].", e);
+            } else {
+                throw (AbortException) e.getCause();
             }
         }
     }

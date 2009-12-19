@@ -107,7 +107,7 @@ public class DispatchFilter implements Filter {
         }
     }
 
-    private void updateReloadingClassLoader() {
+    static void updateReloadingClassLoader() {
         if (lastReloadingClassLoader == null) {
             lastReloadingClassLoader = new ReloadingClassLoader();
         } else {
@@ -123,7 +123,7 @@ public class DispatchFilter implements Filter {
         }
     }
 
-    private long hashCode(List<File> paths) {
+    private static long hashCode(List<File> paths) {
         long result = 0;
         long mul = 1;
         for (File dir : paths) {
@@ -135,7 +135,7 @@ public class DispatchFilter implements Filter {
         return result;
     }
 
-    private long hashCode(File file, long depth) {
+    private static long hashCode(File file, long depth) {
         long result = 0;
         if (file.isFile()) {
             result += file.getName().hashCode() * file.lastModified() * (depth + 1);
