@@ -36,6 +36,8 @@ public class DebugResourceFilter implements Filter {
 
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         if (ReloadingContext.getInstance().isDebug()) {
+            DispatchFilter.updateReloadingClassLoader();
+
             if (getClass().getClassLoader() == DispatchFilter.lastReloadingClassLoader) {
                 handleDebugModeDoFilter(request, response, chain);
             } else {

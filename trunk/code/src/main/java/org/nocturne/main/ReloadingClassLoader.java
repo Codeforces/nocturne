@@ -76,6 +76,7 @@ class ReloadingClassLoader extends ClassLoader {
             boolean reload = false;
 
             String nameWithDot = name + ".";
+            String nameWithDollar = name + "$";
 
             // Check if it is in the reloading packages.
             List<String> classReloadingPackages = ReloadingContext.getInstance().getClassReloadingPackages();
@@ -90,7 +91,7 @@ class ReloadingClassLoader extends ClassLoader {
             if (reload) {
                 List<String> exceptions = ReloadingContext.getInstance().getClassReloadingExceptions();
                 for (String exception : exceptions) {
-                    if (nameWithDot.startsWith(exception + ".")) {
+                    if (nameWithDot.startsWith(exception + ".") || nameWithDollar.startsWith(exception + "$")) {
                         reload = false;
                         break;
                     }
