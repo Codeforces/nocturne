@@ -9,11 +9,13 @@ import org.apache.log4j.Logger;
 import org.nocturne.exception.NocturneException;
 import org.nocturne.exception.ReflectionException;
 import org.nocturne.module.Module;
+import org.nocturne.util.FileUtil;
 import org.nocturne.util.ReflectionUtil;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -36,7 +38,7 @@ public class DebugResourceFilter implements Filter {
 
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         if (ReloadingContext.getInstance().isDebug()) {
-            DispatchFilter.updateReloadingClassLoader();
+            DispatchFilter.updateRequestDispatcher();
 
             if (getClass().getClassLoader() == DispatchFilter.lastReloadingClassLoader) {
                 handleDebugModeDoFilter(request, response, chain);
@@ -68,10 +70,9 @@ public class DebugResourceFilter implements Filter {
             String path = httpRequest.getServletPath();
 
             List<Module> modules = ApplicationContext.getInstance().getModules();
-
             for (Module module : modules) {
                 if (processModuleResource(module, path, response)) {
-                    break;
+                    return;
                 }
             }
 
@@ -89,7 +90,7 @@ public class DebugResourceFilter implements Filter {
                 setupContentType(path, response);
 
                 int size = 0;
-                byte buffer[] = new byte[13];
+                byte buffer[] = new byte[65536];
 
                 while (true) {
                     int readCount = inputStream.read(buffer);
@@ -114,7 +115,7 @@ public class DebugResourceFilter implements Filter {
     }
 
     private void setupContentType(String path, ServletResponse response) {
-        String type = MimeUtil.getMimeType(path);
+        String type = MimeUtil.getMimeType(FileUtil.getExt(new File(path)));
 
         if (type != null) {
             response.setContentType(type);

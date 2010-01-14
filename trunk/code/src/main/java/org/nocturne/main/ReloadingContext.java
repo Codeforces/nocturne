@@ -8,15 +8,18 @@ import org.nocturne.exception.ConfigurationException;
 
 import java.io.File;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author Mike Mirzayanov
  */
-class ReloadingContext {
+public class ReloadingContext {
     private static final ReloadingContext INSTANCE =
             new ReloadingContext();
 
     private boolean debug;
+    private Pattern skipRegex;
+
     private List<File> reloadingClassPaths;
     private List<String> classReloadingPackages;
     private List<String> classReloadingExceptions;
@@ -48,6 +51,14 @@ class ReloadingContext {
         this.debug = debug;
     }
 
+    void setSkipRegex(Pattern skipRegex) {
+        this.skipRegex = skipRegex;
+    }
+
+    public Pattern getSkipRegex() {
+        return skipRegex;
+    }
+
     void setReloadingClassPaths(List<File> reloadingClassPaths) {
         this.reloadingClassPaths = reloadingClassPaths;
     }
@@ -67,5 +78,9 @@ class ReloadingContext {
         if (reloadingClassPaths.indexOf(dir) < 0) {
             reloadingClassPaths.add(dir);
         }
+    }
+
+    public void addClassReloadingException(String packageOrClassName) {
+        classReloadingExceptions.add(packageOrClassName);
     }
 }

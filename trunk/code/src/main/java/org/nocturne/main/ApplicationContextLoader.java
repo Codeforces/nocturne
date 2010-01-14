@@ -181,11 +181,7 @@ class ApplicationContextLoader {
             String module = properties.getProperty("nocturne.guice-module-class-name");
             if (module != null && !module.isEmpty()) {
                 ApplicationContext.getInstance().setGuiceModuleClassName(module);
-            } else {
-                throw new ConfigurationException("Missed required parameter nocturne.guice-module-class-name.");
             }
-        } else {
-            throw new ConfigurationException("Missed required parameter nocturne.guice-module-class-name.");
         }
     }
 

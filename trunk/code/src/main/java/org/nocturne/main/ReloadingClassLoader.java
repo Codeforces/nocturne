@@ -10,18 +10,23 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 
-/** @author Mike Mirzayanov */
+/**
+ * @author Mike Mirzayanov
+ */
 class ReloadingClassLoader extends ClassLoader {
-    /** Should ReloadingClassLoader skip class. Lazy initialized. */
-    private Map<String, Boolean> shouldSkip = new HashMap<String, Boolean>();
-
-    /** Standard class loader class path. */
+    /**
+     * Standard class loader class path.
+     */
     private static final URL[] classPathUrls = ((URLClassLoader) ReloadingClassLoader.class.getClassLoader()).getURLs();
 
-    /** Class loader for delegation. */
+    /**
+     * Class loader for delegation.
+     */
     private DelegationClassLoader delegationClassLoader;
 
-    /** Creates new instance of ReloadingClassLoader. */
+    /**
+     * Creates new instance of ReloadingClassLoader.
+     */
     public ReloadingClassLoader() {
         List<URL> delegationClassLoaderClassPath = new ArrayList<URL>();
         List<File> classPathItems = ReloadingContext.getInstance().getReloadingClassPaths();
@@ -72,35 +77,32 @@ class ReloadingClassLoader extends ClassLoader {
      * @return boolean {@code true} iff this class should be loaded by standard class.
      */
     private boolean isForceToLoadUsingStandardClassLoader(String name) {
-        if (!shouldSkip.containsKey(name)) {
-            boolean reload = false;
+        boolean reload = false;
 
-            String nameWithDot = name + ".";
-            String nameWithDollar = name + "$";
+        String nameWithDot = name + ".";
+        String nameWithDollar = name + "$";
 
-            // Check if it is in the reloading packages.
-            List<String> classReloadingPackages = ReloadingContext.getInstance().getClassReloadingPackages();
-            for (String classReloadingPackage : classReloadingPackages) {
-                if (nameWithDot.startsWith(classReloadingPackage + ".")) {
-                    reload = true;
+        // Check if it is in the reloading packages.
+        List<String> classReloadingPackages = ReloadingContext.getInstance().getClassReloadingPackages();
+        for (String classReloadingPackage : classReloadingPackages) {
+            if (nameWithDot.startsWith(classReloadingPackage + ".")) {
+                reload = true;
+                break;
+            }
+        }
+
+        // Check if it is in exceptions.
+        if (reload) {
+            List<String> exceptions = ReloadingContext.getInstance().getClassReloadingExceptions();
+            for (String exception : exceptions) {
+                if (nameWithDot.startsWith(exception + ".") || nameWithDollar.startsWith(exception + "$")) {
+                    reload = false;
                     break;
                 }
             }
-
-            // Check if it is in exceptions.
-            if (reload) {
-                List<String> exceptions = ReloadingContext.getInstance().getClassReloadingExceptions();
-                for (String exception : exceptions) {
-                    if (nameWithDot.startsWith(exception + ".") || nameWithDollar.startsWith(exception + "$")) {
-                        reload = false;
-                        break;
-                    }
-                }
-            }
-
-            shouldSkip.put(name, !reload);
         }
-        return shouldSkip.get(name);
+
+        return !reload;
     }
 
     class DelegationClassLoader extends URLClassLoader {

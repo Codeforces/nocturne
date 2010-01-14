@@ -10,8 +10,10 @@ import org.nocturne.caption.CaptionsImpl;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.exception.NocturneException;
 import org.nocturne.exception.ReflectionException;
+import org.nocturne.link.Link;
 import org.nocturne.module.Module;
 import org.nocturne.util.ReflectionUtil;
+import org.nocturne.util.RequestUtil;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -28,39 +30,57 @@ import java.util.regex.Pattern;
  * @author Mike Mirzayanov
  */
 public class ApplicationContext {
-    /** The only singleton instance. */
+    /**
+     * The only singleton instance.
+     */
     private static final ApplicationContext INSTANCE =
             new ApplicationContext();
 
-    /** Current page. Stored as ThreadLocal. */
+    /**
+     * Current page. Stored as ThreadLocal.
+     */
     private ThreadLocal<Page> currentPage = new ThreadLocal<Page>();
 
-    /** Current component. Stored as ThreadLocal. */
+    /**
+     * Current component. Stored as ThreadLocal.
+     */
     private ThreadLocal<Component> currentComponent = new ThreadLocal<Component>();
 
-    /** Is in debug mode? */
+    /**
+     * Is in debug mode?
+     */
     private boolean debug;
 
-    /** List of directories to be scanned for recompiled classes. Possibly, it depends on your IDE. */
-    private List<File> reloadingClassPaths;
+    /**
+     * List of directories to be scanned for recompiled classes. Possibly, it depends on your IDE.
+     */
+    private Set<File> reloadingClassPaths;
 
-    /** List of listener class names. */
-    private List<String> pageRequestListeners;
+    /**
+     * List of listener class names.
+     */
+    private Set<String> pageRequestListeners;
 
-    /** Request routern class name. */
+    /**
+     * Request routern class name.
+     */
     private String requestRouter;
 
-    /** IoC module class name. */
+    /**
+     * IoC module class name.
+     */
     private String guiceModuleClassName;
 
-    /** List of packages (or classes) which will be reloaded using ReloadingClassLoader. */
-    private List<String> classReloadingPackages;
+    /**
+     * List of packages (or classes) which will be reloaded using ReloadingClassLoader.
+     */
+    private Set<String> classReloadingPackages;
 
     /**
      * List of packages (or classes) which should not be reloaded using ReloadingClassLoader,
      * even they are in classReloadingPackages.
      */
-    private List<String> classReloadingExceptions;
+    private Set<String> classReloadingExceptions;
 
     /**
      * Where to find templates. Contains relative path from
@@ -68,10 +88,14 @@ public class ApplicationContext {
      */
     private String templatesPath;
 
-    /** Servlet context. */
+    /**
+     * Servlet context.
+     */
     private ServletContext servletContext;
 
-    /** What page to show if RequestRouter returns {@code null}. */
+    /**
+     * What page to show if RequestRouter returns {@code null}.
+     */
     private String defaultPageClassName;
 
     /**
@@ -80,40 +104,64 @@ public class ApplicationContext {
      */
     private Pattern skipRegex;
 
-    /** Default locale or English by default. */
+    /**
+     * Default locale or English by default.
+     */
     private Locale defaultLocale = new Locale("en");
 
-    /** Where to find caption property files, used in case of CaptionsImpl used. */
+    /**
+     * Where to find caption property files, used in case of CaptionsImpl used.
+     */
     private String debugCaptionsDir;
 
-    /** Class name for Captions implementations. */
+    /**
+     * Class name for Captions implementations.
+     */
     private String captionsImplClass = CaptionsImpl.class.getName();
 
-    /** Captions implementation instance. */
+    /**
+     * Captions implementation instance.
+     */
     private Captions captions;
 
-    /** Encoding for caption property files, used in case of CaptionsImpl used. */
+    /**
+     * Encoding for caption property files, used in case of CaptionsImpl used.
+     */
     private String captionFilesEncoding = "UTF-8";
 
-    /** Allowed languages (use 2-letter codes). Only English by default. */
+    /**
+     * Allowed languages (use 2-letter codes). Only English by default.
+     */
     private List<String> allowedLanguages = Arrays.asList("en");
 
-    /** Guice injector for production mode. */
+    /**
+     * Guice injector for production mode.
+     */
     private Injector injectorForProduction;
 
-    /** Guice injector for debug mode. */
+    /**
+     * Guice injector for debug mode.
+     */
     private ThreadLocal<Injector> injector = new ThreadLocal<Injector>();
 
-    /** RequestContext for current thread. */
+    /**
+     * RequestContext for current thread.
+     */
     private ThreadLocal<RequestContext> requestsPerThread = new ThreadLocal<RequestContext>();
 
-    /** Reloading class loader for current thread, used in debug mode only. */
+    /**
+     * Reloading class loader for current thread, used in debug mode only.
+     */
     private ThreadLocal<ClassLoader> reloadingClassLoaderPerThread = new ThreadLocal<ClassLoader>();
 
-    /** Current reloading class loader. */
+    /**
+     * Current reloading class loader.
+     */
     private ClassLoader reloadingClassLoader = getClass().getClassLoader();
 
-    /** List of loaded modules. */
+    /**
+     * List of loaded modules.
+     */
     private List<Module> modules = new ArrayList<Module>();
 
     void setRequestAndResponse(HttpServletRequest request, HttpServletResponse response) {
@@ -158,7 +206,9 @@ public class ApplicationContext {
         return defaultLocale;
     }
 
-    /** @return List of allowed languages, use property nocturne.allowed-languages. */
+    /**
+     * @return List of allowed languages, use property nocturne.allowed-languages.
+     */
     public List<String> getAllowedLanguages() {
         return allowedLanguages;
     }
@@ -179,12 +229,16 @@ public class ApplicationContext {
         return captionFilesEncoding;
     }
 
-    /** @return Current rendering frame or page. */
+    /**
+     * @return Current rendering frame or page.
+     */
     public Component getCurrentComponent() {
         return currentComponent.get();
     }
 
-    /** @return Current rendering page instance. */
+    /**
+     * @return Current rendering page instance.
+     */
     public Page getCurrentPage() {
         return currentPage.get();
     }
@@ -198,6 +252,18 @@ public class ApplicationContext {
         return INSTANCE;
     }
 
+    void setLink(Link link) {
+        getRequest().setAttribute("nocturne.current-page-link", link);
+    }
+
+    /**
+     * @return Link annotation instance, which was choosen by LinkedRequestRouter as
+     *         link for current request.
+     */
+    public Link getLink() {
+        return (Link) getRequest().getAttribute("nocturne.current-page-link");
+    }
+
     void setDefaultPageClassName(String defaultPageClassName) {
         this.defaultPageClassName = defaultPageClassName;
     }
@@ -206,12 +272,16 @@ public class ApplicationContext {
         currentPage.set(page);
     }
 
-    /** @return Is application in the debug mode? */
+    /**
+     * @return Is application in the debug mode?
+     */
     public boolean isDebug() {
         return debug;
     }
 
-    /** @return Captions implementation class name. */
+    /**
+     * @return Captions implementation class name.
+     */
     public String getCaptionsImplClass() {
         return captionsImplClass;
     }
@@ -233,12 +303,14 @@ public class ApplicationContext {
      *         Setup it by nocturne.reloading-class-paths.
      */
     public List<File> getReloadingClassPaths() {
-        return reloadingClassPaths;
+        return new LinkedList<File>(reloadingClassPaths);
     }
 
-    /** @return List of listener class names. Setup it by nocturne.page-request-listeners. */
+    /**
+     * @return List of listener class names. Setup it by nocturne.page-request-listeners.
+     */
     public List<String> getPageRequestListeners() {
-        return pageRequestListeners;
+        return new LinkedList<String>(pageRequestListeners);
     }
 
     void addRequestOverrideParameter(String name, String value) {
@@ -254,11 +326,11 @@ public class ApplicationContext {
     }
 
     void setReloadingClassPaths(List<File> reloadingClassPaths) {
-        this.reloadingClassPaths = reloadingClassPaths;
+        this.reloadingClassPaths = new LinkedHashSet<File>(reloadingClassPaths);
     }
 
     void setPageRequestListeners(List<String> pageRequestListeners) {
-        this.pageRequestListeners = pageRequestListeners;
+        this.pageRequestListeners = new LinkedHashSet<String>(pageRequestListeners);
     }
 
     void setCaptionFilesEncoding(String captionFilesEncoding) {
@@ -282,7 +354,7 @@ public class ApplicationContext {
     }
 
     void setClassReloadingExceptions(List<String> classReloadingExceptions) {
-        this.classReloadingExceptions = classReloadingExceptions;
+        this.classReloadingExceptions = new LinkedHashSet<String>(classReloadingExceptions);
     }
 
     /**
@@ -293,13 +365,15 @@ public class ApplicationContext {
         return requestRouter;
     }
 
-    /** @return Guice IoC module class name. Set nocturne.guice-module-class-name property. */
+    /**
+     * @return Guice IoC module class name. Set nocturne.guice-module-class-name property.
+     */
     public String getGuiceModuleClassName() {
         return guiceModuleClassName;
     }
 
     void setClassReloadingPackages(List<String> classReloadingPackages) {
-        this.classReloadingPackages = classReloadingPackages;
+        this.classReloadingPackages = new LinkedHashSet<String>(classReloadingPackages);
     }
 
     void setInjector(Injector injector) {
@@ -312,7 +386,9 @@ public class ApplicationContext {
         }
     }
 
-    /** @return Guice injector. It is not good idea to use it. */
+    /**
+     * @return Guice injector. It is not good idea to use it.
+     */
     public Injector getInjector() {
         if (isDebug()) {
             return injector.get();
@@ -326,7 +402,7 @@ public class ApplicationContext {
      *         ReloadingClassLoader. Set nocturne.class-reloading-packages to specify it.
      */
     public List<String> getClassReloadingPackages() {
-        return classReloadingPackages;
+        return new LinkedList<String>(classReloadingPackages);
     }
 
     /**
@@ -335,7 +411,7 @@ public class ApplicationContext {
      *         Set nocturne.class-reloading-exceptions to specify the value.
      */
     public List<String> getClassReloadingExceptions() {
-        return classReloadingExceptions;
+        return new LinkedList<String>(classReloadingExceptions);
     }
 
     /**
@@ -358,7 +434,9 @@ public class ApplicationContext {
         this.debugCaptionsDir = debugCaptionsDir;
     }
 
-    /** Returns current servlet context. */
+    /**
+     * Returns current servlet context.
+     */
     public ServletContext getServletContext() {
         return servletContext;
     }
@@ -386,7 +464,9 @@ public class ApplicationContext {
 
     //
 
-    /** @return Returns current servlet request instance. */
+    /**
+     * @return Returns current servlet request instance.
+     */
     public HttpServletRequest getRequest() {
         return requestsPerThread.get().getRequest();
     }
@@ -423,6 +503,11 @@ public class ApplicationContext {
         }
     }
 
+    public void addClassReloadingException(String packageOrClassName) {
+        classReloadingExceptions.add(packageOrClassName);
+        ReloadingContext.getInstance().addClassReloadingException(packageOrClassName);
+    }
+
     /**
      * @param shortcut Shortcut value.
      * @return Use the method to work with captions from your code.
@@ -456,12 +541,16 @@ public class ApplicationContext {
         return captions.find(shortcut, args);
     }
 
-    /** @return Locale for current request. */
+    /**
+     * @return Locale for current request.
+     */
     public Locale getLocale() {
         return requestsPerThread.get().getLocale();
     }
 
-    /** @return List of loaded modules. */
+    /**
+     * @return List of loaded modules.
+     */
     public List<Module> getModules() {
         return modules;
     }
@@ -503,23 +592,35 @@ public class ApplicationContext {
         getRequest().setAttribute(getActionRequestPageClassName(), pageClassName);
     }
 
-    /** @return Page class name for current request (how request router decided). */
+    /**
+     * @return Page class name for current request (how request router decided).
+     */
     public String getRequestPageClassName() {
         return (String) getRequest().getAttribute(getActionRequestPageClassName());
     }
 
-    /** Stores current request context: request, response and locale. */
+    /**
+     * Stores current request context: request, response and locale.
+     */
     private static final class RequestContext {
-        /** Http servlet request. */
+        /**
+         * Http servlet request.
+         */
         private final HttpServletRequest request;
 
-        /** Http servlet response. */
+        /**
+         * Http servlet response.
+         */
         private final HttpServletResponse response;
 
-        /** Locale for current request. */
+        /**
+         * Locale for current request.
+         */
         private Locale locale;
 
-        /** Parameters which override request params. */
+        /**
+         * Parameters which override request params.
+         */
         private Map<String, String> overrideParameters;
 
         private RequestContext(HttpServletRequest request, HttpServletResponse response) {
@@ -529,12 +630,16 @@ public class ApplicationContext {
             setupLocale();
         }
 
-        /** @return Http servlet request. */
+        /**
+         * @return Http servlet request.
+         */
         public HttpServletRequest getRequest() {
             return request;
         }
 
-        /** @return Http servlet response. */
+        /**
+         * @return Http servlet response.
+         */
         public HttpServletResponse getResponse() {
             return response;
         }
@@ -550,14 +655,16 @@ public class ApplicationContext {
         }
 
         private void setupLocale() {
-            String lang = request.getParameter("lang");
+            Map<String, String> requestMap = RequestUtil.getRequestParams(request);
+
+            String lang = requestMap.get("lang");
 
             if (lang == null || lang.length() != 2) {
-                lang = request.getParameter("language");
+                lang = requestMap.get("language");
             }
 
             if (lang == null || lang.length() != 2) {
-                lang = request.getParameter("locale");
+                lang = requestMap.get("locale");
             }
 
             if (lang == null) {

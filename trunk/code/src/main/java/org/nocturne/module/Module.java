@@ -9,6 +9,7 @@ import org.nocturne.exception.ModuleInitializationException;
 import org.nocturne.main.ApplicationContext;
 import org.nocturne.util.FileUtil;
 import org.nocturne.util.StreamUtil;
+import org.apache.commons.io.FileUtils;
 
 import javax.servlet.ServletContext;
 import java.io.*;
@@ -54,7 +55,7 @@ public class Module {
     /** @param url URL containing path to module JAR-file. */
     public Module(URL url) {
         try {
-            file = new JarFile(url.getFile());
+            file = new JarFile(FileUtils.toFile(url));
         } catch (IOException e) {
             throw new ModuleInitializationException("Can't create JarFile instance from " + url + ".", e);
         }

@@ -12,6 +12,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * @author Mike Mirzayanov
@@ -22,6 +24,7 @@ class ReloadingContextLoader {
 
     static void run() {
         setupDebug();
+        setupSkipRegex();
         setupReloadingClassPaths();
         setupClassReloadingPackages();
         setupClassReloadingExceptions();
@@ -42,6 +45,19 @@ class ReloadingContextLoader {
             }
         }
         ReloadingContext.getInstance().setClassReloadingExceptions(exceptions);
+    }
+
+    private static void setupSkipRegex() {
+        if (properties.containsKey("nocturne.skip-regex")) {
+            String regex = properties.getProperty("nocturne.skip-regex");
+            if (regex != null && !regex.isEmpty()) {
+                try {
+                    ReloadingContext.getInstance().setSkipRegex(Pattern.compile(regex));
+                } catch (PatternSyntaxException e) {
+                    throw new ConfigurationException("Parameter nocturne.skip-regex contains invalid pattern.");
+                }
+            }
+        }
     }
 
     private static void setupClassReloadingPackages() {

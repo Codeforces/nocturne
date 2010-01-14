@@ -12,6 +12,7 @@ import org.nocturne.listener.PageRequestListener;
 import org.nocturne.module.Module;
 import org.nocturne.pool.TemplateEngineConfigurationPool;
 import org.nocturne.util.ReflectionUtil;
+import org.nocturne.util.RequestUtil;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -21,29 +22,45 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 
-/** @author Mike Mirzayanov */
+/**
+ * @author Mike Mirzayanov
+ */
 public class RequestDispatcher {
-    /** Logger. */
+    /**
+     * Logger.
+     */
     private static Logger logger = Logger.getLogger(DispatchFilter.class);
 
-    /** Context. */
+    /**
+     * Context.
+     */
     private final ApplicationContext applicationContext
             = ApplicationContext.getInstance();
 
-    /** Freemarker configuration. */
+    /**
+     * Freemarker configuration.
+     */
     private TemplateEngineConfigurationPool templateEngineConfigurationPool;
 
-    /** Page loader for production mode. */
+    /**
+     * Page loader for production mode.
+     */
     private PageLoader pageLoader
             = new PageLoader();
 
-    /** Servlet config. */
+    /**
+     * Servlet config.
+     */
     private FilterConfig filterConfig;
 
-    /** Listens requests for pages. */
+    /**
+     * Listens requests for pages.
+     */
     private List<Object> pageRequestListeners;
 
-    /** Class loader used when application has been accessed in the debug mode. */
+    /**
+     * Class loader used when application has been accessed in the debug mode.
+     */
     private ClassLoader reloadingClassLoader;
 
     /**
@@ -122,7 +139,7 @@ public class RequestDispatcher {
 
         String path = request.getServletPath();
 
-        Map<String, String> parameterMap = getRequestParams(request);
+        Map<String, String> parameterMap = RequestUtil.getRequestParams(request);
         Page page = pageLoader.loadPage(path, parameterMap);
 
         if (page == null) {
@@ -212,20 +229,9 @@ public class RequestDispatcher {
         }
     }
 
-    private Map<String, String> getRequestParams(HttpServletRequest request) {
-        Map<String, String> params = new HashMap<String, String>();
-        for (Object key : request.getParameterMap().keySet()) {
-            Object value = request.getParameter(key.toString());
-            if (value != null) {
-                params.put(key.toString(), value.toString());
-            } else {
-                params.put(key.toString(), null);
-            }
-        }
-        return params;
-    }
-
-    /** @return filterConfig Retuns filter configuration instance. */
+    /**
+     * @return filterConfig Retuns filter configuration instance.
+     */
     private FilterConfig getFilterConfig() {
         return filterConfig;
     }
@@ -248,7 +254,7 @@ public class RequestDispatcher {
             Class pageLoaderClass = reloadingClassLoader.loadClass(PageLoader.class.getName());
             Object pageLoader = pageLoaderClass.newInstance();
 
-            page = ReflectionUtil.invoke(pageLoader, "loadPage", request.getServletPath(), getRequestParams(request));
+            page = ReflectionUtil.invoke(pageLoader, "loadPage", request.getServletPath(), RequestUtil.getRequestParams(request));
             if (page == null) {
                 runResult.setProcessChain(true);
             } else {
@@ -332,42 +338,29 @@ public class RequestDispatcher {
     /**
      * Handles requests to the application pages.
      *
-     * @param servletRequest  Request.
-     * @param servletResponse Response.
+     * @param request  Request.
+     * @param response Response.
      * @param filterChain     Filter chain.
      * @throws ServletException when method fails.
      * @throws IOException      when something wrong with IO.
      */
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+    public void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
         try {
-            if (servletRequest instanceof HttpServletRequest && servletResponse instanceof HttpServletResponse) {
-                HttpServletRequest request = (HttpServletRequest) servletRequest;
-                HttpServletResponse response = (HttpServletResponse) servletResponse;
+            //applicationContext.clearComponentsByTemplate();
+            applicationContext.setRequestAndResponse(request, response);
 
-                String path = request.getServletPath();
+            setupHeaders(response);
+            RunResult runResult;
 
-                if (applicationContext.getSkipRegex() != null && applicationContext.getSkipRegex().matcher(path).matches()) {
-                    filterChain.doFilter(servletRequest, servletResponse);
-                } else {
-                    //applicationContext.clearComponentsByTemplate();
-                    applicationContext.setRequestAndResponse(request, response);
-
-                    setupHeaders(response);
-                    RunResult runResult;
-
-                    if (applicationContext.isDebug()) {
-                        runResult = runDebugService(request, response);
-                    } else {
-                        runResult = runProductionService(request, response);
-                    }
-                    //applicationContext.clearComponentsByTemplate();
-
-                    if (runResult.isProcessChain()) {
-                        filterChain.doFilter(servletRequest, servletResponse);
-                    }
-                }
+            if (applicationContext.isDebug()) {
+                runResult = runDebugService(request, response);
             } else {
-                filterChain.doFilter(servletRequest, servletResponse);
+                runResult = runProductionService(request, response);
+            }
+            //applicationContext.clearComponentsByTemplate();
+
+            if (runResult.isProcessChain()) {
+                filterChain.doFilter(request, response);
             }
         } catch (Exception e) {
             logger.error("Exception while processing request.", e);
@@ -383,7 +376,9 @@ public class RequestDispatcher {
         response.setContentType("text/html");
     }
 
-    /** Destroy filter. */
+    /**
+     * Destroy filter.
+     */
     public void destroy() {
         templateEngineConfigurationPool.close();
         pageLoader.close();

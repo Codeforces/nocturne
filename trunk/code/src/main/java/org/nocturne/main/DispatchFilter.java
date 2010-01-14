@@ -9,17 +9,19 @@ import org.nocturne.exception.ReflectionException;
 import org.nocturne.util.ReflectionUtil;
 
 import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
 /**
  * Main nocturne filter to dispatch requests.
- *
+ * <p/>
  * In will create new ReloadingClassLoader on each request
  * (if changes found and more than 500 ms passed since last request) in the debug mode.
  * This class loader will load updated classes of your application.
- *
+ * <p/>
  * In the production mode it uses usual webapp class loader.
  *
  * @author Mike Mirzayanov
@@ -31,11 +33,11 @@ public class DispatchFilter implements Filter {
     private static long lastDebugModeAccess = 0;
     private static long lastDebugModeAccessReloadingClassPathHashCode = 0;
     static ClassLoader lastReloadingClassLoader;
-    private Object debugModeRequestDispatcher;
+    private static Object debugModeRequestDispatcher;
 
     private static RequestDispatcher productionModeRequestDispatcher
             = new RequestDispatcher();
-    private FilterConfig filterConfig;
+    private static FilterConfig filterConfig;
 
     public void init(FilterConfig config) throws ServletException {
         if (reloadingContext.isDebug()) {
@@ -47,7 +49,7 @@ public class DispatchFilter implements Filter {
         filterConfig = config;
     }
 
-    private void initDebugMode(FilterConfig config) {
+    private static void initDebugMode(FilterConfig config) {
         if (debugModeRequestDispatcher != null) {
             try {
                 ReflectionUtil.invoke(debugModeRequestDispatcher, "init", config);
@@ -61,16 +63,27 @@ public class DispatchFilter implements Filter {
         servletRequest.setCharacterEncoding("UTF-8");
         servletResponse.setCharacterEncoding("UTF-8");
 
-        if (reloadingContext.isDebug()) {
-            updateRequestDispatcher();
+        if (servletRequest instanceof HttpServletRequest && servletResponse instanceof HttpServletResponse) {
+            HttpServletRequest request = (HttpServletRequest) servletRequest;
+            HttpServletResponse response = (HttpServletResponse) servletResponse;
 
-            try {
-                ReflectionUtil.invoke(debugModeRequestDispatcher, "doFilter", servletRequest, servletResponse, filterChain);
-            } catch (ReflectionException e) {
-                throw new NocturneException("Can't run debug mode request dispatcher doFilter().", e);
+            if (reloadingContext.getSkipRegex() != null && reloadingContext.getSkipRegex().matcher(request.getServletPath()).matches()) {
+                filterChain.doFilter(request, response);
+            } else {
+                if (reloadingContext.isDebug()) {
+                    updateRequestDispatcher();
+
+                    try {
+                        ReflectionUtil.invoke(debugModeRequestDispatcher, "doFilter", request, response, filterChain);
+                    } catch (ReflectionException e) {
+                        throw new NocturneException("Can't run debug mode request dispatcher doFilter().", e);
+                    }
+                } else {
+                    productionModeRequestDispatcher.doFilter(request, response, filterChain);
+                }
             }
         } else {
-            productionModeRequestDispatcher.doFilter(servletRequest, servletResponse, filterChain);
+            filterChain.doFilter(servletRequest, servletResponse);
         }
     }
 
@@ -82,7 +95,7 @@ public class DispatchFilter implements Filter {
         }
     }
 
-    private void destroyDebugMode() {
+    private static void destroyDebugMode() {
         if (debugModeRequestDispatcher != null) {
             try {
                 ReflectionUtil.invoke(debugModeRequestDispatcher, "destroy");
@@ -92,10 +105,10 @@ public class DispatchFilter implements Filter {
         }
     }
 
-    private void updateRequestDispatcher() {
+    static synchronized void updateRequestDispatcher() {
         ClassLoader previousClassLoader = lastReloadingClassLoader;
         updateReloadingClassLoader();
-        if (previousClassLoader != lastReloadingClassLoader) {
+        if (previousClassLoader != lastReloadingClassLoader || debugModeRequestDispatcher == null) {
             try {
                 destroyDebugMode();
                 debugModeRequestDispatcher = lastReloadingClassLoader.loadClass(RequestDispatcher.class.getName()).newInstance();
@@ -107,18 +120,20 @@ public class DispatchFilter implements Filter {
         }
     }
 
-    static void updateReloadingClassLoader() {
+    private static synchronized void updateReloadingClassLoader() {
         if (lastReloadingClassLoader == null) {
             lastReloadingClassLoader = new ReloadingClassLoader();
+            lastDebugModeAccessReloadingClassPathHashCode = hashCode(reloadingContext.getReloadingClassPaths());
+            lastDebugModeAccess = System.currentTimeMillis();
         } else {
-            if (System.currentTimeMillis() - lastDebugModeAccess > 500) {
+            if (System.currentTimeMillis() - lastDebugModeAccess > 1000) {
                 long hashCode = hashCode(reloadingContext.getReloadingClassPaths());
 
                 if (hashCode != lastDebugModeAccessReloadingClassPathHashCode) {
                     lastReloadingClassLoader = new ReloadingClassLoader();
-                    lastDebugModeAccess = System.currentTimeMillis();
                     lastDebugModeAccessReloadingClassPathHashCode = hashCode;
                 }
+                lastDebugModeAccess = System.currentTimeMillis();
             }
         }
     }
