@@ -6,6 +6,7 @@ package org.nocturne.main;
 
 import org.nocturne.annotation.Parameter;
 import org.nocturne.exception.ConfigurationException;
+import org.nocturne.util.RequestUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Field;
@@ -23,13 +24,19 @@ import java.util.Set;
  * @author Mike Mirzayanov
  */
 public class ParametersInjector {
-    /** Injection target object. */
+    /**
+     * Injection target object.
+     */
     private Object component;
 
-    /** Stores information about */
+    /**
+     * Stores information about
+     */
     private Set<InjectField> fields;
 
-    /** @param component Object which has fields with @Parameter annotation. */
+    /**
+     * @param component Object which has fields with @Parameter annotation.
+     */
     public ParametersInjector(Object component) {
         this.component = component;
     }
@@ -45,6 +52,8 @@ public class ParametersInjector {
 
         Map<String, String> overrideParameters =
                 ApplicationContext.getInstance().getRequestOverrideParameters();
+        Map<String, String> requestParameters =
+                RequestUtil.getRequestParams(request);
 
         for (InjectField field : fields) {
             String key = field.parameter.name().isEmpty()
@@ -54,7 +63,7 @@ public class ParametersInjector {
             if (overrideParameters != null && overrideParameters.containsKey(key)) {
                 value = overrideParameters.get(key);
             } else {
-                value = request.getParameter(key);
+                value = requestParameters.get(key);
             }
 
             setupField(field, value);
@@ -93,10 +102,14 @@ public class ParametersInjector {
 
         if (clazz.equals(Boolean.class) || clazz.equals(boolean.class)) {
             processed = true;
-            try {
-                assign = Boolean.valueOf(value);
-            } catch (Exception e) {
-                assign = false;
+            if (value.equalsIgnoreCase("on") || value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("1") || value.equalsIgnoreCase("y")) {
+                assign = true;
+            } else {
+                try {
+                    assign = Boolean.valueOf(value);
+                } catch (Exception e) {
+                    assign = false;
+                }
             }
         }
 

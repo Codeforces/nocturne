@@ -17,6 +17,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Loads pages from the pool.
@@ -28,19 +29,30 @@ public class PageLoader {
     private RequestRouter requestRouter;
     private final Map<String, PagePool> pagePoolMap = new HashMap<String, PagePool>();
 
-    private void initialize() {
-        if (injector == null) {
-            setupInjector();
-        }
+    private static ReentrantLock lock = new ReentrantLock();
+    private static boolean loaded = false;
 
-        if (requestRouter == null) {
-            try {
-                requestRouter = (RequestRouter) getClass().getClassLoader().loadClass(
-                        ApplicationContext.getInstance().getRequestRouter()
-                ).newInstance();
-            } catch (Exception e) {
-                throw new ConfigurationException("Can't load application page class name resolver.", e);
+    private void initialize() {
+        lock.lock();
+        try {
+            if (injector == null) {
+                setupInjector();
             }
+            if (!loaded) {
+                runModuleStartups();
+                loaded = true;
+            }
+            if (requestRouter == null) {
+                try {
+                    requestRouter = (RequestRouter) getClass().getClassLoader().loadClass(
+                            ApplicationContext.getInstance().getRequestRouter()
+                    ).newInstance();
+                } catch (Exception e) {
+                    throw new ConfigurationException("Can't load application page class name resolver.", e);
+                }
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -57,7 +69,7 @@ public class PageLoader {
         } else {
             ApplicationContext.getInstance().setRequestAction(resolution.getAction());
             ApplicationContext.getInstance().setRequestPageClassName(resolution.getPageClassName());
-            
+
             Map<String, String> overrideParameters = resolution.getOverrideParameters();
             if (overrideParameters != null) {
                 for (Map.Entry<String, String> entry : overrideParameters.entrySet()) {
@@ -93,13 +105,15 @@ public class PageLoader {
         String guiceModuleClassName = ApplicationContext.getInstance().getGuiceModuleClassName();
         GenericIocModule module = new GenericIocModule();
 
-        try {
-            Module applicationModule = (Module) getClass().getClassLoader().loadClass(
-                    guiceModuleClassName
-            ).newInstance();
-            module.setModule(applicationModule);
-        } catch (Exception e) {
-            throw new ConfigurationException("Can't load application giuce module.", e);
+        if (guiceModuleClassName != null) {
+            try {
+                Module applicationModule = (Module) getClass().getClassLoader().loadClass(
+                        guiceModuleClassName
+                ).newInstance();
+                module.setModule(applicationModule);
+            } catch (Exception e) {
+                throw new ConfigurationException("Can't load application giuce module.", e);
+            }
         }
 
         injector = Guice.createInjector(module);
@@ -119,8 +133,6 @@ public class PageLoader {
         } else {
             ApplicationContext.getInstance().setInjector(injector);
         }
-
-        runModuleStartups();
     }
 
     private void runModuleStartups() {

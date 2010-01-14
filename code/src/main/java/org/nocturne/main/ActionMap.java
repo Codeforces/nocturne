@@ -70,7 +70,7 @@ class ActionMap {
                 throw new ConfigurationException("Default invalid method [name=" + method.getName() + ", " +
                         "class=" + clazz.getName() + "] should return void.");
             }
-            validators.put("", clazz.getMethod(method));
+            invalids.put("", clazz.getMethod(method));
         }
     }
 

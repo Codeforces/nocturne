@@ -2,23 +2,24 @@
  * Copyright 2009 Mike Mirzayanov
  */
 
-package org.nocturne.link;
+package org.nocturne.main;
 
-import org.nocturne.main.ApplicationContext;
-import org.nocturne.main.RequestRouter;
+import org.nocturne.link.LinkMatchResult;
+import org.nocturne.link.Links;
 
 import java.util.Map;
 
 /**
  * @author Mike Mirzayanov
  */
-public abstract class LinkedRequestRouter implements RequestRouter {
+public class LinkedRequestRouter implements RequestRouter {
     @Override
     public Resolution route(String path, Map<String, String> parameterMap) {
         String action = parameterMap.get("action");
         LinkMatchResult linkMatchResult = Links.match(path);
 
         if (linkMatchResult != null) {
+            ApplicationContext.getInstance().setLink(linkMatchResult.getLink());
             Map<String, String> attrs = linkMatchResult.getAttributes();
             if (attrs != null) {
                 for (Map.Entry<String, String> entry : attrs.entrySet()) {

@@ -21,4 +21,16 @@ public @interface Link {
      *         Example: "user/{login};profile".
      */
     String value();
+
+    /**
+     * @return You can mark link usages with some classes. For example, it
+     *         could be menu items or layout types.
+     */
+    Class<? extends Type>[] types() default {};
+
+    /**
+     * Marker interface for type of link.
+     */
+    public static interface Type {
+    }
 }

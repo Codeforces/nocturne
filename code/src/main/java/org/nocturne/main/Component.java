@@ -15,6 +15,7 @@ import org.nocturne.exception.*;
 import org.nocturne.link.LinkDirective;
 import org.nocturne.link.Links;
 import org.nocturne.util.ReflectionUtil;
+import org.nocturne.util.RequestUtil;
 import org.nocturne.validation.ValidationException;
 import org.nocturne.validation.Validator;
 
@@ -41,7 +42,7 @@ public abstract class Component {
      * Gson instance - needed in the debug mode to store JSON-ized objects in session
      * instead of real objects, because their classes between reloads can change.
      */
-    private Gson gson = new Gson();
+    private final Gson gson = new Gson();
 
     /** Log4j logger. */
     private Logger logger;
@@ -94,6 +95,9 @@ public abstract class Component {
 
     /** Map, containing parameters, which will be checked before request.getParameter(). */
     private Map<String, String> overrideParameters = new HashMap<String, String>();
+
+    /** Stores params from request. */
+    private Map<String, String> requestParams = new HashMap<String, String>();
 
     /** @return Action name or empty string if not specified. */
     protected String getActionName() {
@@ -551,7 +555,7 @@ public abstract class Component {
         if (overrideParameters.containsKey(key)) {
             return overrideParameters.get(key);
         } else {
-            return request.getParameter(key);
+            return requestParams.get(key);
         }
     }
 
@@ -625,8 +629,29 @@ public abstract class Component {
         return getString(key) != null;
     }
 
+    Map<String, String> getRequestParams() {
+        return new HashMap<String, String>(requestParams);
+    }
+
     void setRequest(HttpServletRequest request) {
         this.request = request;
+        setupRequestParams();
+    }
+
+    private void setupRequestParams() {
+        if (this instanceof Page) {
+            setupRequestParamsForPage();
+        } else {
+            if (this instanceof Frame) {
+                requestParams = ApplicationContext.getInstance().getCurrentPage().getRequestParams();
+            } else {
+                throw new NocturneException("Expected page or frame class.");
+            }
+        }
+    }
+
+    private void setupRequestParamsForPage() {
+        requestParams = RequestUtil.getRequestParams(request);
     }
 
     void setResponse(HttpServletResponse response) {
@@ -826,10 +851,17 @@ public abstract class Component {
     private boolean runValidation(ErrorValidationHandler handler) {
         boolean failed = false;
 
-        Iterator<Map.Entry<String, List<Validator>>> i = validators.entrySet().iterator();
-        while (i.hasNext()) {
-            Map.Entry<String, List<Validator>> entry = i.next();
+        Map parameterMap = getRequestParams();
+        for (Object key : parameterMap.keySet()) {
+            Object value = parameterMap.get(key);
+            if (value != null) {
+                put(key.toString(), getString(key.toString()));
+            } else {
+                put(key.toString(), null);
+            }
+        }
 
+        for (Map.Entry<String, List<Validator>> entry : validators.entrySet()) {
             String parameter = entry.getKey();
             List<Validator> parameterValidators = entry.getValue();
 
@@ -897,9 +929,15 @@ public abstract class Component {
         });
 
         synchronized (gson) {
-            Type mapType = new TypeToken<Map<String, String>>() {
-            }.getType();
-            getWriter().println(gson.toJson(errors, mapType));
+            Type mapType = new TypeToken<Map<String, String>>() {}.getType();
+            getResponse().setContentType("application/json");
+            Writer writer = getWriter();
+            try {
+                writer.write(gson.toJson(errors, mapType));
+                writer.flush();
+            } catch (IOException e) {
+                // No operations.
+            }
         }
 
         return result;
@@ -913,7 +951,7 @@ public abstract class Component {
      * @param shortcut Shortcut value.
      * @return The same as {@code ApplicationContext.getInstance().$()}.
      */
-    public String $(String shortcut) {
+    public static String $(String shortcut) {
         return ApplicationContext.getInstance().$(shortcut);
     }
 
@@ -922,7 +960,7 @@ public abstract class Component {
      * @param args     Shortcut arguments.
      * @return The same as {@code ApplicationContext.getInstance().$()}.
      */
-    public String $(String shortcut, Object... args) {
+    public static String $(String shortcut, Object... args) {
         return ApplicationContext.getInstance().$(shortcut, args);
     }
 
