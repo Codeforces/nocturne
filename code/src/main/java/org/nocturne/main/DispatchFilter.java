@@ -7,6 +7,7 @@ package org.nocturne.main;
 import org.nocturne.exception.NocturneException;
 import org.nocturne.exception.ReflectionException;
 import org.nocturne.util.ReflectionUtil;
+import org.nocturne.gzip.GzipResponseWrapper;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -70,16 +71,30 @@ public class DispatchFilter implements Filter {
             if (reloadingContext.getSkipRegex() != null && reloadingContext.getSkipRegex().matcher(request.getServletPath()).matches()) {
                 filterChain.doFilter(request, response);
             } else {
-                if (reloadingContext.isDebug()) {
-                    updateRequestDispatcher();
+                GzipResponseWrapper wrappedResponse = null;
 
-                    try {
-                        ReflectionUtil.invoke(debugModeRequestDispatcher, "doFilter", request, response, filterChain);
-                    } catch (ReflectionException e) {
-                        throw new NocturneException("Can't run debug mode request dispatcher doFilter().", e);
+                String acceptEncoding = request.getHeader("accept-encoding");
+                if (acceptEncoding != null && acceptEncoding.indexOf("gzip") != -1) {
+                    wrappedResponse = new GzipResponseWrapper(response);
+                    response = wrappedResponse;
+                }
+
+                try {
+                    if (reloadingContext.isDebug()) {
+                        updateRequestDispatcher();
+
+                        try {
+                            ReflectionUtil.invoke(debugModeRequestDispatcher, "doFilter", request, response, filterChain);
+                        } catch (ReflectionException e) {
+                            throw new NocturneException("Can't run debug mode request dispatcher doFilter().", e);
+                        }
+                    } else {
+                        productionModeRequestDispatcher.doFilter(request, response, filterChain);
                     }
-                } else {
-                    productionModeRequestDispatcher.doFilter(request, response, filterChain);
+                } finally {
+                    if (wrappedResponse != null) {
+                        wrappedResponse.finishResponse();
+                    }
                 }
             }
         } else {
