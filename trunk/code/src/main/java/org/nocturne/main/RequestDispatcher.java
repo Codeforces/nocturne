@@ -165,13 +165,9 @@ public class RequestDispatcher {
             processChain = page.isProcessChain();
 
             try {
-                page.getOutputStream().flush();
+                page.getOutputStream().close();
             } catch (Exception e) {
-                try {
-                    page.getOutputStream().close();
-                } catch (Exception t) {
-                    // No operations.
-                }
+                // No operations.
             }
         } catch (Exception e) {
             pageThrowable = e;
@@ -338,9 +334,9 @@ public class RequestDispatcher {
     /**
      * Handles requests to the application pages.
      *
-     * @param request  Request.
-     * @param response Response.
-     * @param filterChain     Filter chain.
+     * @param request     Request.
+     * @param response    Response.
+     * @param filterChain Filter chain.
      * @throws ServletException when method fails.
      * @throws IOException      when something wrong with IO.
      */
@@ -369,8 +365,10 @@ public class RequestDispatcher {
     }
 
     private void setupHeaders(HttpServletResponse response) {
+        response.setHeader("Cache-Control", "private, max-age=0");
         response.setHeader("Expires", "-1");
         response.setHeader("Pragma", "no-cache");
+        response.setHeader("Connection", "Keep-Alive");
         response.setHeader("Keep-Alive", "600");
         response.setCharacterEncoding("UTF-8");
         response.setContentType("text/html");
