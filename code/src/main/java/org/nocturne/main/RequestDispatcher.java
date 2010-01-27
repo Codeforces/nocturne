@@ -164,11 +164,7 @@ public class RequestDispatcher {
             page.parseTemplate();
             processChain = page.isProcessChain();
 
-            try {
-                page.getOutputStream().close();
-            } catch (Exception e) {
-                // No operations.
-            }
+            page.getOutputStream().flush();
         } catch (Exception e) {
             pageThrowable = e;
             logger.fatal("Can't process " + request.getRequestURL() + ".", e);
