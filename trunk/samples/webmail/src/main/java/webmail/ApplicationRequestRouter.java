@@ -1,6 +1,6 @@
 package webmail;
 
-import org.nocturne.link.LinkedRequestRouter;
+import org.nocturne.main.LinkedRequestRouter;
 import org.nocturne.link.Links;
 import webmail.page.*;
 
