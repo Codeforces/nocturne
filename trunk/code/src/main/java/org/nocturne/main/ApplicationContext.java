@@ -57,6 +57,12 @@ public class ApplicationContext {
     private Set<File> reloadingClassPaths;
 
     /**
+     * Context path of the application.
+     * Use {@code null} to use ApplicationContext.getInstance().getRequest().getContextPath().
+     */
+    private String contextPath;
+
+    /**
      * List of listener class names.
      */
     private Set<String> pageRequestListeners;
@@ -184,6 +190,20 @@ public class ApplicationContext {
     }
 
     /**
+     * @return Returns application context path.
+     *         You should build paths in your application by
+     *         concatinating getContextPath() and relative path inside
+     *         the application.
+     */
+    public String getContextPath() {
+        if (contextPath == null) {
+            return getRequest().getContextPath();
+        } else {
+            return contextPath;
+        }
+    }
+
+    /**
      * Where to find captions properties files if
      * naive org.nocturne.caption.CaptionsImpl backed used and
      * debug mode switched on.
@@ -250,6 +270,10 @@ public class ApplicationContext {
      */
     public static ApplicationContext getInstance() {
         return INSTANCE;
+    }
+
+    void setContextPath(String contextPath) {
+        this.contextPath = contextPath;
     }
 
     void setLink(Link link) {
@@ -542,6 +566,55 @@ public class ApplicationContext {
     }
 
     /**
+     * @param locale Expected locale.
+     * @param shortcut Shortcut value.
+     * @param args     Shortcut arguments.
+     * @return Use the method to work with captions from your code.
+     *         Usually, it is not good idea, because captions are part of view layer.
+     */
+    @SuppressWarnings({"unchecked"})
+    public String getCaption(Locale locale, String shortcut, Object... args) {
+        shortcut = shortcut.trim();
+
+        if (captions == null) {
+            synchronized (this) {
+                try {
+                    Class<? extends Captions> clazz = (Class<? extends Captions>) getClass().getClassLoader().loadClass(getCaptionsImplClass());
+                    captions = getInjector().getInstance(clazz);
+                } catch (ClassNotFoundException e) {
+                    throw new ConfigurationException("Class " + getCaptionsImplClass() + " should implement Captions.", e);
+                }
+            }
+        }
+
+        return captions.find(locale, shortcut, args);
+    }
+
+    /**
+     * @param locale Expected locale.
+     * @param shortcut Shortcut value.
+     * @return Use the method to work with captions from your code.
+     *         Usually, it is not good idea, because captions are part of view layer.
+     */
+    @SuppressWarnings({"unchecked"})
+    public String getCaption(Locale locale, String shortcut) {
+        shortcut = shortcut.trim();
+
+        if (captions == null) {
+            synchronized (this) {
+                try {
+                    Class<? extends Captions> clazz = (Class<? extends Captions>) getClass().getClassLoader().loadClass(getCaptionsImplClass());
+                    captions = getInjector().getInstance(clazz);
+                } catch (ClassNotFoundException e) {
+                    throw new ConfigurationException("Class " + getCaptionsImplClass() + " should implement Captions.", e);
+                }
+            }
+        }
+
+        return captions.find(locale, shortcut);
+    }
+
+    /**
      * @return Locale for current request.
      */
     public Locale getLocale() {
@@ -671,6 +744,12 @@ public class ApplicationContext {
                 HttpSession session = request.getSession(false);
                 if (session != null) {
                     lang = (String) session.getAttribute("nocturne.language");
+                }
+                if (lang == null) {
+                    String requestUrl = getRequest().getRequestURL().toString();
+                    if (requestUrl.contains(".ru/") || requestUrl.endsWith(".ru")) {
+                        lang = "ru";
+                    }
                 }
                 locale = localeByLanguage(lang);
             } else {

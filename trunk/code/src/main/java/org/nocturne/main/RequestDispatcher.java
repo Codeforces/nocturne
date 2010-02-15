@@ -149,7 +149,7 @@ public class RequestDispatcher {
 
         Configuration templateEngineConfiguration = templateEngineConfigurationPool.getInstance();
 
-        boolean processChain;
+        boolean processChain = false;
         Throwable pageThrowable = null;
 
         try {
@@ -168,7 +168,7 @@ public class RequestDispatcher {
         } catch (Exception e) {
             pageThrowable = e;
             logger.fatal("Can't process " + request.getRequestURL() + ".", e);
-            throw new NocturneException("Can't process " + request.getRequestURL() + ".", e);
+            //throw new NocturneException("Can't process " + request.getRequestURL() + ".", e);
         } finally {
             handleAfterProcessPage(page, pageThrowable);
             pageLoader.unloadPage(path, parameterMap, page);
@@ -255,7 +255,7 @@ public class RequestDispatcher {
         } catch (Throwable e) {
             pageThrowable = e;
             logger.fatal("Can't process " + request.getRequestURL() + ".", e);
-            throw new NocturneException("Can't process " + request.getRequestURL() + ".", e);
+            //throw new NocturneException("Can't process " + request.getRequestURL() + ".", e);
         } finally {
             if (page != null) {
                 handleAfterProcessPage(page, pageThrowable);
@@ -361,11 +361,9 @@ public class RequestDispatcher {
     }
 
     private void setupHeaders(HttpServletResponse response) {
-        response.setHeader("Cache-Control", "private, max-age=0");
+        response.setHeader("Cache-Control", "private,no-cache,no-store,max-age=0,must-revalidate");
         response.setHeader("Expires", "-1");
         response.setHeader("Pragma", "no-cache");
-        response.setHeader("Connection", "Keep-Alive");
-        response.setHeader("Keep-Alive", "600");
         response.setCharacterEncoding("UTF-8");
         response.setContentType("text/html");
     }

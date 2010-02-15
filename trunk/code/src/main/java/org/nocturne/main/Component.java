@@ -35,7 +35,9 @@ import java.util.*;
  * @author Mike Mirzayanov
  */
 public abstract class Component {
-    /** Has been initialized? */
+    /**
+     * Has been initialized?
+     */
     private boolean initialized;
 
     /**
@@ -44,62 +46,112 @@ public abstract class Component {
      */
     private final Gson gson = new Gson();
 
-    /** Log4j logger. */
+    /**
+     * Log4j logger.
+     */
     private Logger logger;
 
-    /** Freemarker configuration. */
+    /**
+     * Freemarker configuration.
+     */
     private Configuration templateEngineConfiguration;
 
-    /** Freemarker template. */
+    /**
+     * Freemarker template.
+     */
     private Template template = null;
 
-    /** Map to store template variables. */
+    /**
+     * Map to store template variables.
+     */
     private Map<String, Object> templateMap = new HashMap<String, Object>();
 
-    /** Map to store frame contents after parse(). */
+    /**
+     * Map to store frame contents after parse().
+     */
     private Map<String, String> frameMap = new HashMap<String, String>();
 
-    /** Should workflow skip template processing? */
+    /**
+     * Should workflow skip template processing?
+     */
     private boolean skipTemplate;
 
-    /** Http filter config. */
+    /**
+     * Http filter config.
+     */
     private FilterConfig filterConfig;
 
-    /** Http servlet request. */
+    /**
+     * Http servlet request.
+     */
     private HttpServletRequest request;
 
-    /** Http servlet response. */
+    /**
+     * Http servlet response.
+     */
     private HttpServletResponse response;
 
-    /** List of validators by parameter names. */
+    /**
+     * List of validators by parameter names.
+     */
     private Map<String, List<Validator>> validators;
 
-    /** Http servlet response output stream. */
+    /**
+     * Http servlet response output stream.
+     */
     private OutputStream outputStream;
 
-    /** Object to inject parameters from request. */
+    /**
+     * Object to inject parameters from request.
+     */
     private ParametersInjector parametersInjector = new ParametersInjector(this);
 
-    /** Parent component (needed for frames). */
+    /**
+     * Parent component (needed for frames).
+     */
     private Component parentComponent;
 
-    /** Http servlet response writer. */
+    /**
+     * Http servlet response writer.
+     */
     private PrintWriter writer = null;
 
-    /** Stores information about action, validation and invalid methods for component. */
+    /**
+     * Stores cached instances for #getInstance(clazz, index) method.
+     */
+    private Map<Class<?>, List<Object>> cacheForGetInstance
+            = new HashMap<Class<?>, List<Object>>();
+
+    /**
+     * Stores current indecies of instances for #getInstance(clazz).
+     */
+    private Map<Class<?>, Integer> instanceIndexForCacheForGetInstance =
+            new HashMap<Class<?>, Integer>();
+
+    /**
+     * Stores information about action, validation and invalid methods for component.
+     */
     private static Map<Class<? extends Component>, ActionMap> actionMaps
             = new Hashtable<Class<? extends Component>, ActionMap>();
 
-    /** Template file name: simple class name + ".ftl" by default. */
+    /**
+     * Template file name: simple class name + ".ftl" by default.
+     */
     private String templateFileName = getClass().getSimpleName() + ".ftl";
 
-    /** Map, containing parameters, which will be checked before request.getParameter(). */
+    /**
+     * Map, containing parameters, which will be checked before request.getParameter().
+     */
     private Map<String, String> overrideParameters = new HashMap<String, String>();
 
-    /** Stores params from request. */
+    /**
+     * Stores params from request.
+     */
     private Map<String, String> requestParams = new HashMap<String, String>();
 
-    /** @return Action name or empty string if not specified. */
+    /**
+     * @return Action name or empty string if not specified.
+     */
     protected String getActionName() {
         return ApplicationContext.getInstance().getRequestAction();
     }
@@ -262,7 +314,9 @@ public abstract class Component {
         }
     }
 
-    /** @param key The name of session attribute to delete. */
+    /**
+     * @param key The name of session attribute to delete.
+     */
     public void removeSession(String key) {
         try {
             getCurrentPage().removeRequestCache(key);
@@ -372,7 +426,9 @@ public abstract class Component {
         overrideParameters.put(name, value);
     }
 
-    /** @return Http filter config. */
+    /**
+     * @return Http filter config.
+     */
     public FilterConfig getFilterConfig() {
         return filterConfig;
     }
@@ -381,7 +437,7 @@ public abstract class Component {
         this.filterConfig = filterConfig;
     }
 
-    Configuration getTemplateEngineConfiguration() {
+    public Configuration getTemplateEngineConfiguration() {
         return templateEngineConfiguration;
     }
 
@@ -394,7 +450,7 @@ public abstract class Component {
      *         name (+ ".ftl") or specified if setTemplateFile(String) has been called. Do
      *         not call the method getTemplate() manually.
      */
-    protected Template getTemplate() {
+    public Template getTemplate() {
         if (!skipTemplate) {
             if (template == null || !template.getName().equals(templateFileName)) {
                 try {
@@ -416,7 +472,9 @@ public abstract class Component {
         }
     }
 
-    /** @param key Template variable name to be removed. */
+    /**
+     * @param key Template variable name to be removed.
+     */
     public void remove(String key) {
         internalGetTemplateMap().remove(key);
     }
@@ -445,7 +503,7 @@ public abstract class Component {
      */
     public void putGlobal(String key, Object value) {
         validateParameter(key, value);
-        getCurrentPage().getGlobalTemplateMap().put(key, value);
+        getCurrentPage().internalGetGlobalTemplateMap().put(key, value);
     }
 
     private void validateParameter(String key, Object value) {
@@ -476,7 +534,9 @@ public abstract class Component {
 //        }
 //    }
 
-    /** @return Is template processing will be skipped? It may be usefull for AJAX pages. */
+    /**
+     * @return Is template processing will be skipped? It may be usefull for AJAX pages.
+     */
     boolean isSkipTemplate() {
         return skipTemplate;
     }
@@ -493,7 +553,7 @@ public abstract class Component {
         return templateMap;
     }
 
-    protected Map<String, Object> getTemplateMap() {
+    public Map<String, Object> getTemplateMap() {
         return new HashMap<String, Object>(templateMap);
     }
 
@@ -658,12 +718,16 @@ public abstract class Component {
         this.response = response;
     }
 
-    /** @return Http servlet request. */
+    /**
+     * @return Http servlet request.
+     */
     public HttpServletRequest getRequest() {
         return request;
     }
 
-    /** @return Http servlet response. */
+    /**
+     * @return Http servlet response.
+     */
     public HttpServletResponse getResponse() {
         return response;
     }
@@ -676,7 +740,9 @@ public abstract class Component {
         // No operations.
     }
 
-    /** Override it to initialize component instance before action. */
+    /**
+     * Override it to initialize component instance before action.
+     */
     public void initializeAction() {
         // No operations.
     }
@@ -687,7 +753,9 @@ public abstract class Component {
      */
     public abstract void action();
 
-    /** Override it to initialize component instance after action. */
+    /**
+     * Override it to initialize component instance after action.
+     */
     public void finalizeAction() {
         // No operations.
     }
@@ -736,6 +804,8 @@ public abstract class Component {
         ApplicationContext.getInstance().setCurrentComponent(this);
 
         internalGetTemplateMap().clear();
+        instanceIndexForCacheForGetInstance.clear();
+
         template = null;
         skipTemplate = false;
         outputStream = null;
@@ -749,7 +819,8 @@ public abstract class Component {
         put("frame", FrameDirective.getInstance());
         put("link", LinkDirective.getInstance());
         put("caption", CaptionDirective.getInstance());
-        put("home", getRequest().getContextPath());
+
+        put("home", ApplicationContext.getInstance().getContextPath());
     }
 
     void finalizeAfterAction() {
@@ -779,13 +850,13 @@ public abstract class Component {
      * Aborts execution and sends redirect to browser.
      *
      * @param target for redirection. It will be prepended with
-     *               getRequest().getContextPath() if doen't contain absolute path.
+     *               ApplicationContext.getInstance().getContextPath() if doen't contain absolute path.
      */
     public void abortWithRedirect(String target) {
         try {
             // make it absolute
             if (!target.startsWith("/") && !target.contains("://")) {
-                target = getRequest().getContextPath() + "/" + target;
+                target = ApplicationContext.getInstance().getContextPath() + "/" + target;
             }
 
             getResponse().sendRedirect(target);
@@ -809,7 +880,9 @@ public abstract class Component {
         throw new AbortException("Send error [code = " + code + "].");
     }
 
-    /** @param pageClass Aborts current flow and redirects to the page pageClass. */
+    /**
+     * @param pageClass Aborts current flow and redirects to the page pageClass.
+     */
     public void abortWithRedirect(Class<? extends Page> pageClass) {
         abortWithRedirect(Links.getLink(pageClass));
     }
@@ -822,7 +895,9 @@ public abstract class Component {
         abortWithRedirect(Links.getLink(pageClass, params));
     }
 
-    /** Redirects to the same page. */
+    /**
+     * Redirects to the same page.
+     */
     public void abortWithReload() {
         String url = getRequest().getRequestURL().toString();
         String queryString = getRequest().getQueryString();
@@ -929,7 +1004,8 @@ public abstract class Component {
         });
 
         synchronized (gson) {
-            Type mapType = new TypeToken<Map<String, String>>() {}.getType();
+            Type mapType = new TypeToken<Map<String, String>>() {
+            }.getType();
             getResponse().setContentType("application/json");
             Writer writer = getWriter();
             try {
@@ -962,6 +1038,42 @@ public abstract class Component {
      */
     public static String $(String shortcut, Object... args) {
         return ApplicationContext.getInstance().$(shortcut, args);
+    }
+
+    /**
+     * Returns instance of class. Creates it via IoC injector
+     * uses ApplicationContext.getInstance().getInjector().getInstance(clazz).
+     * <p/>
+     * But it doesn't create new instance for component if it already
+     * was created. I.e. there is special map Map<Class<?>, List<Object>> to cache
+     * instances. If inside single request there will be several calls
+     * concretComponent.getInstance(ConcretClass.class), each of them returns
+     * own instance. But the first call of concretComponent.getInstance(ConcretClass.class)
+     * in the next request will return the same as the first call in the current request
+     * and so on.
+     *
+     * @param clazz Instance class.
+     * @return Returns new or cached instance.  
+     */
+    @SuppressWarnings({"unchecked"})
+    public synchronized <T> T getInstance(Class<T> clazz) {
+        if (!cacheForGetInstance.containsKey(clazz)) {
+            cacheForGetInstance.put(clazz, new ArrayList<Object>(2));
+        }
+
+        if (!instanceIndexForCacheForGetInstance.containsKey(clazz)) {
+            instanceIndexForCacheForGetInstance.put(clazz, 0);
+        }
+
+        int index = instanceIndexForCacheForGetInstance.get(clazz);
+
+        List<Object> clazzList = cacheForGetInstance.get(clazz);
+        if (clazzList.size() <= index) {
+            clazzList.add(ApplicationContext.getInstance().getInjector().getInstance(clazz));
+        }
+        instanceIndexForCacheForGetInstance.put(clazz, index + 1);
+
+        return (T) clazzList.get(index);
     }
 
     /* init */ {

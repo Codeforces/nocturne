@@ -36,6 +36,16 @@ class ApplicationContextLoader {
         setupCaptionFilesEncoding();
         setupAllowedLanguages();
         setupDefaultPageClassName();
+        setupContextPath();
+    }
+
+    private static void setupContextPath() {
+        if (properties.containsKey("nocturne.context-path")) {
+            String contextPath = properties.getProperty("nocturne.context-path");
+            if (contextPath != null) {
+                ApplicationContext.getInstance().setContextPath(contextPath);
+            }
+        }
     }
 
     private static void setupDefaultPageClassName() {

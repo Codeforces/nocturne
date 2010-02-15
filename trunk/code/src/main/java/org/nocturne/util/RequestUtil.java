@@ -35,7 +35,7 @@ public class RequestUtil {
                     InputStream inputStream = item.getInputStream();
                     byte[] bytes = StreamUtil.getAsByteArray(inputStream);
                     if (bytes != null) {
-                        request.setAttribute(item.getFieldName(), new String(bytes));
+                        request.setAttribute(item.getFieldName(), bytes);
                     }
                     inputStream.close();
                 }

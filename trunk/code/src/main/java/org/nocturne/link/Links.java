@@ -174,7 +174,7 @@ public class Links {
         if (link.startsWith("/")) {
             return link;
         } else {
-            return ApplicationContext.getInstance().getRequest().getContextPath() + "/" + link;
+            return ApplicationContext.getInstance().getContextPath() + "/" + link;
         }
     }
 
