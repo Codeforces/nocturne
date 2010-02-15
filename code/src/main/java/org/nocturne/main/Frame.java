@@ -39,7 +39,7 @@ public abstract class Frame extends Component {
             StringWriter writer = new StringWriter(4096);
 
             Map<String, Object> params = new HashMap<String, Object>(internalGetTemplateMap());
-            params.putAll(ApplicationContext.getInstance().getCurrentPage().getGlobalTemplateMap());
+            params.putAll(ApplicationContext.getInstance().getCurrentPage().internalGetGlobalTemplateMap());
 
             getTemplate().process(params, writer);
             writer.close();

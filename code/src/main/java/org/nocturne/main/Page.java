@@ -84,7 +84,11 @@ public abstract class Page extends Component {
         return jsSet;
     }
 
-    Map<String, Object> getGlobalTemplateMap() {
+    public Map<String, Object> getGlobalTemplateMap() {
+        return new HashMap<String, Object>(globalTemplateMap);
+    }
+
+    Map<String, Object> internalGetGlobalTemplateMap() {
         return globalTemplateMap;
     }
 
@@ -101,7 +105,7 @@ public abstract class Page extends Component {
 
             if (!isSkipTemplate()) {
                 Map<String, Object> params = new HashMap<String, Object>(internalGetTemplateMap());
-                params.putAll(getGlobalTemplateMap());
+                params.putAll(internalGetGlobalTemplateMap());
 
                 try {
                     getTemplate().setOutputEncoding("UTF-8");
@@ -129,7 +133,7 @@ public abstract class Page extends Component {
         requestCache.clear();
         processChain = false;
 
-        getGlobalTemplateMap().clear();
+        internalGetGlobalTemplateMap().clear();
     }
 
     private void setupCurrentPage() {
