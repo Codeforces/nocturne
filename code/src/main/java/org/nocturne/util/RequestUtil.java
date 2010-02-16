@@ -25,6 +25,7 @@ import java.io.InputStream;
  * @author Mike Mirzayanov
  */
 public class RequestUtil {
+    @SuppressWarnings({"unchecked"})
     public static Map<String, String> getRequestParams(HttpServletRequest request) {
         if (request.getMethod().equalsIgnoreCase("post")) {
             try {
@@ -35,7 +36,11 @@ public class RequestUtil {
                     InputStream inputStream = item.getInputStream();
                     byte[] bytes = StreamUtil.getAsByteArray(inputStream);
                     if (bytes != null) {
-                        request.setAttribute(item.getFieldName(), bytes);
+                        if (item.isFormField()) {
+                            request.setAttribute(item.getFieldName(), new String(bytes, "UTF-8"));
+                        } else {
+                            request.setAttribute(item.getFieldName(), bytes);
+                        }
                     }
                     inputStream.close();
                 }
@@ -58,12 +63,21 @@ public class RequestUtil {
             result.put(key, value.toString());
         }
 
-        Enumeration enumeration = request.getAttributeNames();
-        while (enumeration.hasMoreElements()) {
-            String name = enumeration.nextElement().toString();
-            if (request.getAttribute(name) != null) {
-                result.put(name, request.getAttribute(name).toString());
+        try {
+            Enumeration enumeration = request.getAttributeNames();
+            while (enumeration.hasMoreElements()) {
+                String name = enumeration.nextElement().toString();
+                Object value = request.getAttribute(name);
+                if (value != null) {
+                    if (value instanceof byte[]) {
+                        result.put(name, new String((byte[]) value, "UTF-8"));
+                    } else {
+                        result.put(name, request.getAttribute(name).toString());
+                    }
+                }
             }
+        } catch (UnsupportedEncodingException e) {
+            throw new NocturneException("Can't use encoding UTF-8.", e);
         }
 
         return result;
