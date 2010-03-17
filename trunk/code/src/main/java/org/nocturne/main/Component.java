@@ -18,6 +18,7 @@ import org.nocturne.util.ReflectionUtil;
 import org.nocturne.util.RequestUtil;
 import org.nocturne.validation.ValidationException;
 import org.nocturne.validation.Validator;
+import org.nocturne.cache.CacheHandler;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
@@ -39,6 +40,11 @@ public abstract class Component {
      * Has been initialized?
      */
     private boolean initialized;
+
+    /**
+     * Default is null, which means no caching.
+     */
+    private CacheHandler cacheHandler;
 
     /**
      * Gson instance - needed in the debug mode to store JSON-ized objects in session
@@ -144,10 +150,28 @@ public abstract class Component {
      */
     private Map<String, String> overrideParameters = new HashMap<String, String>();
 
-    /**
+    /**        
      * Stores params from request.
      */
     private Map<String, String> requestParams = new HashMap<String, String>();
+
+    /**
+     * @return Component cache handler. Use it if you want to avoid typical
+     *         rendering life-cycle and get component HTML (or other parsed result) from
+     *         cache.
+     */
+    public CacheHandler getCacheHandler() {
+        return cacheHandler;
+    }
+
+    /**
+     * @param cacheHandler Component cache handler. Use it if you want to avoid typical
+     *         rendering life-cycle and get component HTML (or other parsed result) from
+     *         cache.
+     */
+    public void setCacheHandler(CacheHandler cacheHandler) {
+        this.cacheHandler = cacheHandler;
+    }
 
     /**
      * @return Action name or empty string if not specified.
@@ -786,6 +810,16 @@ public abstract class Component {
     }
 
     /**
+     * Sets frame body without #parse().
+     *
+     * @param key       Frame key (name).
+     * @param frameBody Parsed frame body.
+     */
+    public void setFrameBody(String key, String frameBody) {
+        frameMap.put(key, frameBody);
+    }
+
+    /**
      * Parses frame and returns raw HTML
      * (or some other parsing result, possibly, JSON or some other).
      *
@@ -1003,16 +1037,18 @@ public abstract class Component {
             }
         });
 
-        synchronized (gson) {
-            Type mapType = new TypeToken<Map<String, String>>() {
-            }.getType();
-            getResponse().setContentType("application/json");
-            Writer writer = getWriter();
-            try {
-                writer.write(gson.toJson(errors, mapType));
-                writer.flush();
-            } catch (IOException e) {
-                // No operations.
+        if (errors.size() > 0) {
+            synchronized (gson) {
+                Type mapType = new TypeToken<Map<String, String>>() {
+                }.getType();
+                getResponse().setContentType("application/json");
+                Writer writer = getWriter();
+                try {
+                    writer.write(gson.toJson(errors, mapType));
+                    writer.flush();
+                } catch (IOException e) {
+                    // No operations.
+                }
             }
         }
 
@@ -1053,7 +1089,7 @@ public abstract class Component {
      * and so on.
      *
      * @param clazz Instance class.
-     * @return Returns new or cached instance.  
+     * @return Returns new or cached instance.
      */
     @SuppressWarnings({"unchecked"})
     public synchronized <T> T getInstance(Class<T> clazz) {

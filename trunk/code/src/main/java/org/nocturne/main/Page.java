@@ -5,6 +5,7 @@
 package org.nocturne.main;
 
 import freemarker.template.TemplateException;
+import org.nocturne.cache.CacheHandler;
 import org.nocturne.exception.AbortException;
 import org.nocturne.exception.FreemarkerException;
 import org.nocturne.exception.NocturneException;
@@ -12,6 +13,7 @@ import org.nocturne.exception.ReflectionException;
 import org.nocturne.util.ReflectionUtil;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -25,19 +27,29 @@ import java.util.Set;
  * @author Mike Mirzayanov
  */
 public abstract class Page extends Component {
-    /** Global template variables map. */
+    /**
+     * Global template variables map.
+     */
     private Map<String, Object> globalTemplateMap = new HashMap<String, Object>();
 
-    /** Stores additional css resources added by addCss() from the page or internal frames. */
+    /**
+     * Stores additional css resources added by addCss() from the page or internal frames.
+     */
     private Set<String> cssSet = new HashSet<String>();
 
-    /** Stores additional js resources added by addJs() from the page or internal frames. */
+    /**
+     * Stores additional js resources added by addJs() from the page or internal frames.
+     */
     private Set<String> jsSet = new HashSet<String>();
 
-    /** Request-scoped cache. For internal usage. */
+    /**
+     * Request-scoped cache. For internal usage.
+     */
     private Map<String, Object> requestCache = new HashMap<String, Object>();
 
-    /** Flag, which stores should workflow be passed to filterChain. */
+    /**
+     * Flag, which stores should workflow be passed to filterChain.
+     */
     private boolean processChain;
 
     Map<String, Object> getRequestCache() {
@@ -92,33 +104,57 @@ public abstract class Page extends Component {
         return globalTemplateMap;
     }
 
-    /** Handles main part of page workflow and parses template (writes it to response) if needed. */
+    /**
+     * Handles main part of page workflow and parses template (writes it to response) if needed.
+     */
     public void parseTemplate() {
         try {
             prepareForAction();
 
-            initializeAction();
-            Events.fireBeforeAction(this);
-            internalRunAction(getActionName());
-            Events.fireAfterAction(this);
-            finalizeAction();
+            CacheHandler cacheHandler = getCacheHandler();
+            String result = null;
+            if (cacheHandler != null && !isSkipTemplate()) {
+                result = cacheHandler.intercept(this);
+            }
 
-            if (!isSkipTemplate()) {
-                Map<String, Object> params = new HashMap<String, Object>(internalGetTemplateMap());
-                params.putAll(internalGetGlobalTemplateMap());
+            if (result == null) {
+                initializeAction();
+                Events.fireBeforeAction(this);
+                internalRunAction(getActionName());
+                Events.fireAfterAction(this);
+                finalizeAction();
 
-                try {
-                    getTemplate().setOutputEncoding("UTF-8");
-                    getTemplate().process(params, getWriter());
-                } catch (TemplateException e) {
-                    throw new FreemarkerException("Can't parse template for page " + getClass().getName() + ".", e);
-                } catch (IOException e) {
-                    throw new FreemarkerException("Can't parse template for page " + getClass().getName() + ".", e);
+                if (!isSkipTemplate()) {
+                    Map<String, Object> params = new HashMap<String, Object>(internalGetTemplateMap());
+                    params.putAll(internalGetGlobalTemplateMap());
+
+                    try {
+                        getTemplate().setOutputEncoding("UTF-8");
+                        if (cacheHandler == null) {
+                            getTemplate().process(params, getWriter());
+                        } else {
+                            StringWriter stringWriter = new StringWriter(4096);
+                            getTemplate().process(params, stringWriter);
+                            stringWriter.close();
+
+                            result = stringWriter.getBuffer().toString();
+                            cacheHandler.postprocess(this, result);
+                            getOutputStream().write(result.getBytes("UTF-8"));
+                        }
+                    } catch (TemplateException e) {
+                        throw new FreemarkerException("Can't parse template for page " + getClass().getName() + ".", e);
+                    } catch (IOException e) {
+                        throw new FreemarkerException("Can't parse template for page " + getClass().getName() + ".", e);
+                    }
                 }
+            } else {
+                getOutputStream().write(result.getBytes("UTF-8"));
             }
         } catch (AbortException e) {
             // No operations.
-        } finally {
+        } catch (IOException e) {
+            throw new FreemarkerException("Can't write page " + getClass().getName() + ".", e);
+        }  finally {
             finalizeAfterAction();
         }
     }
