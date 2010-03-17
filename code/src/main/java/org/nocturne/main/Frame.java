@@ -6,6 +6,7 @@ package org.nocturne.main;
 
 import freemarker.template.TemplateException;
 import org.nocturne.exception.FreemarkerException;
+import org.nocturne.cache.CacheHandler;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -21,7 +22,9 @@ import java.util.Map;
  * @author Mike Mirzayanov
  */
 public abstract class Frame extends Component {
-    /** @return Current processing page for current request. */
+    /**
+     * @return Current processing page for current request.
+     */
     public Page getCurrentPage() {
         return ApplicationContext.getInstance().getCurrentPage();
     }
@@ -29,22 +32,38 @@ public abstract class Frame extends Component {
     String parseTemplate() {
         prepareForAction();
 
-        initializeAction();
-        Events.fireBeforeAction(this);
-        internalRunAction(getActionName());
-        Events.fireAfterAction(this);
-        finalizeAction();
+        CacheHandler cacheHandler = getCacheHandler();
+        String result = null;
+        if (cacheHandler != null && !isSkipTemplate()) {
+            result = cacheHandler.intercept(this);
+        }
 
         try {
-            StringWriter writer = new StringWriter(4096);
+            if (result == null) {
+                initializeAction();
+                Events.fireBeforeAction(this);
+                internalRunAction(getActionName());
+                Events.fireAfterAction(this);
+                finalizeAction();
 
-            Map<String, Object> params = new HashMap<String, Object>(internalGetTemplateMap());
-            params.putAll(ApplicationContext.getInstance().getCurrentPage().internalGetGlobalTemplateMap());
+                if (!isSkipTemplate()) {
+                    StringWriter writer = new StringWriter(4096);
+                    Map<String, Object> params = new HashMap<String, Object>(internalGetTemplateMap());
+                    params.putAll(ApplicationContext.getInstance().getCurrentPage().internalGetGlobalTemplateMap());
+                    getTemplate().process(params, writer);
+                    writer.close();
 
-            getTemplate().process(params, writer);
-            writer.close();
-
-            return writer.getBuffer().toString();
+                    result = writer.getBuffer().toString();
+                    if (cacheHandler != null) {
+                        cacheHandler.postprocess(this, result);
+                    }
+                    return result;
+                } else {
+                    return null;
+                }
+            } else {
+                return result;
+            }
         } catch (TemplateException e) {
             throw new FreemarkerException("Can't parse frame " + getClass().getSimpleName() + ".", e);
         } catch (IOException e) {

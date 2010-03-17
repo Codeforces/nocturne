@@ -74,7 +74,7 @@ public class DispatchFilter implements Filter {
                 GzipResponseWrapper wrappedResponse = null;
 
                 String acceptEncoding = request.getHeader("accept-encoding");
-                if (acceptEncoding != null && acceptEncoding.indexOf("gzip") != -1) {
+                if (false && acceptEncoding != null && acceptEncoding.indexOf("gzip") != -1 && !isCompressed(request)) {
                     wrappedResponse = new GzipResponseWrapper(response);
                     response = wrappedResponse;
                 }
@@ -100,6 +100,12 @@ public class DispatchFilter implements Filter {
         } else {
             filterChain.doFilter(servletRequest, servletResponse);
         }
+    }
+
+    // TODO: To remove the method and make workaround more clear.
+    private boolean isCompressed(HttpServletRequest request) {
+        return request.getRequestURI().endsWith(".png") || request.getRequestURI().endsWith(".gif")
+                || request.getRequestURI().endsWith(".jpg");
     }
 
     public void destroy() {

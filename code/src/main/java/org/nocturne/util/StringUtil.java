@@ -13,6 +13,9 @@ public class StringUtil {
     /** Dangerous characters for HTML. */
     private static String DANGEROUS_CHARS = "&\"\'<>";
 
+    /** Empty string. */
+    public static final String EMPTY = "";
+
     /**
      * @param s String to be checked.
      * @return Is given string empty or null?

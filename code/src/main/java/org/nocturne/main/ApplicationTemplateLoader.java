@@ -6,6 +6,7 @@ package org.nocturne.main;
 
 import freemarker.cache.FileTemplateLoader;
 import freemarker.cache.TemplateLoader;
+import org.apache.log4j.Logger;
 import org.nocturne.exception.NocturneException;
 import org.nocturne.module.Module;
 import org.nocturne.module.PreprocessFreemarkerFileTemplateLoader;
@@ -23,6 +24,9 @@ import java.util.WeakHashMap;
  * loads template from modules DebugContext in debug mode.
  */
 public class ApplicationTemplateLoader implements TemplateLoader {
+    /** Logger. */
+    private static final Logger logger = Logger.getLogger(ApplicationTemplateLoader.class);
+
     /** List of loaded modules. */
     private List<Module> modules;
 
@@ -73,11 +77,13 @@ public class ApplicationTemplateLoader implements TemplateLoader {
     }
 
     public Reader getReader(Object o, String s) throws IOException {
+        logger.info("Invoked getReader [s=" + s + ", o=" + o + "].");
+        
         if (applicationContext.isDebug() && loadersByTemplate.containsKey(o)) {
             return loadersByTemplate.get(o).getReader(o, s);
         }
-        return fileTemplateLoader.getReader(o, s);
 
+        return fileTemplateLoader.getReader(o, s);
     }
 
     public void closeTemplateSource(Object o) throws IOException {
