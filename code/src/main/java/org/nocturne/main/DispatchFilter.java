@@ -6,8 +6,8 @@ package org.nocturne.main;
 
 import org.nocturne.exception.NocturneException;
 import org.nocturne.exception.ReflectionException;
-import org.nocturne.util.ReflectionUtil;
 import org.nocturne.gzip.GzipResponseWrapper;
+import org.nocturne.util.ReflectionUtil;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -143,18 +143,24 @@ public class DispatchFilter implements Filter {
 
     private static synchronized void updateReloadingClassLoader() {
         if (lastReloadingClassLoader == null) {
+            //System.out.println("DEBUG: ReloadingClassLoader created [first time].");
             lastReloadingClassLoader = new ReloadingClassLoader();
             lastDebugModeAccessReloadingClassPathHashCode = hashCode(reloadingContext.getReloadingClassPaths());
             lastDebugModeAccess = System.currentTimeMillis();
         } else {
             if (System.currentTimeMillis() - lastDebugModeAccess > 1000) {
+                long start = System.currentTimeMillis();
                 long hashCode = hashCode(reloadingContext.getReloadingClassPaths());
+                //System.out.println("hashCode invoked in " + (System.currentTimeMillis() - start) + " ms.");
 
                 if (hashCode != lastDebugModeAccessReloadingClassPathHashCode) {
+                    //System.out.println("DEBUG: ReloadingClassLoader created because of hash mismatch.");
                     lastReloadingClassLoader = new ReloadingClassLoader();
                     lastDebugModeAccessReloadingClassPathHashCode = hashCode;
                 }
                 lastDebugModeAccess = System.currentTimeMillis();
+            } else {
+                //System.out.println("DEBUG: ReloadingClassLoader wasn't change because of time.");
             }
         }
     }

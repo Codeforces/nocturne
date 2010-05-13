@@ -64,39 +64,49 @@ public class RequestDispatcher {
     private ClassLoader reloadingClassLoader;
 
     /**
+     * Is modules already are initialized.
+     */
+    private boolean modulesInitialized;
+
+    /**
      * Runs init() method for all modules.
      * Each module should be initialized on the application startup.
      */
     private void initializeModules() {
-        List<Module> modules = getModules();
+        synchronized (RequestDispatcher.class) {
+            List<Module> modules = getModules();
 
-        //TODO: To check order of initialization
-        for (Module module : modules) {
-            module.init();
-        }
+            //TODO: To check order of initialization
+            for (Module module : modules) {
+                module.init();
+            }
 
-        Collections.sort(modules, new Comparator<Module>() {
-            /**
-             * Sorts by priority.
-             *
-             * @param a Module.
-             * @param b Module.
-             * @return int.
-             */
-            public int compare(Module a, Module b) {
-                if (b.getPriority() != a.getPriority()) {
-                    return b.getPriority() - a.getPriority();
-                } else {
-                    return a.getName().compareTo(b.getName());
+            Collections.sort(modules, new Comparator<Module>() {
+                /**
+                 * Sorts by priority.
+                 *
+                 * @param a Module.
+                 * @param b Module.
+                 * @return int.
+                 */
+                public int compare(Module a, Module b) {
+                    if (b.getPriority() != a.getPriority()) {
+                        return b.getPriority() - a.getPriority();
+                    } else {
+                        return a.getName().compareTo(b.getName());
+                    }
+                }
+            });
+
+            if (!modulesInitialized) {
+                modulesInitialized = true;
+                for (Module module : modules) {
+                    module.getConfiguration().addPages();
                 }
             }
-        });
 
-        for (Module module : modules) {
-            module.getConfiguration().addPages();
+            applicationContext.setModules(modules);
         }
-
-        applicationContext.setModules(modules);
     }
 
     /**
