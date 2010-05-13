@@ -43,6 +43,10 @@ public class RequestUtil {
                         }
                     }
                     inputStream.close();
+
+                    if (item.getName() != null) {
+                        request.setAttribute(item.getFieldName() + "::name", item.getName());
+                    }
                 }
             } catch (Exception e) {
                 // No operations.
