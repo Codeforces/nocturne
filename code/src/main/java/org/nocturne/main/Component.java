@@ -573,6 +573,13 @@ public abstract class Component {
         skipTemplate = true;
     }
 
+    /**
+     * Call it to rollback skipTemplate().
+     */
+    protected void unskipTemplate() {
+        skipTemplate = false;
+    }
+
     Map<String, Object> internalGetTemplateMap() {
         return templateMap;
     }
