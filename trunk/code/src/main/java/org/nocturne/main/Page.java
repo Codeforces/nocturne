@@ -144,7 +144,9 @@ public abstract class Page extends Component {
                     } catch (TemplateException e) {
                         throw new FreemarkerException("Can't parse template for page " + getClass().getName() + ".", e);
                     } catch (IOException e) {
-                        throw new FreemarkerException("Can't parse template for page " + getClass().getName() + ".", e);
+                        if (!e.toString().contains("ClientAbortException")) {
+                            throw new FreemarkerException("Can't parse template for page " + getClass().getName() + ".", e);
+                        }
                     }
                 }
             } else {
