@@ -4,6 +4,8 @@
 
 package org.nocturne.pool;
 
+import org.apache.log4j.Logger;
+
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -13,6 +15,7 @@ import java.util.Queue;
  * @author Mike Mirzayanov
  */
 public abstract class Pool<T> {
+    private static final Logger logger = Logger.getLogger(Pool.class);
     private final Queue<T> instances = new LinkedList<T>();
 
     /**
@@ -21,6 +24,13 @@ public abstract class Pool<T> {
      * @return New instance.
      */
     protected abstract T newInstance();
+
+    /**
+     * @return Number of new instances created each time the pool is empty.
+     */
+    protected int getAcquireIncrement() {
+        return 5;
+    }
 
     /**
      * Close() method will force finalizeInstance() for each
@@ -39,10 +49,30 @@ public abstract class Pool<T> {
      */
     public T getInstance() {
         synchronized (instances) {
-            if (instances.isEmpty()) {
-                return newInstance();
-            } else {
-                return instances.remove();
+            checkSize();
+            ensureElement();
+            return instances.remove();
+        }
+    }
+
+    private void ensureElement() {
+        if (instances.isEmpty()) {
+            int acquireIncrement = getAcquireIncrement();
+            for (int i = 0; i < acquireIncrement; i++) {
+                T instance = newInstance();
+                instances.add(instance);
+            }
+        }
+    }
+
+    private void checkSize() {
+        if (instances.size() > 1000) {
+            T t = instances.peek();
+            if (t != null) {
+                logger.warn("Queue " + getClass() + " [t=" + t.getClass().getName()+ "] is too large.");
+            }
+            while (instances.size() > 500) {
+                instances.remove();
             }
         }
     }

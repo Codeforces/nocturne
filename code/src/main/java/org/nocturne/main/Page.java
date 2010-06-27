@@ -11,6 +11,7 @@ import org.nocturne.exception.FreemarkerException;
 import org.nocturne.exception.NocturneException;
 import org.nocturne.exception.ReflectionException;
 import org.nocturne.util.ReflectionUtil;
+import org.nocturne.postprocess.ResponsePostprocessor;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -43,6 +44,11 @@ public abstract class Page extends Component {
     private Set<String> jsSet = new HashSet<String>();
 
     /**
+     * Default is null, which means no postprocessing.
+     */
+    private ResponsePostprocessor responsePostprocessor;
+
+    /**
      * Request-scoped cache. For internal usage.
      */
     private Map<String, Object> requestCache = new HashMap<String, Object>();
@@ -66,6 +72,20 @@ public abstract class Page extends Component {
      */
     public boolean isProcessChain() {
         return processChain;
+    }
+
+    /**
+     * @return Request postprocessor or {@code null} if not set.
+     */
+    public ResponsePostprocessor getResponsePostprocessor() {
+        return responsePostprocessor;
+    }
+
+    /**
+     * @param responsePostprocessor Request postprocessor to postprocess response from the current page.
+     */
+    public void setResponsePostprocessor(ResponsePostprocessor responsePostprocessor) {
+        this.responsePostprocessor = responsePostprocessor;
     }
 
     /**
@@ -139,6 +159,10 @@ public abstract class Page extends Component {
 
                             result = stringWriter.getBuffer().toString();
                             cacheHandler.postprocess(this, result);
+                            ResponsePostprocessor postprocessor = getResponsePostprocessor();
+                            if (postprocessor != null) {
+                                result = postprocessor.postprocess(result);
+                            }
                             getOutputStream().write(result.getBytes("UTF-8"));
                         }
                     } catch (TemplateException e) {

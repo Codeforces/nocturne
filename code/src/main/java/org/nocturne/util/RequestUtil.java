@@ -60,7 +60,7 @@ public class RequestUtil {
             Object value = e.getValue();
             if (value.getClass().isArray()) {
                 Object[] array = (Object[]) value;
-                if (array.length == 1) {
+                if (array.length >= 1) {
                     value = array[0];
                 }
             }
