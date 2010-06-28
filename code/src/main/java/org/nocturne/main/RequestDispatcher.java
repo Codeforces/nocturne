@@ -135,6 +135,11 @@ public class RequestDispatcher {
         this.reloadingClassLoader = reloadingClassLoader;
     }
 
+    private boolean isClientAbortException(Exception e) {
+        return e != null && (e.getClass().getName().contains("ClientAbortException")
+                || (e.getCause() != null && e.getCause().getClass().getName().contains("ClientAbortException")));
+    }
+
     /**
      * Run production mode request handling.
      *
@@ -177,8 +182,9 @@ public class RequestDispatcher {
             page.getOutputStream().flush();
         } catch (Exception e) {
             pageThrowable = e;
-            logger.fatal("Can't process " + request.getRequestURL() + ".", e);
-            //throw new NocturneException("Can't process " + request.getRequestURL() + ".", e);
+            if (!isClientAbortException(e)) {
+                logger.fatal("Can't process " + request.getRequestURL() + ".", e);
+            }
         } finally {
             handleAfterProcessPage(page, pageThrowable);
             pageLoader.unloadPage(path, parameterMap, page);
@@ -186,7 +192,6 @@ public class RequestDispatcher {
         }
 
         result.setProcessChain(processChain);
-
         return result;
     }
 
