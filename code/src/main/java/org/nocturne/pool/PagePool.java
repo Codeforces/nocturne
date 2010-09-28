@@ -6,6 +6,7 @@ package org.nocturne.pool;
 
 import org.nocturne.main.Page;
 import org.nocturne.main.PageLoader;
+import org.apache.log4j.Logger;
 
 /**
  * Stores all the instances of the specific page class.
@@ -13,6 +14,8 @@ import org.nocturne.main.PageLoader;
  * @author Mike Mirzayanov
  */
 public class PagePool extends Pool<Page> {
+    private static final Logger logger = Logger.getLogger(PagePool.class);
+
     /** Generates page instances. */
     private final PageLoader pageLoader;
 
@@ -31,10 +34,27 @@ public class PagePool extends Pool<Page> {
     }
 
     /**
-     * Method newInstance ...
-     * @return Page
+     * {@inheritDoc}
      */
+    @Override
     protected Page newInstance() {
         return pageLoader.loadPage(pageClassName);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected int getAcquireIncrement() {
+        int createdCount = getCreatedCount();
+
+        if (createdCount < 1000) {
+            int result = Math.max(25, createdCount + 1);
+            logger.warn("PagePool will create " + pageClassName + ": " + result + " [large step]");
+            return result;
+        } else {
+            logger.warn("PagePool will create " + pageClassName + ": " + 25 + " [small step]");
+            return 25;
+        }
     }
 }

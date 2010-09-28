@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Mike Mirzayanov
@@ -197,7 +198,7 @@ public class RequestDispatcher {
 
     private void setupPageRequestListener(Object page) throws ClassNotFoundException {
         if (pageRequestListeners == null || applicationContext.isDebug()) {
-            pageRequestListeners = new ArrayList<Object>();
+            pageRequestListeners = new CopyOnWriteArrayList<Object>();
 
             for (String name : applicationContext.getPageRequestListeners()) {
                 ClassLoader loader = page.getClass().getClassLoader();

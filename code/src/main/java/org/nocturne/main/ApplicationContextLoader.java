@@ -37,6 +37,7 @@ class ApplicationContextLoader {
         setupAllowedLanguages();
         setupDefaultPageClassName();
         setupContextPath();
+        setupDebugWebResourcesDir();
     }
 
     private static void setupContextPath() {
@@ -128,6 +129,15 @@ class ApplicationContextLoader {
             ApplicationContext.getInstance().setRequestRouter(resolver);
         } else {
             throw new ConfigurationException("Missed parameter nocturne.request-router.");
+        }
+    }
+
+    private static void setupDebugWebResourcesDir() {
+        if (properties.containsKey("nocturne.debug-web-resources-dir")) {
+            String dir = properties.getProperty("nocturne.debug-web-resources-dir");
+            if (dir != null && dir.trim().length() > 0) {
+                ApplicationContext.getInstance().setDebugWebResourcesDir(dir.trim());
+            }
         }
     }
 
