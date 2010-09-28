@@ -15,10 +15,7 @@ import org.nocturne.util.ReflectionUtil;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.List;
 
 /**
@@ -76,13 +73,26 @@ public class DebugResourceFilter implements Filter {
                 }
             }
 
+            String resourcesDir = ApplicationContext.getInstance().getDebugWebResourcesDir();
+            if (resourcesDir != null) {
+                File resourceFile = new File(resourcesDir, path);
+                if (resourceFile.isFile()) {
+                    InputStream resourceInputStream = new FileInputStream(resourceFile);
+                    writeResourceByPathAndStream(response, path, resourceInputStream);
+                    return;
+                }
+            }
+
             filterChain.doFilter(request, response);
         }
     }
 
     private boolean processModuleResource(Module module, String path, ServletResponse response) throws IOException {
         InputStream inputStream = module.getResourceLoader().getResourceInputStream(path);
+        return writeResourceByPathAndStream(response, path, inputStream);
+    }
 
+    private boolean writeResourceByPathAndStream(ServletResponse response, String path, InputStream inputStream) throws IOException {
         if (inputStream != null) {
             OutputStream outputStream = response.getOutputStream();
 

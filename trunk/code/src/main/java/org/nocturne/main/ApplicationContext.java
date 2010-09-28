@@ -121,6 +121,11 @@ public class ApplicationContext {
     private String debugCaptionsDir;
 
     /**
+     * Where to find resources by DebugResourceFilter.
+     */
+    private String debugWebResourcesDir;
+
+    /**
      * Class name for Captions implementations.
      */
     private String captionsImplClass = CaptionsImpl.class.getName();
@@ -459,7 +464,7 @@ public class ApplicationContext {
     }
 
     /**
-     * Returns current servlet context.
+     * @return Returns current servlet context.
      */
     public ServletContext getServletContext() {
         return servletContext;
@@ -670,6 +675,17 @@ public class ApplicationContext {
      */
     public String getRequestPageClassName() {
         return (String) getRequest().getAttribute(getActionRequestPageClassName());
+    }
+
+    public void setDebugWebResourcesDir(String debugWebResourcesDir) {
+        this.debugWebResourcesDir = debugWebResourcesDir;
+    }
+
+    /**
+     * @return Returns the directory where to find resources by DebugResourceFilter.
+     */
+    public String getDebugWebResourcesDir() {
+        return debugWebResourcesDir;
     }
 
     /**
