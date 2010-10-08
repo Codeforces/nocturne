@@ -8,14 +8,12 @@
     <name>webmail</name>
     <repositories>
         <repository>
-            <id>codecenter.sgu.ru-snapshots</id>
-            <name>codecenter.sgu.ru-snapshots</name>
-            <url>http://codecenter.sgu.ru:8081/artifactory/libs-snapshots-local</url>
+            <id>nocturne</id>
+            <url>http://nocturne.googlecode.com/svn/trunk/repo/</url>
         </repository>
         <repository>
-            <id>codecenter.sgu.ru-releases</id>
-            <name>codecenter.sgu.ru-releases</name>
-            <url>http://codecenter.sgu.ru:8081/artifactory/libs-releases-local</url>
+            <id>jacuzzi</id>
+            <url>http://jacuzzi.googlecode.com/svn/trunk/repo/</url>
         </repository>
     </repositories>
     <build>
