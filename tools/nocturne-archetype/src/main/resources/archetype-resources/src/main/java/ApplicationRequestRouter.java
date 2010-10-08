@@ -1,7 +1,7 @@
 package ${packageName};
 
 import ${packageName}.page.IndexPage;
-import org.nocturne.link.LinkedRequestRouter;
+import org.nocturne.main.LinkedRequestRouter;
 import org.nocturne.link.Links;
 
 /**
