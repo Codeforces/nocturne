@@ -1,2 +1,2 @@
 copy profiles.xml.prod profiles.xml
-call build.bat *%
+call build.bat %*
