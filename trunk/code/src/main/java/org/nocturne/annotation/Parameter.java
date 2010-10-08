@@ -42,7 +42,7 @@ public @interface Parameter {
             }
         },
 
-        /** Leave only safe chars: strip slashes, quotes and low-code chars. Also makes trim(). */
+        /** Leave only safe chars: strip slashes, quotes, angle brackets, ampersand and low-code chars. Also makes trim(). */
         SAFE {
             /** @see org.nocturne.annotation.Parameter.StripMode#strip(String) */
             public String strip(String value) {
@@ -50,7 +50,7 @@ public @interface Parameter {
                     char[] chars = value.toCharArray();
                     StringBuilder sb = new StringBuilder(chars.length);
                     for (char c : chars) {
-                        if (c != '/' && c != '\\' && c != '\"' && c != '\'' && c >= ' ') {
+                        if (c != '/' && c != '&' && c != '<' && c != '>' && c != '\\' && c != '\"' && c != '\'' && c >= ' ') {
                             sb.append(c);
                         }
                     }

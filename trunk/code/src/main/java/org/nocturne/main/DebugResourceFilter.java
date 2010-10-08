@@ -123,7 +123,7 @@ public class DebugResourceFilter implements Filter {
             return false;
         }
     }
-
+                                                        
     private void setupContentType(String path, ServletResponse response) {
         String type = MimeUtil.getMimeType(FileUtil.getExt(new File(path)));
 
