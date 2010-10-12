@@ -1,1 +1,1 @@
-mvn clean source:jar javadoc:jar repository:bundle-create install 
+mvn clean source:jar javadoc:jar repository:bundle-create install -DcreateChecksum=true
