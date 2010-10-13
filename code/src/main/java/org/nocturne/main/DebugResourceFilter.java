@@ -125,7 +125,7 @@ public class DebugResourceFilter implements Filter {
     }
                                                         
     private void setupContentType(String path, ServletResponse response) {
-        String type = MimeUtil.getMimeType(FileUtil.getExt(new File(path)));
+        String type = MimeUtil.getFirstMimeType(MimeUtil.getMimeType(FileUtil.getExt(new File(path))));
 
         if (type != null) {
             response.setContentType(type);

@@ -25,9 +25,12 @@ class ReloadingContextLoader {
     static void run() {
         setupDebug();
         setupSkipRegex();
-        setupReloadingClassPaths();
-        setupClassReloadingPackages();
-        setupClassReloadingExceptions();
+
+        if (ReloadingContext.getInstance().isDebug()) {
+            setupReloadingClassPaths();
+            setupClassReloadingPackages();
+            setupClassReloadingExceptions();
+        }
     }
 
     private static void setupClassReloadingExceptions() {
