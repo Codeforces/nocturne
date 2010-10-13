@@ -15,7 +15,9 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-/** @author Mike Mirzayanov */
+/**
+ * @author Mike Mirzayanov
+ */
 class ApplicationContextLoader {
     public static final String CONFIGURATION_FILE = "/nocturne.properties";
     private static final Properties properties = new Properties();
@@ -23,21 +25,25 @@ class ApplicationContextLoader {
     static void run() {
         setupDebug();
         setupTemplatesPath();
-        setupReloadingClassPaths();
+
+        if (ApplicationContext.getInstance().isDebug()) {
+            setupReloadingClassPaths();
+            setupClassReloadingPackages();
+            setupClassReloadingExceptions();
+            setupDebugCaptionsDir();
+            setupDebugWebResourcesDir();
+        }
+
         setupPageRequestListeners();
         setupGuiceModuleClassName();
         setupSkipRegex();
-        setupClassReloadingPackages();
-        setupClassReloadingExceptions();
         setupRequestRouter();
         setupDefaultLocale();
-        setupDebugCaptionsDir();
         setupCaptionsImplClass();
         setupCaptionFilesEncoding();
         setupAllowedLanguages();
         setupDefaultPageClassName();
         setupContextPath();
-        setupDebugWebResourcesDir();
     }
 
     private static void setupContextPath() {
