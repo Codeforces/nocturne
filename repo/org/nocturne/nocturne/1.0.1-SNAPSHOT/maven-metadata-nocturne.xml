@@ -3,10 +3,4 @@
   <groupId>org.nocturne</groupId>
   <artifactId>nocturne</artifactId>
   <version>1.0.1-SNAPSHOT</version>
-  <versioning>
-    <snapshot>
-      <localCopy>true</localCopy>
-    </snapshot>
-    <lastUpdated>20101013072848</lastUpdated>
-  </versioning>
 </metadata>
