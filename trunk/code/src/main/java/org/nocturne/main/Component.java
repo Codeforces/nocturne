@@ -150,7 +150,7 @@ public abstract class Component {
      */
     private Map<String, String> overrideParameters = new HashMap<String, String>();
 
-    /**        
+    /**
      * Stores params from request.
      */
     private Map<String, String> requestParams = new HashMap<String, String>();
@@ -166,8 +166,8 @@ public abstract class Component {
 
     /**
      * @param cacheHandler Component cache handler. Use it if you want to avoid typical
-     *         rendering life-cycle and get component HTML (or other parsed result) from
-     *         cache.
+     *                     rendering life-cycle and get component HTML (or other parsed result) from
+     *                     cache.
      */
     public void setCacheHandler(CacheHandler cacheHandler) {
         this.cacheHandler = cacheHandler;
@@ -1060,6 +1060,44 @@ public abstract class Component {
         }
 
         return result;
+    }
+
+    /**
+     * Prints all the key-values added by put(String, Object) inside this Component
+     * as json into response writer.
+     * <p/>
+     * For each value (Object) will be called toString() and printed json data
+     * will contain keys and values as strings.
+     *
+     * @param keys If at least one key is specified then the method take care only about
+     *             templateMap entries (putted key-value pairs), such that key in keys array.
+     *             If keys are not specified, method returns all the entries.
+     */
+    public void printTemplateMapAsStringsUsingJson(String... keys) {
+        Type mapType = new TypeToken<Map<String, String>>() {
+        }.getType();
+
+        Set<String> keySet = new HashSet<String>(Arrays.asList(keys));
+
+        Map<String, String> params = new HashMap<String, String>();
+        for (Map.Entry<String, Object> entry : templateMap.entrySet()) {
+            String key = entry.getKey();
+            if (keySet.isEmpty() || keySet.contains(key)) {
+                Object value = entry.getValue();
+                if (value != null) {
+                    params.put(key, value.toString());
+                }
+            }
+        }
+
+        getResponse().setContentType("application/json");
+        Writer writer = getWriter();
+        try {
+            writer.write(gson.toJson(params, mapType));
+            writer.flush();
+        } catch (IOException e) {
+            // No operations.
+        }
     }
 
     private Page getCurrentPage() {
