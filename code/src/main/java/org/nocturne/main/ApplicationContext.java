@@ -533,8 +533,10 @@ public class ApplicationContext {
     }
 
     public void addClassReloadingException(String packageOrClassName) {
-        classReloadingExceptions.add(packageOrClassName);
-        ReloadingContext.getInstance().addClassReloadingException(packageOrClassName);
+        if (isDebug()) {
+            classReloadingExceptions.add(packageOrClassName);
+            ReloadingContext.getInstance().addClassReloadingException(packageOrClassName);
+        }
     }
 
     /**
