@@ -2,11 +2,11 @@
 <metadata>
   <groupId>org.nocturne</groupId>
   <artifactId>nocturne</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
   <versioning>
-    <versions>
-      <version>1.0.1-SNAPSHOT</version>
-    </versions>
-    <lastUpdated>20101115081645</lastUpdated>
+    <snapshot>
+      <buildNumber>3</buildNumber>
+    </snapshot>
+    <lastUpdated>20091217150816</lastUpdated>
   </versioning>
 </metadata>
