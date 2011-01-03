@@ -50,10 +50,10 @@ public class PagePool extends Pool<Page> {
 
         if (createdCount < 1000) {
             int result = Math.max(25, createdCount + 1);
-            logger.warn("PagePool will create " + pageClassName + ": " + result + " [large step]");
+            logger.debug("PagePool will create " + pageClassName + ": " + result + " [large step]");
             return result;
         } else {
-            logger.warn("PagePool will create " + pageClassName + ": " + 25 + " [small step]");
+            logger.debug("PagePool will create " + pageClassName + ": " + 25 + " [small step]");
             return 25;
         }
     }
