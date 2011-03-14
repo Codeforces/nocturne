@@ -93,7 +93,7 @@ class ReloadingClassLoader extends ClassLoader {
 
         // Check if it is in exceptions.
         if (reload) {
-            List<String> exceptions = ReloadingContext.getInstance().getClassReloadingExceptions();
+            List<String> exceptions = new LinkedList<String>(ReloadingContext.getInstance().getClassReloadingExceptions());
             for (String exception : exceptions) {
                 if (nameWithDot.startsWith(exception + ".") || nameWithDollar.startsWith(exception + "$")) {
                     reload = false;
