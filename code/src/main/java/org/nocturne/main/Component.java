@@ -653,10 +653,11 @@ public abstract class Component {
     /**
      * @param key Parameter name.
      * @return Returns parameter as boolean. Returns {@code false}
-     *         on invalid boolean value.
+     *         on invalid boolean value. Returns {@code true} if
+     *         key is "true" or "on" (case ignored).
      */
     public boolean getBoolean(String key) {
-        return Boolean.parseBoolean(getString(key));
+        return "true".equalsIgnoreCase(key) || "on".equalsIgnoreCase(key);
     }
 
     /**

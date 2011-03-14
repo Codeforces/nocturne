@@ -18,6 +18,7 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
@@ -184,6 +185,7 @@ public class RequestDispatcher {
         } catch (Exception e) {
             pageThrowable = e;
             if (!isClientAbortException(e)) {
+                e.printStackTrace();
                 logger.fatal("Can't process " + request.getRequestURL() + ".", e);
             }
         } finally {
@@ -304,6 +306,8 @@ public class RequestDispatcher {
             handleBeforeProcessPage(page);
             ReflectionUtil.invoke(page, "parseTemplate");
             runResult.setProcessChain((Boolean) ReflectionUtil.invoke(page, "isProcessChain"));
+
+            ((OutputStream) ReflectionUtil.invoke(page, "getOutputStream")).flush();
         } catch (ReflectionException e) {
             throw new NocturneException("Can't run method via reflection.", e);
         } finally {

@@ -14,9 +14,9 @@ import org.nocturne.pool.PagePool;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -27,11 +27,12 @@ import java.util.concurrent.locks.ReentrantLock;
 public class PageLoader {
     private Injector injector = null;
     private RequestRouter requestRouter;
-    private final Map<String, PagePool> pagePoolMap = new HashMap<String, PagePool>();
+    private final Map<String, PagePool> pagePoolMap
+            = new ConcurrentHashMap<String, PagePool>();
 
     private static ReentrantLock lock = new ReentrantLock();
-    private static boolean loaded = false;
-
+    private static volatile boolean loaded = false;
+    
     private void initialize() {
         lock.lock();
         try {
