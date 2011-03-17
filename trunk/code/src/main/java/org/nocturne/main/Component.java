@@ -657,7 +657,8 @@ public abstract class Component {
      *         key is "true" or "on" (case ignored).
      */
     public boolean getBoolean(String key) {
-        return "true".equalsIgnoreCase(key) || "on".equalsIgnoreCase(key);
+        String value = getString(key);
+        return "true".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value);
     }
 
     /**
