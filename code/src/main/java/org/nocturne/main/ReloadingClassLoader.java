@@ -45,7 +45,8 @@ class ReloadingClassLoader extends ClassLoader {
 
         delegationClassLoaderClassPath.addAll(Arrays.asList(classPathUrls));
 
-        delegationClassLoader = new DelegationClassLoader(delegationClassLoaderClassPath.toArray(new URL[]{}));
+        delegationClassLoader = new DelegationClassLoader(delegationClassLoaderClassPath.toArray(
+                new URL[delegationClassLoaderClassPath.size()]));
     }
 
     /**

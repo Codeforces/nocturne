@@ -6,7 +6,7 @@ package org.nocturne.main;
 
 import org.nocturne.exception.NocturneException;
 import org.nocturne.exception.ReflectionException;
-import org.nocturne.gzip.GzipResponseWrapper;
+import org.nocturne.util.FileUtil;
 import org.nocturne.util.ReflectionUtil;
 
 import javax.servlet.*;
@@ -71,41 +71,21 @@ public class DispatchFilter implements Filter {
             if (reloadingContext.getSkipRegex() != null && reloadingContext.getSkipRegex().matcher(request.getServletPath()).matches()) {
                 filterChain.doFilter(request, response);
             } else {
-                GzipResponseWrapper wrappedResponse = null;
+                if (reloadingContext.isDebug()) {
+                    updateRequestDispatcher();
 
-                String acceptEncoding = request.getHeader("accept-encoding");
-                if (false && acceptEncoding != null && acceptEncoding.indexOf("gzip") != -1 && !isCompressed(request)) {
-                    wrappedResponse = new GzipResponseWrapper(response);
-                    response = wrappedResponse;
-                }
-
-                try {
-                    if (reloadingContext.isDebug()) {
-                        updateRequestDispatcher();
-
-                        try {
-                            ReflectionUtil.invoke(debugModeRequestDispatcher, "doFilter", request, response, filterChain);
-                        } catch (ReflectionException e) {
-                            throw new NocturneException("Can't run debug mode request dispatcher doFilter().", e);
-                        }
-                    } else {
-                        productionModeRequestDispatcher.doFilter(request, response, filterChain);
+                    try {
+                        ReflectionUtil.invoke(debugModeRequestDispatcher, "doFilter", request, response, filterChain);
+                    } catch (ReflectionException e) {
+                        throw new NocturneException("Can't run debug mode request dispatcher doFilter().", e);
                     }
-                } finally {
-                    if (wrappedResponse != null) {
-                        wrappedResponse.finishResponse();
-                    }
+                } else {
+                    productionModeRequestDispatcher.doFilter(request, response, filterChain);
                 }
             }
         } else {
             filterChain.doFilter(servletRequest, servletResponse);
         }
-    }
-
-    // TODO: To remove the method and make workaround more clear.
-    private boolean isCompressed(HttpServletRequest request) {
-        return request.getRequestURI().endsWith(".png") || request.getRequestURI().endsWith(".gif")
-                || request.getRequestURI().endsWith(".jpg");
     }
 
     public void destroy() {
@@ -143,24 +123,23 @@ public class DispatchFilter implements Filter {
 
     private static synchronized void updateReloadingClassLoader() {
         if (lastReloadingClassLoader == null) {
-            //System.out.println("DEBUG: ReloadingClassLoader created [first time].");
             lastReloadingClassLoader = new ReloadingClassLoader();
             lastDebugModeAccessReloadingClassPathHashCode = hashCode(reloadingContext.getReloadingClassPaths());
             lastDebugModeAccess = System.currentTimeMillis();
         } else {
             if (System.currentTimeMillis() - lastDebugModeAccess > 1000) {
-                long start = System.currentTimeMillis();
+                //long start = System.currentTimeMillis();
                 long hashCode = hashCode(reloadingContext.getReloadingClassPaths());
-                //System.out.println("hashCode invoked in " + (System.currentTimeMillis() - start) + " ms.");
+                //System.out.println("DEBUG: hashCode invoked in " + (System.currentTimeMillis() - start) + " ms.");
 
                 if (hashCode != lastDebugModeAccessReloadingClassPathHashCode) {
                     //System.out.println("DEBUG: ReloadingClassLoader created because of hash mismatch.");
                     lastReloadingClassLoader = new ReloadingClassLoader();
                     lastDebugModeAccessReloadingClassPathHashCode = hashCode;
+                } else {
+                    //System.out.println("DEBUG: Hashes matched");
                 }
                 lastDebugModeAccess = System.currentTimeMillis();
-            } else {
-                //System.out.println("DEBUG: ReloadingClassLoader wasn't change because of time.");
             }
         }
     }
@@ -180,7 +159,9 @@ public class DispatchFilter implements Filter {
     private static long hashCode(File file, long depth) {
         long result = 0;
         if (file.isFile()) {
-            result += file.getName().hashCode() * file.lastModified() * (depth + 1);
+            if (useInHashCode(file)) {
+                result += file.getName().hashCode() * file.lastModified() * (depth + 1);
+            }
         } else {
             File[] files = file.listFiles();
             for (File nested : files) {
@@ -188,6 +169,12 @@ public class DispatchFilter implements Filter {
             }
         }
         return result;
+    }
+
+    private static boolean useInHashCode(File file) {
+        String ext = FileUtil.getExt(file);
+        return ".class".equalsIgnoreCase(ext)
+                || ".properties".equalsIgnoreCase(ext);
     }
 
     static {
