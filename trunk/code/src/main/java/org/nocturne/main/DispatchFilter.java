@@ -176,8 +176,8 @@ public class DispatchFilter implements Filter {
         return ".class".equalsIgnoreCase(ext)
                 || ".properties".equalsIgnoreCase(ext);
     }
-
-    static {
-        ReloadingContextLoader.run();
-    }
+//
+//    static {
+//        ReloadingContextLoader.run();
+//    }
 }

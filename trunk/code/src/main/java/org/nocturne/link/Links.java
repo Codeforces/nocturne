@@ -4,12 +4,13 @@
 
 package org.nocturne.link;
 
+import org.nocturne.annotation.Name;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.main.ApplicationContext;
-import org.nocturne.annotation.Name;
 import org.nocturne.main.Page;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Handles link pattern methods.
@@ -27,15 +28,15 @@ public class Links {
      * and Link instances as values.
      */
     private static final Map<Class<? extends Page>, Map<String, Link>> linksByPage =
-            Collections.synchronizedMap(new HashMap<Class<? extends Page>, Map<String, Link>>());
+            new ConcurrentHashMap<Class<? extends Page>, Map<String, Link>>();
 
     /** Stores page classes by their names. */
     private static final Map<String, Class<? extends Page>> classesByName =
-            Collections.synchronizedMap(new HashMap<String, Class<? extends Page>>());
+            new ConcurrentHashMap<String, Class<? extends Page>>();
 
     /** Stores parameter names in pattern (page link). */
     private static final Map<String, Set<String>> parametersByLink =
-            Collections.synchronizedMap(new HashMap<String, Set<String>>());
+            new ConcurrentHashMap<String, Set<String>>();
 
     /** As ZERO. */
     private static final Set<String> EMPTY_STRING_SET = Collections.emptySet();
@@ -89,6 +90,10 @@ public class Links {
         for (Link link : linkSet) {
             String[] pageLinks = link.value().split(";");
             for (String pageLink : pageLinks) {
+                if (pageLink.startsWith("/")) {
+                    throw new ConfigurationException("Page link can't start with '/', use links like" +
+                            " 'home', 'page/{index}'.");
+                }
                 if (!parametersByLink.containsKey(pageLink)) {
                     setupParametersByLink(pageLink);
                 }
@@ -349,7 +354,7 @@ public class Links {
      */
     public static LinkMatchResult match(String link) {
         for (Map.Entry<Class<? extends Page>, Map<String, Link>> listEntry : linksByPage.entrySet()) {
-            Map<String, Link> patterns = listEntry.getValue();
+            final Map<String, Link> patterns = listEntry.getValue();
 
             if (patterns == null) {
                 continue;
@@ -399,8 +404,30 @@ public class Links {
 
             for (int i = 0; i < patternTokens.length; i++) {
                 if (patternTokens[i].startsWith("{") && patternTokens[i].endsWith("}")) {
-                    attrs.put(patternTokens[i].substring(1, patternTokens[i].length() - 1), linkTokens[i]);
-                    continue;
+                    String[] parts = patternTokens[i].substring(1, patternTokens[i].length() - 1).split(":");
+
+                    if (parts.length == 1) {
+                        attrs.put(parts[0], linkTokens[i]);
+                        continue;
+                    }
+
+                    if (parts.length == 2) {
+                        String[] values = parts[1].split(",");
+                        boolean matched = false;
+                        for (String value : values) {
+                            if (value.equals(linkTokens[i])) {
+                                matched = true;
+                                attrs.put(parts[0], linkTokens[i]);
+                                break;
+                            }
+                        }
+                        if (!matched) {
+                            return null;
+                        }
+                        continue;
+                    }
+
+                    throw new ConfigurationException("Link '" + link + "' is not a valid link.");
                 }
 
                 if (!patternTokens[i].equals(linkTokens[i])) {

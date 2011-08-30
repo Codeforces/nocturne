@@ -4,19 +4,15 @@
 
 package org.nocturne.main;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Module;
+import org.apache.log4j.Logger;
 import org.nocturne.exception.ConfigurationException;
-import org.nocturne.exception.ModuleInitializationException;
-import org.nocturne.exception.NocturneException;
 import org.nocturne.pool.PagePool;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -25,39 +21,38 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Mike Mirzayanov
  */
 public class PageLoader {
-    private Injector injector = null;
+    private static final Logger logger = Logger.getLogger(PageLoader.class);
+
     private RequestRouter requestRouter;
-    private final Map<String, PagePool> pagePoolMap
+    private final ConcurrentMap<String, PagePool> pagePoolMap
             = new ConcurrentHashMap<String, PagePool>();
 
-    private static ReentrantLock lock = new ReentrantLock();
-    private static volatile boolean loaded = false;
-    
-    private void initialize() {
-        lock.lock();
-        try {
-            if (injector == null) {
-                setupInjector();
-            }
-            if (!loaded) {
-                runModuleStartups();
-                loaded = true;
-            }
-            if (requestRouter == null) {
-                try {
-                    requestRouter = (RequestRouter) getClass().getClassLoader().loadClass(
-                            ApplicationContext.getInstance().getRequestRouter()
-                    ).newInstance();
-                } catch (Exception e) {
-                    throw new ConfigurationException("Can't load application page class name resolver.", e);
+    private static final Lock lock = new ReentrantLock();
+
+    private volatile boolean initialized = false;
+
+    void initialize() {
+        if (!initialized) {
+            lock.lock();
+            try {
+                if (requestRouter == null) {
+                    try {
+                        requestRouter = (RequestRouter) getClass().getClassLoader().loadClass(
+                                ApplicationContext.getInstance().getRequestRouter()
+                        ).newInstance();
+                    } catch (Exception e) {
+                        throw new ConfigurationException("Can't load application page class name resolver.", e);
+                    }
                 }
+                initialized = true;
+            } finally {
+                lock.unlock();
+                logger.info("Page loader has been initialized.");
             }
-        } finally {
-            lock.unlock();
         }
     }
 
-    public synchronized Page loadPage(String path, Map<String, String> parameterMap) {
+    public Page loadPage(String path, Map<String, String> parameterMap) {
         initialize();
 
         RequestRouter.Resolution resolution = requestRouter.route(path, parameterMap);
@@ -84,94 +79,40 @@ public class PageLoader {
     }
 
     @SuppressWarnings({"UnusedDeclaration"})
-    public synchronized void unloadPage(String path, Map<String, String> parameterMap, Page page) {
+    public void unloadPage(String path, Map<String, String> parameterMap, Page page) {
         String className = ApplicationContext.getInstance().getRequestPageClassName();
         PagePool pool = getPoolByClassName(className);
         pool.release(page);
     }
 
     private PagePool getPoolByClassName(String className) {
-        PagePool pool;
+        PagePool pool = pagePoolMap.get(className);
 
-        if (pagePoolMap.containsKey(className)) {
-            pool = pagePoolMap.get(className);
-        } else {
-            pool = new PagePool(this, className);
-            pagePoolMap.put(className, pool);
-        }
-        return pool;
-    }
-
-    private void setupInjector() {
-        String guiceModuleClassName = ApplicationContext.getInstance().getGuiceModuleClassName();
-        GenericIocModule module = new GenericIocModule();
-
-        if (guiceModuleClassName != null) {
-            try {
-                Module applicationModule = (Module) getClass().getClassLoader().loadClass(
-                        guiceModuleClassName
-                ).newInstance();
-                module.setModule(applicationModule);
-            } catch (Exception e) {
-                throw new ConfigurationException("Can't load application giuce module.", e);
-            }
+        if (pool == null) {
+            pagePoolMap.putIfAbsent(className, new PagePool(this, className));
         }
 
-        injector = Guice.createInjector(module);
-
-        if (ApplicationContext.getInstance().isDebug()) {
-            try {
-                Method method = ApplicationContext.class.getDeclaredMethod("setInjector", Injector.class);
-                method.setAccessible(true);
-                method.invoke(ApplicationContext.getInstance(), injector);
-            } catch (NoSuchMethodException e) {
-                throw new NocturneException("Can't find method setInjector.", e);
-            } catch (InvocationTargetException e) {
-                throw new NocturneException("InvocationTargetException", e);
-            } catch (IllegalAccessException e) {
-                throw new NocturneException("IllegalAccessException", e);
-            }
-        } else {
-            ApplicationContext.getInstance().setInjector(injector);
-        }
-    }
-
-    private void runModuleStartups() {
-        List<org.nocturne.module.Module> modules = ApplicationContext.getInstance().getModules();
-        for (org.nocturne.module.Module module : modules) {
-            String startupClassName = module.getStartupClassName();
-            if (!startupClassName.isEmpty()) {
-                Runnable runnable;
-                try {
-                    runnable = (Runnable) injector.getInstance(getClass().getClassLoader().loadClass(startupClassName));
-                } catch (ClassCastException e) {
-                    throw new ModuleInitializationException("Startup class " + startupClassName + " must implement Runnable.", e);
-                } catch (ClassNotFoundException e) {
-                    throw new ModuleInitializationException("Can't load startup class be name " + startupClassName + ".", e);
-                }
-                if (runnable != null) {
-                    runnable.run();
-                }
-            }
-        }
+        return pagePoolMap.get(className);
     }
 
     @SuppressWarnings({"unchecked"})
-    public synchronized Page loadPage(String pageClassName) {
+    public Page loadPage(String pageClassName) {
         try {
             Class<Page> pageClass = (Class<Page>)
                     PageLoader.class.getClassLoader().loadClass(pageClassName);
-            return injector.getInstance(pageClass);
+            return ApplicationContext.getInstance().getInjector().getInstance(pageClass);
         } catch (Exception e) {
             throw new ConfigurationException("Can't load page " +
                     pageClassName + ".", e);
         }
     }
 
-    public synchronized void close() {
-        for (String clazz : pagePoolMap.keySet()) {
-            PagePool pool = pagePoolMap.get(clazz);
+    public void close() {
+        Collection<PagePool> values = pagePoolMap.values();
+        PagePool[] pools = values.toArray(new PagePool[values.size()]);
+
+        for (PagePool pool : pools) {
             pool.close();
         }
-    }
+   }
 }

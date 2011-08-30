@@ -8,6 +8,7 @@ import org.nocturne.exception.ConfigurationException;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 /**
@@ -16,6 +17,8 @@ import java.util.regex.Pattern;
 public class ReloadingContext {
     private static final ReloadingContext INSTANCE =
             new ReloadingContext();
+
+    private static final AtomicBoolean initialized = new AtomicBoolean(false);
 
     private boolean debug;
     private Pattern skipRegex;
@@ -28,6 +31,10 @@ public class ReloadingContext {
     }
 
     public static ReloadingContext getInstance() {
+        if (!initialized.getAndSet(true)) {
+            ReloadingContextLoader.run();
+        }
+
         return INSTANCE;
     }
 

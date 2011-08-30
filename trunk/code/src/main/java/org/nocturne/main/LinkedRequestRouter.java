@@ -6,6 +6,7 @@ package org.nocturne.main;
 
 import org.nocturne.link.LinkMatchResult;
 import org.nocturne.link.Links;
+import org.nocturne.util.StringUtil;
 
 import java.util.Map;
 
@@ -20,6 +21,7 @@ public class LinkedRequestRouter implements RequestRouter {
 
         if (linkMatchResult != null) {
             ApplicationContext.getInstance().setLink(linkMatchResult.getLink());
+
             Map<String, String> attrs = linkMatchResult.getAttributes();
             if (attrs != null) {
                 for (Map.Entry<String, String> entry : attrs.entrySet()) {
@@ -32,7 +34,11 @@ public class LinkedRequestRouter implements RequestRouter {
                 }
             }
 
-            if (action == null || action.trim().isEmpty()) {
+            if (StringUtil.isEmptyOrNull(action)) {
+                action = linkMatchResult.getLink().action();
+            }
+
+            if (action == null) {
                 action = "";
             }
 

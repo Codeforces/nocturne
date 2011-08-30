@@ -23,6 +23,16 @@ public @interface Link {
     String value();
 
     /**
+     * @return Link name: use it together with getRequest().getAttribute("nocturne.current-page-link").
+     */
+    String name() default "";
+
+    /**
+     * @return Default action for page, it will be invoked if no action specified as request parameter.
+     */
+    String action() default "";
+
+    /**
      * @return You can mark link usages with some classes. For example, it
      *         could be menu items or layout types.
      */
