@@ -4,14 +4,26 @@
 
 package org.nocturne.main;
 
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import org.nocturne.exception.ConfigurationException;
+import org.nocturne.exception.ModuleInitializationException;
+import org.nocturne.exception.NocturneException;
+import org.nocturne.module.Module;
+import org.nocturne.reset.ResetStrategy;
+import org.nocturne.reset.annotation.Persist;
+import org.nocturne.reset.annotation.Reset;
+import org.nocturne.util.StringUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -21,8 +33,9 @@ import java.util.regex.PatternSyntaxException;
 class ApplicationContextLoader {
     public static final String CONFIGURATION_FILE = "/nocturne.properties";
     private static final Properties properties = new Properties();
+    private static final Pattern SPLIT_ITEMS_PATTERN = Pattern.compile("\\s*;\\s*");
 
-    static void run() {
+    private static void run() {
         setupDebug();
         setupTemplatesPath();
 
@@ -44,6 +57,35 @@ class ApplicationContextLoader {
         setupAllowedLanguages();
         setupDefaultPageClassName();
         setupContextPath();
+        setupResetProperties();
+    }
+
+    private static void setupResetProperties() {
+        String strategy = properties.getProperty("nocturne.reset.strategy");
+        if (!StringUtil.isEmptyOrNull(strategy)) {
+            ApplicationContext.getInstance().setResetStrategy(ResetStrategy.valueOf(strategy));
+        } else {
+            ApplicationContext.getInstance().setResetStrategy(ResetStrategy.PERSIST);
+        }
+
+        String resetAnnotations = properties.getProperty("nocturne.reset.reset-annotations");
+        if (!StringUtil.isEmptyOrNull(resetAnnotations)) {
+            String[] annotations = SPLIT_ITEMS_PATTERN.split(resetAnnotations);
+            ApplicationContext.getInstance().setResetAnnotations(Arrays.asList(annotations));
+        } else {
+            ApplicationContext.getInstance().setResetAnnotations(Arrays.asList(Reset.class.getName()));
+        }
+
+        String persistAnnotations = properties.getProperty("nocturne.reset.persist-annotations");
+        if (!StringUtil.isEmptyOrNull(persistAnnotations)) {
+            String[] annotations = SPLIT_ITEMS_PATTERN.split(persistAnnotations);
+            ApplicationContext.getInstance().setPersistAnnotations(Arrays.asList(annotations));
+        } else {
+            ApplicationContext.getInstance().setPersistAnnotations(Arrays.asList(
+                    Persist.class.getName(),
+                    Inject.class.getName()
+            ));
+        }
     }
 
     private static void setupContextPath() {
@@ -154,12 +196,7 @@ class ApplicationContextLoader {
         if (properties.containsKey("nocturne.class-reloading-exceptions")) {
             String exceptionsAsString = properties.getProperty("nocturne.class-reloading-exceptions");
             if (exceptionsAsString != null) {
-                String[] candidats = exceptionsAsString.split("\\s*;\\s*");
-                for (String item : candidats) {
-                    if (!item.isEmpty()) {
-                        exceptions.add(item);
-                    }
-                }
+                exceptions.addAll(listOfNonEmpties(SPLIT_ITEMS_PATTERN.split(exceptionsAsString)));
             }
         }
         ApplicationContext.getInstance().setClassReloadingExceptions(exceptions);
@@ -169,21 +206,10 @@ class ApplicationContextLoader {
         List<String> packages = new ArrayList<String>();
         packages.add("org.nocturne");
 
-//        packages.add(PageLoader.class.getName());
-//        packages.add(PagePool.class.getName());
-//        packages.add(Links.class.getName());
-//        packages.add(LinkDirective.class.getName());
-//        packages.add(LinkedRequestRouter.class.getName());
-
         if (properties.containsKey("nocturne.class-reloading-packages")) {
             String packagesAsString = properties.getProperty("nocturne.class-reloading-packages");
             if (packagesAsString != null) {
-                String[] candidats = packagesAsString.split("\\s*;\\s*");
-                for (String item : candidats) {
-                    if (!item.isEmpty()) {
-                        packages.add(item);
-                    }
-                }
+                packages.addAll(listOfNonEmpties(SPLIT_ITEMS_PATTERN.split(packagesAsString)));
             }
         }
         ApplicationContext.getInstance().setClassReloadingPackages(packages);
@@ -216,12 +242,7 @@ class ApplicationContextLoader {
         if (properties.containsKey("nocturne.page-request-listeners")) {
             String pageRequestListenersAsString = properties.getProperty("nocturne.page-request-listeners");
             if (pageRequestListenersAsString != null) {
-                String[] candidats = pageRequestListenersAsString.split("\\s*;\\s*");
-                for (String listener : candidats) {
-                    if (!listener.isEmpty()) {
-                        listeners.add(listener);
-                    }
-                }
+                listeners.addAll(listOfNonEmpties(SPLIT_ITEMS_PATTERN.split(pageRequestListenersAsString)));
             }
         }
         ApplicationContext.getInstance().setPageRequestListeners(listeners);
@@ -232,9 +253,9 @@ class ApplicationContextLoader {
         if (properties.containsKey("nocturne.reloading-class-paths")) {
             String reloadingClassPathsAsString = properties.getProperty("nocturne.reloading-class-paths");
             if (reloadingClassPathsAsString != null) {
-                String[] dirs = reloadingClassPathsAsString.split("\\s*;\\s*");
+                String[] dirs = SPLIT_ITEMS_PATTERN.split(reloadingClassPathsAsString);
                 for (String dir : dirs) {
-                    if (!dir.isEmpty()) {
+                    if (dir != null && !dir.isEmpty()) {
                         File file = new File(dir);
                         if (!file.isDirectory() && ApplicationContext.getInstance().isDebug()) {
                             throw new ConfigurationException("Each item in nocturne.reloading-class-paths should be a directory.");
@@ -271,6 +292,126 @@ class ApplicationContextLoader {
         }
 
         ApplicationContext.getInstance().setDebug(debug);
+    }
+
+    private static List<String> listOfNonEmpties(String[] strings) {
+        List<String> result = new ArrayList<String>(strings.length);
+        for (String string : strings) {
+            if (!StringUtil.isEmptyOrNull(string)) {
+                result.add(string);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Scans classpath for modules.
+     *
+     * @return List of modules ordered by priority (from high priority to low).
+     */
+    private static List<Module> getModulesFromClasspath() {
+        List<Module> modules = new ArrayList<Module>();
+        URLClassLoader loader = (URLClassLoader) ApplicationContext.class.getClassLoader();
+        URL[] classPath = loader.getURLs();
+        for (URL url : classPath) {
+            if (Module.isModuleUrl(url)) {
+                modules.add(new Module(url));
+            }
+        }
+        return modules;
+    }
+
+    /**
+     * Runs init() method for all modules.
+     * Each module should be initialized on the application startup.
+     */
+    private static void initializeModules() {
+        List<Module> modules = getModulesFromClasspath();
+
+        for (Module module : modules) {
+            module.init();
+        }
+
+        Collections.sort(modules, new Comparator<Module>() {
+            public int compare(Module a, Module b) {
+                if (b.getPriority() != a.getPriority()) {
+                    return Integer.valueOf(b.getPriority()).compareTo(a.getPriority());
+                } else {
+                    return a.getName().compareTo(b.getName());
+                }
+            }
+        });
+
+        for (Module module : modules) {
+            module.getConfiguration().addPages();
+        }
+
+        ApplicationContext.getInstance().setModules(modules);
+    }
+
+    private static void setupInjector() {
+        String guiceModuleClassName = ApplicationContext.getInstance().getGuiceModuleClassName();
+        GenericIocModule module = new GenericIocModule();
+
+        if (guiceModuleClassName != null) {
+            try {
+                com.google.inject.Module applicationModule = (com.google.inject.Module) ApplicationContext.class.getClassLoader().loadClass(
+                        guiceModuleClassName
+                ).newInstance();
+                module.setModule(applicationModule);
+            } catch (Exception e) {
+                throw new ConfigurationException("Can't load application guice module.", e);
+            }
+        }
+
+        Injector injector = Guice.createInjector(module);
+
+        if (ApplicationContext.getInstance().isDebug()) {
+            try {
+                Method method = ApplicationContext.class.getDeclaredMethod("setInjector", Injector.class);
+                method.setAccessible(true);
+                method.invoke(ApplicationContext.getInstance(), injector);
+            } catch (NoSuchMethodException e) {
+                throw new NocturneException("Can't find method setInjector.", e);
+            } catch (InvocationTargetException e) {
+                throw new NocturneException("InvocationTargetException", e);
+            } catch (IllegalAccessException e) {
+                throw new NocturneException("IllegalAccessException", e);
+            }
+        } else {
+            ApplicationContext.getInstance().setInjector(injector);
+        }
+    }
+
+    private static void runModuleStartups() {
+        List<org.nocturne.module.Module> modules = ApplicationContext.getInstance().getModules();
+        for (org.nocturne.module.Module module : modules) {
+            String startupClassName = module.getStartupClassName();
+            if (!startupClassName.isEmpty()) {
+                Runnable runnable;
+                try {
+                    runnable = (Runnable) ApplicationContext.getInstance().getInjector().getInstance(
+                            ApplicationContext.class.getClassLoader().loadClass(startupClassName));
+                } catch (ClassCastException e) {
+                    throw new ModuleInitializationException("Startup class " + startupClassName
+                            + " must implement Runnable.", e);
+                } catch (ClassNotFoundException e) {
+                    throw new ModuleInitializationException("Can't load startup class be name "
+                            + startupClassName + ".", e);
+                }
+                if (runnable != null) {
+                    runnable.run();
+                }
+            }
+        }
+    }
+
+    static synchronized void initialize() {
+        run();
+        initializeModules();
+        setupInjector();
+        runModuleStartups();
+        ApplicationContext.getInstance().setInitialized();
     }
 
     static {

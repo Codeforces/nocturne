@@ -17,6 +17,8 @@ public interface RequestRouter {
      * </pre>
      * }
      *
+     * Should be thread-safe.
+     *
      * @param path         Page path, for example "/login";
      * @param parameterMap Contains parameters (from regquest.getParametersMap()).
      * @return Resolution, containing page class and action name. Also it can add own parameters.

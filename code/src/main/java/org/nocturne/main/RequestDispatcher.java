@@ -9,19 +9,19 @@ import org.apache.log4j.Logger;
 import org.nocturne.exception.NocturneException;
 import org.nocturne.exception.ReflectionException;
 import org.nocturne.listener.PageRequestListener;
-import org.nocturne.module.Module;
 import org.nocturne.pool.TemplateEngineConfigurationPool;
 import org.nocturne.util.ReflectionUtil;
 import org.nocturne.util.RequestUtil;
 
-import javax.servlet.*;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -64,74 +64,6 @@ public class RequestDispatcher {
      * Class loader used when application has been accessed in the debug mode.
      */
     private ClassLoader reloadingClassLoader;
-
-    /**
-     * Is modules already are initialized.
-     */
-    private boolean modulesInitialized;
-
-    /**
-     * Runs init() method for all modules.
-     * Each module should be initialized on the application startup.
-     */
-    private void initializeModules() {
-        synchronized (RequestDispatcher.class) {
-            List<Module> modules = getModules();
-
-            //TODO: To check order of initialization
-            for (Module module : modules) {
-                module.init();
-            }
-
-            Collections.sort(modules, new Comparator<Module>() {
-                /**
-                 * Sorts by priority.
-                 *
-                 * @param a Module.
-                 * @param b Module.
-                 * @return int.
-                 */
-                public int compare(Module a, Module b) {
-                    if (b.getPriority() != a.getPriority()) {
-                        return b.getPriority() - a.getPriority();
-                    } else {
-                        return a.getName().compareTo(b.getName());
-                    }
-                }
-            });
-
-            if (!modulesInitialized) {
-                modulesInitialized = true;
-                for (Module module : modules) {
-                    module.getConfiguration().addPages();
-                }
-            }
-
-            applicationContext.setModules(modules);
-        }
-    }
-
-    /**
-     * Scans classpath for modules.
-     *
-     * @return List of modules ordered by priority (from high priority to low).
-     */
-    private List<Module> getModules() {
-        List<Module> modules = new ArrayList<Module>();
-
-        URLClassLoader loader =
-                (URLClassLoader) getClass().getClassLoader();
-
-        URL[] classPath = loader.getURLs();
-
-        for (URL url : classPath) {
-            if (Module.isModuleUrl(url)) {
-                modules.add(new Module(url));
-            }
-        }
-
-        return modules;
-    }
 
     void setReloadingClassLoader(ClassLoader reloadingClassLoader) {
         this.reloadingClassLoader = reloadingClassLoader;
@@ -264,7 +196,8 @@ public class RequestDispatcher {
             Class pageLoaderClass = reloadingClassLoader.loadClass(PageLoader.class.getName());
             Object pageLoader = pageLoaderClass.newInstance();
 
-            page = ReflectionUtil.invoke(pageLoader, "loadPage", request.getServletPath(), RequestUtil.getRequestParams(request));
+            page = ReflectionUtil.invoke(pageLoader, "loadPage", request.getServletPath(),
+                    RequestUtil.getRequestParams(request));
             if (page == null) {
                 runResult.setProcessChain(true);
             } else {
@@ -279,7 +212,7 @@ public class RequestDispatcher {
             }
         }
 
-        applicationContext.setInjector(null);
+        //applicationContext.setInjector(null);
         return runResult;
     }
 
@@ -328,17 +261,16 @@ public class RequestDispatcher {
                     = new TemplateEngineConfigurationPool(config);
 
             filterConfig = config;
-            ApplicationContextLoader.run();
             applicationContext.setServletContext(config.getServletContext());
 
             // Pass application context to servlet
             config.getServletContext().setAttribute("applicationContext", applicationContext);
 
-            initializeModules();
+            ApplicationContextLoader.initialize();
 
             // Log.
             if (!applicationContext.isDebug()) {
-                logger.info("Nocturne RequestDispatcter has been initialized.");
+                logger.info("Nocturne RequestDispatcher has been initialized.");
             }
         } catch (Exception e) {
             logger.error("Exception while initialization DispatchFilter.", e);

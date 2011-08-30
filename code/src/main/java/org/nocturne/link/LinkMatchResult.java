@@ -19,7 +19,7 @@ public class LinkMatchResult {
     /** Page matched by given link. */
     private final Class<? extends Page> pageClass;
 
-    /** Part of link value, mathed pattern. */
+    /** Part of link value, matched pattern. */
     private final String pattern;
 
     /** Attributes extracted from given link. */
@@ -33,7 +33,7 @@ public class LinkMatchResult {
      *
      * @param pageClass  Matched page class.
      * @param pattern    Matched pattern (link value).
-     * @param attributes of type Map<String, String> - attributes extracted from given matching.
+     * @param attributes attributes extracted from given matching.
      * @param link       Matched @Link instance.
      */
     public LinkMatchResult(Class<? extends Page> pageClass, String pattern, Map<String, String> attributes, Link link) {

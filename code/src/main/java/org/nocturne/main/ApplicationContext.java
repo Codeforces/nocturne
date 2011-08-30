@@ -12,6 +12,7 @@ import org.nocturne.exception.NocturneException;
 import org.nocturne.exception.ReflectionException;
 import org.nocturne.link.Link;
 import org.nocturne.module.Module;
+import org.nocturne.reset.ResetStrategy;
 import org.nocturne.util.ReflectionUtil;
 import org.nocturne.util.RequestUtil;
 
@@ -21,6 +22,10 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 /**
@@ -146,14 +151,24 @@ public class ApplicationContext {
     private List<String> allowedLanguages = Arrays.asList("en");
 
     /**
-     * Guice injector for production mode.
+     * Default reset strategy for fields of Components: should they be reset after request processing.
      */
-    private Injector injectorForProduction;
+    private ResetStrategy resetStrategy;
 
     /**
-     * Guice injector for debug mode.
+     * List of annotation classes to override default strategy, should be used on classes or fields.
      */
-    private ThreadLocal<Injector> injector = new ThreadLocal<Injector>();
+    private Set<String> resetAnnotations;
+
+    /**
+     * List of annotation classes to override default strategy, should be used on classes or fields.
+     */
+    private Set<String> persistAnnotations;
+
+    /**
+     * Guice injector.
+     */
+    private Injector injector;
 
     /**
      * RequestContext for current thread.
@@ -175,15 +190,38 @@ public class ApplicationContext {
      */
     private List<Module> modules = new ArrayList<Module>();
 
+    /**
+     * ApplicationContext is initialized.
+     */
+    private AtomicBoolean initialized = new AtomicBoolean(false);
+
+    private Lock initializedLock = new ReentrantLock();
+    private Condition initializedCondition = initializedLock.newCondition();
+
+    void setInitialized() {
+        initializedLock.lock();
+        try {
+            if (!initialized.getAndSet(true)) {
+                initializedCondition.signalAll();
+            }
+        } finally {
+            initializedLock.unlock();
+        }
+    }
+
+    boolean isInitialized() {
+        return initialized.get();
+    }
+
     void setRequestAndResponse(HttpServletRequest request, HttpServletResponse response) {
         requestsPerThread.set(new RequestContext(request, response));
     }
 
     /**
      * In debug mode it will return reloading class loader, and it
-     * will return typical webapplication class loader in production mode.
+     * will return typical web-application class loader in production mode.
      *
-     * @return Reloading class loader (for debug mode) and usual webbaplication
+     * @return Reloading class loader (for debug mode) and usual web-application
      *         class loader (for production mode).
      */
     public ClassLoader getReloadingClassLoader() {
@@ -197,7 +235,7 @@ public class ApplicationContext {
     /**
      * @return Returns application context path.
      *         You should build paths in your application by
-     *         concatinating getContextPath() and relative path inside
+     *         concatenation getContextPath() and relative path inside
      *         the application.
      */
     public String getContextPath() {
@@ -236,6 +274,39 @@ public class ApplicationContext {
      */
     public List<String> getAllowedLanguages() {
         return allowedLanguages;
+    }
+
+    /**
+     * @return Default reset strategy for fields of Components: should they be reset after request processing.
+     */
+    public ResetStrategy getResetStrategy() {
+        return resetStrategy;
+    }
+
+    /**
+     * @return List of annotation classes to override default strategy, should be used on classes or fields.
+     */
+    public Set<String> getResetAnnotations() {
+        return resetAnnotations;
+    }
+
+    /**
+     * @return List of annotation classes to override default strategy, should be used on classes or fields.
+     */
+    public Set<String> getPersistAnnotations() {
+        return persistAnnotations;
+    }
+
+    void setResetStrategy(ResetStrategy resetStrategy) {
+        this.resetStrategy = resetStrategy;
+    }
+
+    void setResetAnnotations(Collection<String> resetAnnotations) {
+        this.resetAnnotations = new LinkedHashSet<String>(resetAnnotations);
+    }
+
+    void setPersistAnnotations(Collection<String> persistAnnotations) {
+        this.persistAnnotations = new LinkedHashSet<String>(persistAnnotations);
     }
 
     /**
@@ -314,12 +385,6 @@ public class ApplicationContext {
     public String getCaptionsImplClass() {
         return captionsImplClass;
     }
-
-//    void setComponentByTemplate(Template template, Component component) {
-//        componentsByTemplate.get().put(template, component);
-//    }
-
-    //
 
     void setCurrentComponent(Component component) {
         currentComponent.set(component);
@@ -405,25 +470,15 @@ public class ApplicationContext {
         this.classReloadingPackages = new LinkedHashSet<String>(classReloadingPackages);
     }
 
-    void setInjector(Injector injector) {
-        if (isDebug()) {
-            this.injector.set(injector);
-        } else {
-            synchronized (this) {
-                injectorForProduction = injector;
-            }
-        }
+    synchronized void setInjector(Injector injector) {
+        this.injector = injector;
     }
 
     /**
      * @return Guice injector. It is not good idea to use it.
      */
     public Injector getInjector() {
-        if (isDebug()) {
-            return injector.get();
-        } else {
-            return injectorForProduction;
-        }
+        return injector;
     }
 
     /**
@@ -486,12 +541,6 @@ public class ApplicationContext {
     void setSkipRegex(Pattern skipRegex) {
         this.skipRegex = skipRegex;
     }
-
-//    void clearComponentsByTemplate() {
-//        componentsByTemplate.get().clear();
-//    }
-
-    //
 
     /**
      * @return Returns current servlet request instance.
@@ -573,7 +622,7 @@ public class ApplicationContext {
     }
 
     /**
-     * @param locale Expected locale.
+     * @param locale   Expected locale.
      * @param shortcut Shortcut value.
      * @param args     Shortcut arguments.
      * @return Use the method to work with captions from your code.
@@ -598,7 +647,7 @@ public class ApplicationContext {
     }
 
     /**
-     * @param locale Expected locale.
+     * @param locale   Expected locale.
      * @param shortcut Shortcut value.
      * @return Use the method to work with captions from your code.
      *         Usually, it is not good idea, because captions are part of view layer.
@@ -688,6 +737,30 @@ public class ApplicationContext {
      */
     public String getDebugWebResourcesDir() {
         return debugWebResourcesDir;
+    }
+
+    /**
+     * @param runnable Runnable to be executed after ApplicationContext has been initialized.
+     */
+    public void executeAfterInitialization(final Runnable runnable) {
+        new Thread() {
+            @Override
+            public void run() {
+                initializedLock.lock();
+                try {
+                    while (!isInitialized()) {
+                        try {
+                            initializedCondition.await();
+                        } catch (InterruptedException e) {
+                            // No operations.
+                        }
+                    }
+                    runnable.run();
+                } finally {
+                    initializedLock.unlock();
+                }
+            }
+        }.start();
     }
 
     /**

@@ -10,15 +10,16 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import net.sf.cglib.reflect.FastMethod;
 import org.apache.log4j.Logger;
+import org.nocturne.cache.CacheHandler;
 import org.nocturne.caption.CaptionDirective;
 import org.nocturne.exception.*;
 import org.nocturne.link.LinkDirective;
 import org.nocturne.link.Links;
+import org.nocturne.reset.FieldsReseter;
 import org.nocturne.util.ReflectionUtil;
 import org.nocturne.util.RequestUtil;
 import org.nocturne.validation.ValidationException;
 import org.nocturne.validation.Validator;
-import org.nocturne.cache.CacheHandler;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
@@ -154,6 +155,11 @@ public abstract class Component {
      * Stores params from request.
      */
     private Map<String, String> requestParams = new HashMap<String, String>();
+
+    /**
+     * Object to clean fields between requests.
+     */
+    private FieldsReseter fieldsReseter = null;
 
     /**
      * @return Component cache handler. Use it if you want to avoid typical
@@ -770,7 +776,7 @@ public abstract class Component {
      * The method will be called exactly once for each instance.
      */
     public void init() {
-        // No operations.
+        fieldsReseter = new FieldsReseter(this);
     }
 
     /**
@@ -790,7 +796,6 @@ public abstract class Component {
      * Override it to initialize component instance after action.
      */
     public void finalizeAction() {
-        // No operations.
     }
 
     void setup(Frame frame) {
@@ -876,6 +881,8 @@ public abstract class Component {
         } else {
             ApplicationContext.getInstance().setCurrentComponent(parentComponent);
         }
+
+        fieldsReseter.resetFields();
     }
 
     void initializeIfNeeded() {
@@ -973,7 +980,7 @@ public abstract class Component {
         for (Object key : parameterMap.keySet()) {
             Object value = parameterMap.get(key);
             if (value != null) {
-                put(key.toString(), getString(key.toString()));
+                setupTemplateMapByParameter(key.toString());
             } else {
                 put(key.toString(), null);
             }
@@ -1005,10 +1012,18 @@ public abstract class Component {
                 }
             }
 
-            put(parameter, getString(parameter));
+            setupTemplateMapByParameter(parameter);
         }
 
         return !failed;
+    }
+
+    private void setupTemplateMapByParameter(String parameter) {
+        Object previousValue = getTemplateMap().get(parameter);
+        String value = getString(parameter);
+        if (previousValue == null || !previousValue.toString().equals(value)) {
+            put(parameter, getString(parameter));
+        }
     }
 
     /**
