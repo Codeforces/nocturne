@@ -6,11 +6,14 @@ package org.nocturne.link;
 
 import org.nocturne.annotation.Name;
 import org.nocturne.exception.ConfigurationException;
+import org.nocturne.exception.NocturneException;
 import org.nocturne.main.ApplicationContext;
 import org.nocturne.main.Page;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * Handles link pattern methods.
@@ -34,12 +37,9 @@ public class Links {
     private static final Map<String, Class<? extends Page>> classesByName =
             new ConcurrentHashMap<String, Class<? extends Page>>();
 
-    /** Stores parameter names in pattern (page link). */
-    private static final Map<String, Set<String>> parametersByLink =
-            new ConcurrentHashMap<String, Set<String>>();
-
-    /** As ZERO. */
-    private static final Set<String> EMPTY_STRING_SET = Collections.emptySet();
+    /** Stores link sections by links. */
+    private static final ConcurrentMap<String, List<LinkSection>> sectionsByLinkText =
+            new ConcurrentHashMap<String, List<LinkSection>>();
 
     private static List<Link> getLinksViaReflection(Class<? extends Page> clazz) {
         List<Link> result = new ArrayList<Link>();
@@ -66,7 +66,7 @@ public class Links {
 
     /**
      * @param clazz Page class to be added into Links.
-     *              After it you can get it's link via getLink, or using @link directiive
+     *              After it you can get it's link via getLink, or using @link directive
      *              from template. Link may contain template sections, like "profile/{handle}".
      */
     public static synchronized void add(Class<? extends Page> clazz) {
@@ -77,110 +77,38 @@ public class Links {
 
         String name = getNameViaReflection(clazz);
         if (classesByName.containsKey(name) && !clazz.equals(classesByName.get(name))) {
-            throw new IllegalArgumentException("Can't add page which is not unique by it's name: "
+            throw new ConfigurationException("Can't add page which is not unique by it's name: "
                     + clazz.getName() + ".");
         }
         classesByName.put(name, clazz);
 
         Map<String, Link> links = linksByPage.get(clazz);
         if (links == null) {
+            // It is important that used synchronizedMap, because of "synchronized(links) {..}" later in code.
             links = Collections.synchronizedMap(new LinkedHashMap<String, Link>());
         }
 
         for (Link link : linkSet) {
             String[] pageLinks = link.value().split(";");
             for (String pageLink : pageLinks) {
-                if (pageLink.startsWith("/")) {
-                    throw new ConfigurationException("Page link can't start with '/', use links like" +
-                            " 'home', 'page/{index}'.");
+                if (!sectionsByLinkText.containsKey(pageLink)) {
+                    sectionsByLinkText.putIfAbsent(pageLink, parseLinkToLinkSections(pageLink));
                 }
-                if (!parametersByLink.containsKey(pageLink)) {
-                    setupParametersByLink(pageLink);
-                }
-            }
 
-            for (String pageLink : pageLinks) {
+                for (Map<String, Link> linkMap : linksByPage.values()) {
+                    if (linkMap.containsKey(pageLink)) {
+                        throw new ConfigurationException("Page link \"" + pageLink + "\" already registered.");
+                    }
+                }
+                if (links.containsKey(pageLink)) {
+                    throw new ConfigurationException("Page link \"" + pageLink + "\" already registered.");
+                }
+
                 links.put(pageLink, link);
             }
         }
 
         linksByPage.put(clazz, links);
-    }
-
-    private static void setupParametersByLink(String pageLink) {
-        Set<String> params = new HashSet<String>();
-
-        StringBuilder sb = new StringBuilder();
-        boolean started = false;
-
-        for (int i = 0; i < pageLink.length(); i++) {
-            if (pageLink.charAt(i) == '{') {
-                sb = new StringBuilder();
-                started = true;
-                continue;
-            }
-            if (pageLink.charAt(i) == '}') {
-                params.add(sb.toString());
-                started = false;
-                continue;
-            }
-            if (started) {
-                sb.append(pageLink.charAt(i));
-            }
-        }
-
-        parametersByLink.put(pageLink, params);
-    }
-
-    /**
-     * @param clazz  Page class.
-     * @param params Set of parameter names.
-     * @return Correspondent page link (pattern).
-     */
-    private static String getLinkByPageAndParams(Class<? extends Page> clazz, Set<String> params) {
-        Map<String, Link> linksMap = linksByPage.get(clazz);
-        if (linksMap == null) {
-            throw new NoSuchLinkException("Can't find link for page " + clazz.getName() + ".");
-        }
-
-        Set<String> links = linksMap.keySet();
-
-        String link = null;
-        int maxMathedCount = -1;
-
-        for (String linkItem : links) {
-            int matchedCount = 0;
-            Set<String> pageParams = parametersByLink.get(linkItem);
-
-            for (String pageParam : pageParams) {
-                if (!params.contains(pageParam)) {
-                    matchedCount = Integer.MIN_VALUE;
-                }
-            }
-
-            if (matchedCount == 0) {
-                for (String param : params) {
-                    if (pageParams.contains(param)) {
-                        matchedCount++;
-                    }
-                }
-            }
-
-            if (matchedCount > maxMathedCount) {
-                link = linkItem;
-                maxMathedCount = matchedCount;
-            }
-        }
-
-        if (link == null) {
-            throw new NoSuchLinkException("Can't find link for page " + clazz.getName() + ".");
-        }
-
-        if (link.startsWith("/")) {
-            return link;
-        } else {
-            return ApplicationContext.getInstance().getContextPath() + "/" + link;
-        }
     }
 
     /**
@@ -190,7 +118,7 @@ public class Links {
      *         if no such link exists.
      */
     public static String getLink(Class<? extends Page> clazz) {
-        return getLinkByPageAndParams(clazz, EMPTY_STRING_SET);
+        return getLinkByMap(clazz, Collections.<String, Object>emptyMap());
     }
 
     /**
@@ -204,9 +132,10 @@ public class Links {
         Class<? extends Page> clazz = classesByName.get(name);
 
         if (clazz == null) {
-            return null;
+            throw new NoSuchLinkException("Can't find link for page \"" + name + "\", " +
+                    "because of no such page has been registered.");
         } else {
-            return getLinkByPageAndParams(clazz, EMPTY_STRING_SET);
+            return getLink(clazz);
         }
     }
 
@@ -218,63 +147,79 @@ public class Links {
      *         one of them, which matches better. Can throw NoSuchLinkException.
      */
     public static String getLinkByMap(Class<? extends Page> clazz, Map<String, ?> params) {
-        Set<String> paramSet = new HashSet<String>();
+        Map<String, String> nonEmptyParams = new HashMap<String, String>();
         for (Map.Entry<String, ?> entry : params.entrySet()) {
             Object value = entry.getValue();
             if (!isMissingValue(value)) {
-                paramSet.add(entry.getKey());
+                nonEmptyParams.put(entry.getKey(), entry.getValue().toString());
             }
         }
 
-        String link = getLinkByPageAndParams(clazz, paramSet);
+        Set<String> linkTexts = linksByPage.get(clazz).keySet();
 
-        StringBuilder sb = new StringBuilder();
+        int bestMatchedCount = -1;
+        List<LinkSection> bestMatchedLinkSections = null;
+
+        for (String linkText : linkTexts) {
+            List<LinkSection> sections = sectionsByLinkText.get(linkText);
+            boolean matched = true;
+            int matchedCount = 0;
+            for (LinkSection section : sections) {
+                if (section.isParameter()) {
+                    matchedCount++;
+                    String value = nonEmptyParams.get(section.getParameterName());
+                    if (value == null || (!section.getAllowedParameterValues().isEmpty() && !section.getAllowedParameterValues().contains(value))) {
+                        matched = false;
+                        break;
+                    }
+                }
+            }
+            if (matched && matchedCount > bestMatchedCount) {
+                bestMatchedCount = matchedCount;
+                bestMatchedLinkSections = sections;
+            }
+        }
+
+        if (bestMatchedLinkSections == null) {
+            throw new NoSuchLinkException("Can't find link for page " + clazz.getName() + ".");
+        }
+
+        StringBuilder result = new StringBuilder(ApplicationContext.getInstance().getContextPath());
         Set<String> usedKeys = new HashSet<String>();
 
-        if (link.indexOf('{') >= 0) {
-            String[] tokens = link.split("/");
+        for (LinkSection section : bestMatchedLinkSections) {
+            String item;
 
+            if (section.isParameter()) {
+                usedKeys.add(section.getParameterName());
+                item = nonEmptyParams.get(section.getParameterName());
+            } else {
+                item = section.getValue();
+            }
+
+            result.append('/').append(item);
+        }
+
+        if (nonEmptyParams.size() > usedKeys.size()) {
             boolean first = true;
-            for (String token : tokens) {
-                if (!first) {
-                    sb.append("/");
-                } else {
-                    first = false;
-                }
-                if (token.startsWith("{") && token.endsWith("}")) {
-                    String key = token.substring(1, token.length() - 1);
-                    sb.append(params.get(key).toString());
-                    usedKeys.add(key);
-                } else {
-                    sb.append(token);
+            for (Map.Entry<String, String> entry : nonEmptyParams.entrySet()) {
+                if (!usedKeys.contains(entry.getKey())) {
+                    if (first) {
+                        result.append('?');
+                        first = false;
+                    } else {
+                        result.append('&');
+                    }
+                    result.append(entry.getKey()).append('=').append(entry.getValue());
                 }
             }
-        } else {
-            sb = new StringBuilder(link);
         }
 
-        StringBuilder query = new StringBuilder();
-
-        for (Map.Entry<String, ?> entry : params.entrySet()) {
-            if (!usedKeys.contains(entry.getKey()) && !isMissingValue(entry.getValue())) {
-                if (query.length() == 0) {
-                    query.append("?");
-                } else {
-                    query.append("&");
-                }
-                query.append(entry.getKey()).append("=").append(entry.getValue().toString());
-            }
-        }
-
-        if (query.length() == 0) {
-            return sb.toString();
-        } else {
-            return sb.append(query).toString();
-        }
+        return result.toString();
     }
 
     private static boolean isMissingValue(Object value) {
-        return (value == null || "".equals(value.toString()));
+        return (value == null || value.toString().isEmpty());
     }
 
     /**
@@ -353,35 +298,6 @@ public class Links {
      * @return Result instance or {@code null} if not found.
      */
     public static LinkMatchResult match(String link) {
-        for (Map.Entry<Class<? extends Page>, Map<String, Link>> listEntry : linksByPage.entrySet()) {
-            final Map<String, Link> patterns = listEntry.getValue();
-
-            if (patterns == null) {
-                continue;
-            }
-
-            synchronized (patterns) {
-                for (Map.Entry<String, Link> patternEntry : patterns.entrySet()) {
-                    String pattern = patternEntry.getKey();
-                    Map<String, String> attrs = match(link, pattern);
-
-                    if (attrs != null) {
-                        return new LinkMatchResult(listEntry.getKey(), pattern, attrs, patternEntry.getValue());
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @param link    Relative link to the page started from "/".
-     *                For example, "/profile/MikeMirzayanov".
-     * @param pattern Link pattern, like "profile/{handle}".
-     * @return Correspondent params map or {@code null} if not matched.
-     */
-    public static Map<String, String> match(String link, String pattern) {
         // Remove anchor.
         if (link.contains("#")) {
             link = link.substring(0, link.lastIndexOf('#'));
@@ -392,46 +308,62 @@ public class Links {
             link = link.substring(0, link.lastIndexOf('?'));
         }
 
-        pattern = "/" + pattern;
+        if (!link.startsWith("/")) {
+            throw new IllegalArgumentException("Link \"" + link + "\" doesn't start with '/'.");
+        }
 
-        String[] linkTokens = link.split("/");
-        String[] patternTokens = pattern.split("/");
+        String[] linkTokens = link.substring(1).split("/");
 
-        if (linkTokens.length != patternTokens.length) {
+        for (Map.Entry<Class<? extends Page>, Map<String, Link>> listEntry : linksByPage.entrySet()) {
+            final Map<String, Link> patterns = listEntry.getValue();
+            if (patterns == null) {
+                continue;
+            }
+
+            //noinspection SynchronizationOnLocalVariableOrMethodParameter
+            synchronized (patterns) {
+                for (Map.Entry<String, Link> patternEntry : patterns.entrySet()) {
+                    String linkText = patternEntry.getKey();
+                    Map<String, String> attrs = match(linkTokens, linkText);
+
+                    if (attrs != null) {
+                        return new LinkMatchResult(listEntry.getKey(), linkText, attrs, patternEntry.getValue());
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param linkTokens    For example, ["profile", "MikeMirzayanov"] for requested link "/profile/MikeMirzayanov".
+     * @param linkText Link pattern, like "profile/{handle}".
+     * @return Correspondent params map or {@code null} if not matched.
+     */
+    private static Map<String, String> match(String[] linkTokens, String linkText) {
+        List<LinkSection> sections = sectionsByLinkText.get(linkText);
+        if (sections == null) {
+            throw new NocturneException("Can't find sections for linkText=\"" + linkText + "\".");
+        }
+
+        if (linkTokens.length != sections.size()) {
             return null;
         } else {
             Map<String, String> attrs = new HashMap<String, String>();
 
-            for (int i = 0; i < patternTokens.length; i++) {
-                if (patternTokens[i].startsWith("{") && patternTokens[i].endsWith("}")) {
-                    String[] parts = patternTokens[i].substring(1, patternTokens[i].length() - 1).split(":");
+            for (int i = 0; i < linkTokens.length; i++) {
+                LinkSection section = sections.get(i);
 
-                    if (parts.length == 1) {
-                        attrs.put(parts[0], linkTokens[i]);
-                        continue;
+                if (section.isParameter()) {
+                    if (!section.getAllowedParameterValues().isEmpty() && !section.getAllowedParameterValues().contains(linkTokens[i])) {
+                        return null;
                     }
-
-                    if (parts.length == 2) {
-                        String[] values = parts[1].split(",");
-                        boolean matched = false;
-                        for (String value : values) {
-                            if (value.equals(linkTokens[i])) {
-                                matched = true;
-                                attrs.put(parts[0], linkTokens[i]);
-                                break;
-                            }
-                        }
-                        if (!matched) {
-                            return null;
-                        }
-                        continue;
+                    attrs.put(section.getParameterName(), linkTokens[i]);
+                } else {
+                    if (!section.getValue().equals(linkTokens[i])) {
+                        return null;
                     }
-
-                    throw new ConfigurationException("Link '" + link + "' is not a valid link.");
-                }
-
-                if (!patternTokens[i].equals(linkTokens[i])) {
-                    return null;
                 }
             }
 
@@ -444,6 +376,84 @@ public class Links {
         /** @param message Error message. */
         public NoSuchLinkException(String message) {
             super(message);
+        }
+    }
+
+    private static List<LinkSection> parseLinkToLinkSections(String linkText) {
+        if (linkText == null || linkText.startsWith("/") || linkText.endsWith("/")) {
+            throw new ConfigurationException("Page link has illegal format, use links like" +
+                    " 'home', 'page/{index}', 'page/{index:1,2,3}'.");
+        }
+
+        String[] sections = linkText.split("/");
+        List<LinkSection> linkSections = new ArrayList<LinkSection>(sections.length);
+        for (String section : sections) {
+            linkSections.add(new LinkSection(section));
+        }
+
+        return linkSections;
+    }
+
+    private static final class LinkSection {
+        private final String section;
+        private final boolean parameter;
+        private final String value;
+        private final String parameterName;
+        private final Set<String> allowedParameterValues;
+
+        /**
+         * @param section Each part of link, i.e. "home" from link "test/home"
+         */
+        private LinkSection(String section) {
+            this.section = section;
+
+            if (section.startsWith("{") && section.endsWith("}")) {
+                value = null;
+                parameter = true;
+
+                String[] parts = section.substring(1, section.length() - 1).split(":");
+
+                if (parts.length == 1) {
+                    parameterName = parts[0];
+                    allowedParameterValues = Collections.emptySet();
+                } else if (parts.length == 2) {
+                    parameterName = parts[0];
+                    allowedParameterValues = new ConcurrentSkipListSet<String>(Arrays.asList(parts[1].split(",")));
+                } else {
+                    throw new ConfigurationException("Link section \"" + section + "\" has invalid format, examples of valid formats: " +
+                            "\"test\", \"{userName}\", \"{id:1,2,3}\".");
+                }
+            } else {
+                value = section;
+                parameter = false;
+                allowedParameterValues = null;
+                parameterName = null;
+            }
+        }
+
+        public boolean isParameter() {
+            return parameter;
+        }
+
+        public String getValue() {
+            if (parameter) {
+                throw new IllegalStateException("Can't read value of parameter section \"" + section + "\".");
+            }
+            return value;
+        }
+
+        public String getParameterName() {
+            if (!parameter) {
+                throw new IllegalStateException("Can't read parameterName of non-parameter section \"" + section + "\".");
+            }
+            return parameterName;
+        }
+
+        public Set<String> getAllowedParameterValues() {
+            if (!parameter) {
+                throw new IllegalStateException("Can't read allowedParameterValues of non-parameter section \"" + section + "\".");
+            }
+            return allowedParameterValues;
         }
     }
 }
