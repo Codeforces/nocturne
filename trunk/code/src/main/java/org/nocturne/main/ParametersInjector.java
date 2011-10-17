@@ -161,7 +161,7 @@ public class ParametersInjector {
 
         if (!processed) {
             throw new ConfigurationException("Field " + field.field.getName() + " of "
-                    + field.field.getDeclaringClass().getName() + " has unexpected type " + clazz.getName() + ".");
+                    + field.field.getDeclaringClass().getName() + " has unexpected type " + clazz.getName() + '.');
         } else {
             setFieldValue(field, assign);
         }
@@ -211,7 +211,7 @@ public class ParametersInjector {
             field.field.set(component, assign);
         } catch (IllegalAccessException e) {
             throw new IllegalArgumentException("Don't have access to set field " + field.field.getName() + " of "
-                    + field.field.getDeclaringClass().getName() + ".");
+                    + field.field.getDeclaringClass().getName() + '.');
         }
     }
 

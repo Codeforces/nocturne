@@ -57,7 +57,7 @@ public class Module {
         try {
             file = new JarFile(FileUtils.toFile(url));
         } catch (IOException e) {
-            throw new ModuleInitializationException("Can't create JarFile instance from " + url + ".", e);
+            throw new ModuleInitializationException("Can't create JarFile instance from " + url + '.', e);
         }
     }
 
@@ -106,7 +106,7 @@ public class Module {
         JarEntry webappEntry = file.getJarEntry("module.xml");
 
         if (webappEntry.isDirectory()) {
-            throw new ModuleInitializationException("Entry module.xml should be file in module " + file.getName() + ".");
+            throw new ModuleInitializationException("Entry module.xml should be file in module " + file.getName() + '.');
         }
 
         InputStream inputStream = null;
@@ -294,11 +294,11 @@ public class Module {
                 if (!entryDir.isDirectory()) {
                     if (entryDir.isFile()) {
                         throw new ModuleInitializationException("Path " + entryDir + " expected " +
-                                "to be a directory by " + file.getName() + ".");
+                                "to be a directory by " + file.getName() + '.');
                     } else {
                         if (!entryDir.mkdirs()) {
                             throw new ModuleInitializationException("Can't create " + entryDir + " for " +
-                                    "module " + file.getName() + ".");
+                                    "module " + file.getName() + '.');
                         }
                     }
                 }

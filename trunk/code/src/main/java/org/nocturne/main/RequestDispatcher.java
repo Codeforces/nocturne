@@ -118,7 +118,7 @@ public class RequestDispatcher {
             pageThrowable = e;
             if (!isClientAbortException(e)) {
                 e.printStackTrace();
-                logger.fatal("Can't process " + request.getRequestURL() + ".", e);
+                logger.fatal("Can't process " + request.getRequestURL() + '.', e);
             }
         } finally {
             handleAfterProcessPage(page, pageThrowable);
@@ -205,7 +205,7 @@ public class RequestDispatcher {
             }
         } catch (Throwable e) {
             pageThrowable = e;
-            logger.fatal("Can't process " + request.getRequestURL() + ".", e);
+            logger.fatal("Can't process " + request.getRequestURL() + '.', e);
         } finally {
             if (page != null) {
                 handleAfterProcessPage(page, pageThrowable);

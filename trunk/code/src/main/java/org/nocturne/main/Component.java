@@ -206,7 +206,7 @@ public abstract class Component {
                     actionMethod.invoke(this, new Object[0]);
                 } else {
                     throw new NocturneException("Can't find action method for component "
-                            + getClass().getName() + " and action parameter = " + actionParameter + ".");
+                            + getClass().getName() + " and action parameter = " + actionParameter + '.');
                 }
             } else {
                 FastMethod invalidMethod = actionMap.getInvalidMethod(actionParameter);
@@ -906,14 +906,14 @@ public abstract class Component {
         try {
             // make it absolute
             if (!target.startsWith("/") && !target.contains("://")) {
-                target = ApplicationContext.getInstance().getContextPath() + "/" + target;
+                target = ApplicationContext.getInstance().getContextPath() + '/' + target;
             }
 
             getResponse().sendRedirect(target);
         } catch (IOException e) {
-            throw new ServletException("Can't redirect to " + target + ".", e);
+            throw new ServletException("Can't redirect to " + target + '.', e);
         }
-        throw new AbortException("Redirected to " + target + ".");
+        throw new AbortException("Redirected to " + target + '.');
     }
 
     /**
@@ -925,7 +925,7 @@ public abstract class Component {
         try {
             getResponse().sendError(code);
         } catch (IOException e) {
-            throw new ServletException("Can't send error " + code + ".", e);
+            throw new ServletException("Can't send error " + code + '.', e);
         }
         throw new AbortException("Send error [code = " + code + "].");
     }
@@ -951,7 +951,7 @@ public abstract class Component {
     public void abortWithReload() {
         String url = getRequest().getRequestURL().toString();
         String queryString = getRequest().getQueryString();
-        abortWithRedirect(url + (queryString != null ? "?" + queryString : ""));
+        abortWithRedirect(url + (queryString != null ? '?' + queryString : ""));
     }
 
     /**

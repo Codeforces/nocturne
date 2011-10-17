@@ -132,7 +132,7 @@ public class DebugResourceFilter implements Filter {
             return;
         }
 
-        throw new org.nocturne.exception.ServletException("Can't set content type for " + path + ".");
+        throw new org.nocturne.exception.ServletException("Can't set content type for " + path + '.');
     }
 
     public void destroy() {

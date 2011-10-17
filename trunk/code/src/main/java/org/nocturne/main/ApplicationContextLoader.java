@@ -33,7 +33,8 @@ import java.util.regex.PatternSyntaxException;
 class ApplicationContextLoader {
     public static final String CONFIGURATION_FILE = "/nocturne.properties";
     private static final Properties properties = new Properties();
-    private static final Pattern SPLIT_ITEMS_PATTERN = Pattern.compile("\\s*;\\s*");
+    private static final Pattern ITEMS_SPLIT_PATTERN = Pattern.compile("\\s*;\\s*");
+    private static final Pattern LANGUAGES_SPLIT_PATTERN = Pattern.compile("[,;\\s]+");
 
     private static void run() {
         setupDebug();
@@ -62,29 +63,29 @@ class ApplicationContextLoader {
 
     private static void setupResetProperties() {
         String strategy = properties.getProperty("nocturne.reset.strategy");
-        if (!StringUtil.isEmptyOrNull(strategy)) {
-            ApplicationContext.getInstance().setResetStrategy(ResetStrategy.valueOf(strategy));
-        } else {
+        if (StringUtil.isEmptyOrNull(strategy)) {
             ApplicationContext.getInstance().setResetStrategy(ResetStrategy.PERSIST);
+        } else {
+            ApplicationContext.getInstance().setResetStrategy(ResetStrategy.valueOf(strategy));
         }
 
         String resetAnnotations = properties.getProperty("nocturne.reset.reset-annotations");
-        if (!StringUtil.isEmptyOrNull(resetAnnotations)) {
-            String[] annotations = SPLIT_ITEMS_PATTERN.split(resetAnnotations);
-            ApplicationContext.getInstance().setResetAnnotations(Arrays.asList(annotations));
-        } else {
+        if (StringUtil.isEmptyOrNull(resetAnnotations)) {
             ApplicationContext.getInstance().setResetAnnotations(Arrays.asList(Reset.class.getName()));
+        } else {
+            String[] annotations = ITEMS_SPLIT_PATTERN.split(resetAnnotations);
+            ApplicationContext.getInstance().setResetAnnotations(Arrays.asList(annotations));
         }
 
         String persistAnnotations = properties.getProperty("nocturne.reset.persist-annotations");
-        if (!StringUtil.isEmptyOrNull(persistAnnotations)) {
-            String[] annotations = SPLIT_ITEMS_PATTERN.split(persistAnnotations);
-            ApplicationContext.getInstance().setPersistAnnotations(Arrays.asList(annotations));
-        } else {
+        if (StringUtil.isEmptyOrNull(persistAnnotations)) {
             ApplicationContext.getInstance().setPersistAnnotations(Arrays.asList(
                     Persist.class.getName(),
                     Inject.class.getName()
             ));
+        } else {
+            String[] annotations = ITEMS_SPLIT_PATTERN.split(persistAnnotations);
+            ApplicationContext.getInstance().setPersistAnnotations(Arrays.asList(annotations));
         }
     }
 
@@ -110,7 +111,7 @@ class ApplicationContextLoader {
         if (properties.containsKey("nocturne.allowed-languages")) {
             String languages = properties.getProperty("nocturne.allowed-languages");
             if (languages != null && !languages.isEmpty()) {
-                String[] tokens = languages.split("[,;\\s]+");
+                String[] tokens = LANGUAGES_SPLIT_PATTERN.split(languages);
                 List<String> list = new ArrayList<String>();
                 for (String token : tokens) {
                     if (!token.isEmpty()) {
@@ -148,7 +149,7 @@ class ApplicationContextLoader {
         if (properties.containsKey("nocturne.debug-captions-dir")) {
             String dir = properties.getProperty("nocturne.debug-captions-dir");
             if (dir != null && !dir.isEmpty()) {
-                if (!(new File(dir).isDirectory()) && ApplicationContext.getInstance().isDebug()) {
+                if (!new File(dir).isDirectory() && ApplicationContext.getInstance().isDebug()) {
                     throw new ConfigurationException("nocturne.debug-captions-dir property should be a directory.");
                 }
                 ApplicationContext.getInstance().setDebugCaptionsDir(dir);
@@ -196,7 +197,7 @@ class ApplicationContextLoader {
         if (properties.containsKey("nocturne.class-reloading-exceptions")) {
             String exceptionsAsString = properties.getProperty("nocturne.class-reloading-exceptions");
             if (exceptionsAsString != null) {
-                exceptions.addAll(listOfNonEmpties(SPLIT_ITEMS_PATTERN.split(exceptionsAsString)));
+                exceptions.addAll(listOfNonEmpties(ITEMS_SPLIT_PATTERN.split(exceptionsAsString)));
             }
         }
         ApplicationContext.getInstance().setClassReloadingExceptions(exceptions);
@@ -209,7 +210,7 @@ class ApplicationContextLoader {
         if (properties.containsKey("nocturne.class-reloading-packages")) {
             String packagesAsString = properties.getProperty("nocturne.class-reloading-packages");
             if (packagesAsString != null) {
-                packages.addAll(listOfNonEmpties(SPLIT_ITEMS_PATTERN.split(packagesAsString)));
+                packages.addAll(listOfNonEmpties(ITEMS_SPLIT_PATTERN.split(packagesAsString)));
             }
         }
         ApplicationContext.getInstance().setClassReloadingPackages(packages);
@@ -222,7 +223,7 @@ class ApplicationContextLoader {
                 try {
                     ApplicationContext.getInstance().setSkipRegex(Pattern.compile(regex));
                 } catch (PatternSyntaxException e) {
-                    throw new ConfigurationException("Parameter nocturne.skip-regex contains invalid pattern.");
+                    throw new ConfigurationException("Parameter nocturne.skip-regex contains invalid pattern.", e);
                 }
             }
         }
@@ -242,7 +243,7 @@ class ApplicationContextLoader {
         if (properties.containsKey("nocturne.page-request-listeners")) {
             String pageRequestListenersAsString = properties.getProperty("nocturne.page-request-listeners");
             if (pageRequestListenersAsString != null) {
-                listeners.addAll(listOfNonEmpties(SPLIT_ITEMS_PATTERN.split(pageRequestListenersAsString)));
+                listeners.addAll(listOfNonEmpties(ITEMS_SPLIT_PATTERN.split(pageRequestListenersAsString)));
             }
         }
         ApplicationContext.getInstance().setPageRequestListeners(listeners);
@@ -253,7 +254,7 @@ class ApplicationContextLoader {
         if (properties.containsKey("nocturne.reloading-class-paths")) {
             String reloadingClassPathsAsString = properties.getProperty("nocturne.reloading-class-paths");
             if (reloadingClassPathsAsString != null) {
-                String[] dirs = SPLIT_ITEMS_PATTERN.split(reloadingClassPathsAsString);
+                String[] dirs = ITEMS_SPLIT_PATTERN.split(reloadingClassPathsAsString);
                 for (String dir : dirs) {
                     if (dir != null && !dir.isEmpty()) {
                         File file = new File(dir);
@@ -281,24 +282,14 @@ class ApplicationContextLoader {
     }
 
     private static void setupDebug() {
-        boolean debug = false;
-
-        if (properties.containsKey("nocturne.debug")) {
-            try {
-                debug = Boolean.valueOf(properties.getProperty("nocturne.debug"));
-            } catch (NullPointerException e) {
-                throw new ConfigurationException("Can't cast nocturne.debug to boolean.");
-            }
-        }
-
-        ApplicationContext.getInstance().setDebug(debug);
+        ApplicationContext.getInstance().setDebug(Boolean.parseBoolean(properties.getProperty("nocturne.debug")));
     }
 
     private static List<String> listOfNonEmpties(String[] strings) {
         List<String> result = new ArrayList<String>(strings.length);
-        for (String string : strings) {
-            if (!StringUtil.isEmptyOrNull(string)) {
-                result.add(string);
+        for (String s : strings) {
+            if (!StringUtil.isEmptyOrNull(s)) {
+                result.add(s);
             }
         }
         return result;
@@ -333,12 +324,10 @@ class ApplicationContextLoader {
         }
 
         Collections.sort(modules, new Comparator<Module>() {
-            public int compare(Module a, Module b) {
-                if (b.getPriority() != a.getPriority()) {
-                    return Integer.valueOf(b.getPriority()).compareTo(a.getPriority());
-                } else {
-                    return a.getName().compareTo(b.getName());
-                }
+            @Override
+            public int compare(Module o1, Module o2) {
+                int priorityComparisonResult = Integer.valueOf(o2.getPriority()).compareTo(o1.getPriority());
+                return priorityComparisonResult == 0 ? o1.getName().compareTo(o2.getName()) : priorityComparisonResult;
             }
         });
 
@@ -357,7 +346,7 @@ class ApplicationContextLoader {
             try {
                 com.google.inject.Module applicationModule = (com.google.inject.Module) ApplicationContext.class.getClassLoader().loadClass(
                         guiceModuleClassName
-                ).newInstance();
+                ).getConstructor().newInstance();
                 module.setModule(applicationModule);
             } catch (Exception e) {
                 throw new ConfigurationException("Can't load application guice module.", e);
@@ -384,8 +373,8 @@ class ApplicationContextLoader {
     }
 
     private static void runModuleStartups() {
-        List<org.nocturne.module.Module> modules = ApplicationContext.getInstance().getModules();
-        for (org.nocturne.module.Module module : modules) {
+        List<Module> modules = ApplicationContext.getInstance().getModules();
+        for (Module module : modules) {
             String startupClassName = module.getStartupClassName();
             if (!startupClassName.isEmpty()) {
                 Runnable runnable;
@@ -397,7 +386,7 @@ class ApplicationContextLoader {
                             + " must implement Runnable.", e);
                 } catch (ClassNotFoundException e) {
                     throw new ModuleInitializationException("Can't load startup class be name "
-                            + startupClassName + ".", e);
+                            + startupClassName + '.', e);
                 }
                 if (runnable != null) {
                     runnable.run();
@@ -406,12 +395,14 @@ class ApplicationContextLoader {
         }
     }
 
-    static synchronized void initialize() {
-        run();
-        initializeModules();
-        setupInjector();
-        runModuleStartups();
-        ApplicationContext.getInstance().setInitialized();
+    static void initialize() {
+        synchronized (ApplicationContextLoader.class) {
+            run();
+            initializeModules();
+            setupInjector();
+            runModuleStartups();
+            ApplicationContext.getInstance().setInitialized();
+        }
     }
 
     static {
@@ -420,12 +411,12 @@ class ApplicationContextLoader {
         try {
             properties.load(inputStream);
         } catch (IOException e) {
-            throw new ConfigurationException("Can't load resource file " + CONFIGURATION_FILE + ".", e);
+            throw new ConfigurationException("Can't load resource file " + CONFIGURATION_FILE + '.', e);
         } finally {
             if (inputStream != null) {
                 try {
                     inputStream.close();
-                } catch (IOException e) {
+                } catch (IOException ignored) {
                     // No operations.
                 }
             }

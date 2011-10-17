@@ -103,7 +103,7 @@ public class PageLoader {
             return ApplicationContext.getInstance().getInjector().getInstance(pageClass);
         } catch (Exception e) {
             throw new ConfigurationException("Can't load page " +
-                    pageClassName + ".", e);
+                    pageClassName + '.', e);
         }
     }
 

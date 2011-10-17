@@ -72,13 +72,13 @@ public class Links {
     public static synchronized void add(Class<? extends Page> clazz) {
         List<Link> linkSet = getLinksViaReflection(clazz);
         if (linkSet.isEmpty()) {
-            throw new ConfigurationException("Can't find link for page " + clazz.getName() + ".");
+            throw new ConfigurationException("Can't find link for page " + clazz.getName() + '.');
         }
 
         String name = getNameViaReflection(clazz);
         if (classesByName.containsKey(name) && !clazz.equals(classesByName.get(name))) {
             throw new ConfigurationException("Can't add page which is not unique by it's name: "
-                    + clazz.getName() + ".");
+                    + clazz.getName() + '.');
         }
         classesByName.put(name, clazz);
 
@@ -181,7 +181,7 @@ public class Links {
         }
 
         if (bestMatchedLinkSections == null) {
-            throw new NoSuchLinkException("Can't find link for page " + clazz.getName() + ".");
+            throw new NoSuchLinkException("Can't find link for page " + clazz.getName() + '.');
         }
 
         StringBuilder result = new StringBuilder(ApplicationContext.getInstance().getContextPath());
@@ -286,7 +286,7 @@ public class Links {
         Class<? extends Page> clazz = classesByName.get(name);
 
         if (clazz == null) {
-            throw new NoSuchLinkException("Can't find link for page " + name + ".");
+            throw new NoSuchLinkException("Can't find link for page " + name + '.');
         } else {
             return getLinkByMap(clazz, params);
         }

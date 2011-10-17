@@ -39,7 +39,7 @@ class ReloadingClassLoader extends ClassLoader {
                     throw new IllegalArgumentException("The path " + classPathDir.getAbsolutePath() + " is not valid URL.", e);
                 }
             } else {
-                throw new IllegalArgumentException("Expected to find directory for the path " + classPathDir.getName() + ".");
+                throw new IllegalArgumentException("Expected to find directory for the path " + classPathDir.getName() + '.');
             }
         }
 
@@ -80,13 +80,13 @@ class ReloadingClassLoader extends ClassLoader {
     private boolean isForceToLoadUsingStandardClassLoader(String name) {
         boolean reload = false;
 
-        String nameWithDot = name + ".";
-        String nameWithDollar = name + "$";
+        String nameWithDot = name + '.';
+        String nameWithDollar = name + '$';
 
         // Check if it is in the reloading packages.
         List<String> classReloadingPackages = ReloadingContext.getInstance().getClassReloadingPackages();
         for (String classReloadingPackage : classReloadingPackages) {
-            if (nameWithDot.startsWith(classReloadingPackage + ".")) {
+            if (nameWithDot.startsWith(classReloadingPackage + '.')) {
                 reload = true;
                 break;
             }
@@ -96,7 +96,7 @@ class ReloadingClassLoader extends ClassLoader {
         if (reload) {
             List<String> exceptions = new LinkedList<String>(ReloadingContext.getInstance().getClassReloadingExceptions());
             for (String exception : exceptions) {
-                if (nameWithDot.startsWith(exception + ".") || nameWithDollar.startsWith(exception + "$")) {
+                if (nameWithDot.startsWith(exception + '.') || nameWithDollar.startsWith(exception + '$')) {
                     reload = false;
                     break;
                 }

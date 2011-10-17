@@ -26,7 +26,7 @@ public class LinksTest extends TestCase {
     }
 
     public void testIndexPage() {
-        assertEquals(CONTEXT_PATH + "/", Links.getLink("IndexPage"));
+        assertEquals(CONTEXT_PATH + '/', Links.getLink("IndexPage"));
         assertEquals(CONTEXT_PATH + "/page/17", Links.getLink("IndexPage", "pageIndex", 17));
         assertEquals(CONTEXT_PATH + "/page/17?i=3", Links.getLink(IndexPage.class, "pageIndex", 17, "i", 3));
 

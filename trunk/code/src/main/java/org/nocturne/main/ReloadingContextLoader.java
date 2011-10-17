@@ -120,7 +120,7 @@ class ReloadingContextLoader {
         try {
             properties.load(inputStream);
         } catch (IOException e) {
-            throw new ConfigurationException("Can't load resource file " + CONFIGURATION_FILE + ".", e);
+            throw new ConfigurationException("Can't load resource file " + CONFIGURATION_FILE + '.', e);
         } finally {
             if (inputStream != null) {
                 try {
