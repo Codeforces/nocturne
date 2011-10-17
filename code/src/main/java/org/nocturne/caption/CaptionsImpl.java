@@ -122,7 +122,7 @@ public class CaptionsImpl implements Captions {
             properties.store(writer, null);
             writer.close();
         } catch (IOException e) {
-            throw new ConfigurationException("Can't write into file " + file + ".", e);
+            throw new ConfigurationException("Can't write into file " + file + '.', e);
         }
     }
 
@@ -149,7 +149,7 @@ public class CaptionsImpl implements Captions {
                         reader.close();
                         propertiesMap.put(language, properties);
                     } catch (IOException e) {
-                        throw new ConfigurationException("Can't load caption properties for language " + language + ".", e);
+                        throw new ConfigurationException("Can't load caption properties for language " + language + '.', e);
                     }
                 }
             }

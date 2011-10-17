@@ -166,10 +166,10 @@ public abstract class Page extends Component {
                             getOutputStream().write(result.getBytes("UTF-8"));
                         }
                     } catch (TemplateException e) {
-                        throw new FreemarkerException("Can't parse template for page " + getClass().getName() + ".", e);
+                        throw new FreemarkerException("Can't parse template for page " + getClass().getName() + '.', e);
                     } catch (IOException e) {
                         if (!e.toString().contains("ClientAbortException")) {
-                            throw new FreemarkerException("Can't parse template for page " + getClass().getName() + ".", e);
+                            throw new FreemarkerException("Can't parse template for page " + getClass().getName() + '.', e);
                         }
                     }
                 }
@@ -179,7 +179,7 @@ public abstract class Page extends Component {
         } catch (AbortException e) {
             // No operations.
         } catch (IOException e) {
-            throw new FreemarkerException("Can't write page " + getClass().getName() + ".", e);
+            throw new FreemarkerException("Can't write page " + getClass().getName() + '.', e);
         }  finally {
             finalizeAfterAction();
         }

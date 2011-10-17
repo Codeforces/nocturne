@@ -73,7 +73,7 @@ public class FileUtil {
 
         if (!destination.exists()) {
             if (!destination.mkdirs()) {
-                throw new IOException("Can't create " + destination + ".");
+                throw new IOException("Can't create " + destination + '.');
             }
         }
 
@@ -101,7 +101,7 @@ public class FileUtil {
         if (file.exists()) {
             if (file.isFile()) {
                 if (!file.delete()) {
-                    throw new IOException("Can't delete " + file + ".");
+                    throw new IOException("Can't delete " + file + '.');
                 }
             } else {
                 String[] children = file.list();
@@ -109,7 +109,7 @@ public class FileUtil {
                     deleteTotaly(new File(file, child));
                 }
                 if (!file.delete()) {
-                    throw new IOException("Can't delete " + file + ".");
+                    throw new IOException("Can't delete " + file + '.');
                 }
             }
         }
@@ -178,7 +178,7 @@ public class FileUtil {
     private static void ensureParentDirectoryExists(File file) throws IOException {
         File parent = file.getParentFile();
         if (!parent.isDirectory() && !parent.mkdirs()) {
-            throw new IOException("Can't create directory " + parent + ".");
+            throw new IOException("Can't create directory " + parent + '.');
         }
     }
 
@@ -355,11 +355,11 @@ public class FileUtil {
      */
     public static void removeFile(File file) throws IOException {
         if (!file.exists()) {
-            throw new IOException("File not found " + file + ".");
+            throw new IOException("File not found " + file + '.');
         }
 
         if (!file.delete()) {
-            throw new IOException("Can't delete " + file + ".");
+            throw new IOException("Can't delete " + file + '.');
         }
     }
 
@@ -397,7 +397,7 @@ public class FileUtil {
             stream.close();
             return bytes.array();
         } else {
-            throw new FileNotFoundException("Can't find " + file + ".");
+            throw new FileNotFoundException("Can't find " + file + '.');
         }
     }
 
@@ -425,7 +425,7 @@ public class FileUtil {
             stream.close();
             return new FirstBytes(truncated, bytes.array());
         } else {
-            throw new FileNotFoundException("Can't find " + file + ".");
+            throw new FileNotFoundException("Can't find " + file + '.');
         }
     }
 

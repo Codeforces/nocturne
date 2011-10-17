@@ -36,14 +36,14 @@ public class ReflectionUtil {
                     return method.invoke(object, args);
                 } catch (Exception e) {
                     throw new ReflectionException("Can't invoke method " + methodName +
-                            " of the class " + clazz.getName() + ".", e);
+                            " of the class " + clazz.getName() + '.', e);
                 }
             }
         }
 
         if (clazz.getSuperclass() == null) {
             throw new ReflectionException("Can't find method " + methodName +
-                    " of the class " + clazz.getName() + ".");
+                    " of the class " + clazz.getName() + '.');
         } else {
             return invoke(clazz.getSuperclass(), object, methodName, args);
         }

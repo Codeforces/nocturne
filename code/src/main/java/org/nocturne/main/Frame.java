@@ -65,9 +65,9 @@ public abstract class Frame extends Component {
                 return result;
             }
         } catch (TemplateException e) {
-            throw new FreemarkerException("Can't parse frame " + getClass().getSimpleName() + ".", e);
+            throw new FreemarkerException("Can't parse frame " + getClass().getSimpleName() + '.', e);
         } catch (IOException e) {
-            throw new FreemarkerException("Can't parse frame " + getClass().getSimpleName() + ".", e);
+            throw new FreemarkerException("Can't parse frame " + getClass().getSimpleName() + '.', e);
         } finally {
             finalizeAfterAction();
         }
