@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -33,7 +33,10 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Links {
     private static final Lock addLinkLock = new ReentrantLock();
 
-    private static final List<Interceptor> interceptors = new CopyOnWriteArrayList<Interceptor>();
+    private static final int INTERCEPTOR_MAX_PERMIT_COUNT = 2 * Runtime.getRuntime().availableProcessors();
+    private static final Semaphore interceptorSemaphore = new Semaphore(INTERCEPTOR_MAX_PERMIT_COUNT);
+    private static final ConcurrentMap<String, Interceptor> interceptorByNameMap =
+            new ConcurrentHashMap<String, Interceptor>();
 
     /**
      * Stores maps for each page class. Each map contains single patterns as keys
@@ -218,8 +221,13 @@ public class Links {
 
         String linkResult = result.toString();
 
-        for (Interceptor interceptor : interceptors) {
-            linkResult = interceptor.process(linkResult, clazz, linkName, params);
+        interceptorSemaphore.acquireUninterruptibly();
+        try {
+            for (Interceptor interceptor : interceptorByNameMap.values()) {
+                linkResult = interceptor.postprocess(linkResult, clazz, linkName, params);
+            }
+        } finally {
+            interceptorSemaphore.release();
         }
 
         return linkResult;
@@ -375,19 +383,22 @@ public class Links {
             throw new NocturneException("Can't find sections for linkText=\"" + linkText + "\".");
         }
 
-        if (linkTokens.length == sections.size()) {
+        int linkTokenCount = linkTokens.length;
+
+        if (linkTokenCount == sections.size()) {
             Map<String, String> attrs = new HashMap<String, String>();
 
-            for (int i = 0; i < linkTokens.length; i++) {
-                LinkSection section = sections.get(i);
+            for (int linkTokenIndex = 0; linkTokenIndex < linkTokenCount; ++linkTokenIndex) {
+                LinkSection section = sections.get(linkTokenIndex);
 
                 if (section.isParameter()) {
-                    if (!section.getAllowedParameterValues().isEmpty() && !section.getAllowedParameterValues().contains(linkTokens[i])) {
+                    if (!section.getAllowedParameterValues().isEmpty()
+                            && !section.getAllowedParameterValues().contains(linkTokens[linkTokenIndex])) {
                         return null;
                     }
-                    attrs.put(section.getParameterName(), linkTokens[i]);
+                    attrs.put(section.getParameterName(), linkTokens[linkTokenIndex]);
                 } else {
-                    if (!section.getValue().equals(linkTokens[i])) {
+                    if (!section.getValue().equals(linkTokens[linkTokenIndex])) {
                         return null;
                     }
                 }
@@ -495,14 +506,68 @@ public class Links {
     /**
      * Adds interceptor to the Links. Link will be processed by interceptors before return.
      *
-     * @param interceptor link interceptor to add
+     * @param name        name of the interceptor to add
+     * @param interceptor interceptor to add
      */
-    public static void addInterceptor(Interceptor interceptor) {
-        interceptors.add(interceptor);
+    public static void addInterceptor(String name, Interceptor interceptor) {
+        ensureInterceptorName(name);
+
+        if (interceptor == null) {
+            throw new IllegalArgumentException("Argument \'interceptor\' is \'null\'.");
+        }
+
+        interceptorSemaphore.acquireUninterruptibly(INTERCEPTOR_MAX_PERMIT_COUNT);
+        try {
+            if (interceptorByNameMap.containsKey(name)) {
+                throw new IllegalStateException("Interceptor with name \'" + name + "\' already added.");
+            }
+            interceptorByNameMap.put(name, interceptor);
+        } finally {
+            interceptorSemaphore.release(INTERCEPTOR_MAX_PERMIT_COUNT);
+        }
     }
 
     /**
-     * Custom link processor. You can add interceptor using {@link #addInterceptor(Interceptor)} method.
+     * Removes interceptor from the Links.
+     *
+     * @param name name of the interceptor to remove
+     */
+    public static void removeInterceptor(String name) {
+        ensureInterceptorName(name);
+
+        interceptorSemaphore.acquireUninterruptibly(INTERCEPTOR_MAX_PERMIT_COUNT);
+        try {
+            interceptorByNameMap.remove(name);
+        } finally {
+            interceptorSemaphore.release(INTERCEPTOR_MAX_PERMIT_COUNT);
+        }
+    }
+
+    /**
+     * Checks if specified interceptor is already added to the Links.
+     *
+     * @param name name of the interceptor to check
+     * @return {@code true} iff interceptor with specified name is added to the Links
+     */
+    public static boolean hasInterceptor(String name) {
+        ensureInterceptorName(name);
+
+        interceptorSemaphore.acquireUninterruptibly(INTERCEPTOR_MAX_PERMIT_COUNT);
+        try {
+            return interceptorByNameMap.containsKey(name);
+        } finally {
+            interceptorSemaphore.release(INTERCEPTOR_MAX_PERMIT_COUNT);
+        }
+    }
+
+    private static void ensureInterceptorName(String name) {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Argument \'name\' is \'null\' or empty.");
+        }
+    }
+
+    /**
+     * Custom link processor. You can add interceptor using {@link #addInterceptor(String, Interceptor)} method.
      */
     public interface Interceptor {
         /**
@@ -514,6 +579,6 @@ public class Links {
          * @param params   parameters of the link
          * @return processed link
          */
-        String process(String link, Class<? extends Page> clazz, @Nullable String linkName, Map<String, ?> params);
+        String postprocess(String link, Class<? extends Page> clazz, @Nullable String linkName, Map<String, ?> params);
     }
 }
