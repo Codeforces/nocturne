@@ -7,9 +7,7 @@ import freemarker.core.Environment;
 import freemarker.template.*;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Generates page link.
@@ -18,8 +16,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class LinkDirective implements TemplateDirectiveModel {
     private static final LinkDirective INSTANCE = new LinkDirective();
-
-    private final List<Interceptor> interceptors = new CopyOnWriteArrayList<Interceptor>();
 
     @Override
     public void execute(Environment env, Map params, TemplateModel[] loopVars, TemplateDirectiveBody body)
@@ -49,26 +45,9 @@ public class LinkDirective implements TemplateDirectiveModel {
         }
     }
 
-    private String getLink(Map params, String name) {
+    private static String getLink(Map params, String name) {
         //noinspection unchecked
-        String link = Links.getLinkByMap(name, params);
-
-        for (Interceptor interceptor : interceptors) {
-            link = interceptor.process(link, name, params);
-        }
-
-        return link;
-    }
-
-    /**
-     * Adds interceptor to the link directive.
-     * Link will be processed by interceptors after all logic of this directive is completed
-     * and before resulting string will be written into the output.
-     *
-     * @param interceptor link directive interceptor to add
-     */
-    public void addInterceptor(Interceptor interceptor) {
-        interceptors.add(interceptor);
+        return Links.getLinkByMap(name, params);
     }
 
     /**
@@ -76,17 +55,5 @@ public class LinkDirective implements TemplateDirectiveModel {
      */
     public static LinkDirective getInstance() {
         return INSTANCE;
-    }
-
-    public interface Interceptor {
-        /**
-         * Link directive calls this method to postprocess link.
-         *
-         * @param link   link to process
-         * @param name   name of the link
-         * @param params parameters of the link
-         * @return processed link
-         */
-        String process(String link, String name, Map params);
     }
 }

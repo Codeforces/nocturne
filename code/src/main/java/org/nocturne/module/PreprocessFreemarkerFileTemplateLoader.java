@@ -23,10 +23,12 @@ public class PreprocessFreemarkerFileTemplateLoader extends FileTemplateLoader {
         super(baseDir);
     }
 
+    @Override
     public Object findTemplateSource(String name) throws IOException {
         return super.findTemplateSource(name);
     }
 
+    @Override
     public Reader getReader(Object templateSource, String encoding) throws IOException {
         Reader reader = super.getReader(templateSource, encoding);
         StringBuffer sb = new StringBuffer();
@@ -52,7 +54,7 @@ public class PreprocessFreemarkerFileTemplateLoader extends FileTemplateLoader {
      *
      * @param sb Content to be processes.
      */
-    private void processText(StringBuffer sb) {
+    private static void processText(StringBuffer sb) {
         int index = 0;
 
         while (index + 1 < sb.length()) {
@@ -61,19 +63,17 @@ public class PreprocessFreemarkerFileTemplateLoader extends FileTemplateLoader {
 
                 if (closeIndex >= 0) {
                     String content = sb.substring(index + 2, closeIndex);
-                    String replacement;
 
                     if (content.startsWith("!")) {
                         throw new UnsupportedOperationException("{{!...}} syntax is no more supported.");
                     }
 
-                    replacement = ApplicationContext.getInstance().$(content);
+                    String replacement = ApplicationContext.getInstance().$(content);
                     sb.replace(index, closeIndex + 2, replacement);
                 }
             }
 
-            index++;
+            ++index;
         }
     }
-
 }
