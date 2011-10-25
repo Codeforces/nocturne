@@ -41,6 +41,6 @@ public @interface Link {
     /**
      * Marker interface for type of link.
      */
-    public static interface Type {
+    interface Type {
     }
 }

@@ -62,7 +62,7 @@ public abstract class Pool<T> {
             for (int i = 0; i < acquireIncrement; i++) {
                 T instance = newInstance();
                 instances.add(instance);
-                createdCount++;
+                ++createdCount;
             }
         }
     }

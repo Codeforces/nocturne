@@ -4,16 +4,21 @@
 
 package org.nocturne.link;
 
+import org.jetbrains.annotations.Nullable;
 import org.nocturne.annotation.Name;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.exception.NocturneException;
 import org.nocturne.main.ApplicationContext;
 import org.nocturne.main.Page;
+import org.nocturne.util.StringUtil;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Handles link pattern methods.
@@ -26,18 +31,26 @@ import java.util.concurrent.ConcurrentSkipListSet;
  * @author Mike Mirzayanov
  */
 public class Links {
+    private static final Lock addLinkLock = new ReentrantLock();
+
+    private static final List<Interceptor> interceptors = new CopyOnWriteArrayList<Interceptor>();
+
     /**
      * Stores maps for each page class. Each map contains single patterns as keys
      * and Link instances as values.
      */
-    private static final Map<Class<? extends Page>, Map<String, Link>> linksByPage =
+    private static final ConcurrentMap<Class<? extends Page>, Map<String, Link>> linksByPage =
             new ConcurrentHashMap<Class<? extends Page>, Map<String, Link>>();
 
-    /** Stores page classes by their names. */
-    private static final Map<String, Class<? extends Page>> classesByName =
+    /**
+     * Stores page classes by their names.
+     */
+    private static final ConcurrentMap<String, Class<? extends Page>> classesByName =
             new ConcurrentHashMap<String, Class<? extends Page>>();
 
-    /** Stores link sections by links. */
+    /**
+     * Stores link sections by links.
+     */
     private static final ConcurrentMap<String, List<LinkSection>> sectionsByLinkText =
             new ConcurrentHashMap<String, List<LinkSection>>();
 
@@ -69,84 +82,64 @@ public class Links {
      *              After it you can get it's link via getLink, or using @link directive
      *              from template. Link may contain template sections, like "profile/{handle}".
      */
-    public static synchronized void add(Class<? extends Page> clazz) {
-        List<Link> linkSet = getLinksViaReflection(clazz);
-        if (linkSet.isEmpty()) {
-            throw new ConfigurationException("Can't find link for page " + clazz.getName() + '.');
-        }
+    public static void add(Class<? extends Page> clazz) {
+        addLinkLock.lock();
 
-        String name = getNameViaReflection(clazz);
-        if (classesByName.containsKey(name) && !clazz.equals(classesByName.get(name))) {
-            throw new ConfigurationException("Can't add page which is not unique by it's name: "
-                    + clazz.getName() + '.');
-        }
-        classesByName.put(name, clazz);
+        try {
+            List<Link> linkSet = getLinksViaReflection(clazz);
+            if (linkSet.isEmpty()) {
+                throw new ConfigurationException("Can't find link for page " + clazz.getName() + '.');
+            }
 
-        Map<String, Link> links = linksByPage.get(clazz);
-        if (links == null) {
-            // It is important that used synchronizedMap, because of "synchronized(links) {..}" later in code.
-            links = Collections.synchronizedMap(new LinkedHashMap<String, Link>());
-        }
+            String name = getNameViaReflection(clazz);
+            if (classesByName.containsKey(name) && !clazz.equals(classesByName.get(name))) {
+                throw new ConfigurationException("Can't add page which is not unique by it's name: "
+                        + clazz.getName() + '.');
+            }
+            classesByName.put(name, clazz);
 
-        for (Link link : linkSet) {
-            String[] pageLinks = link.value().split(";");
-            for (String pageLink : pageLinks) {
-                if (!sectionsByLinkText.containsKey(pageLink)) {
-                    sectionsByLinkText.putIfAbsent(pageLink, parseLinkToLinkSections(pageLink));
-                }
+            Map<String, Link> links = linksByPage.get(clazz);
+            if (links == null) {
+                // It is important that used synchronizedMap, because of "synchronized(links) {..}" later in code.
+                links = Collections.synchronizedMap(new LinkedHashMap<String, Link>());
+            }
 
-                for (Map<String, Link> linkMap : linksByPage.values()) {
-                    if (linkMap.containsKey(pageLink)) {
+            for (Link link : linkSet) {
+                String[] pageLinks = StringUtil.Patterns.SEMICOLON_PATTERN.split(link.value());
+                for (String pageLink : pageLinks) {
+                    if (!sectionsByLinkText.containsKey(pageLink)) {
+                        sectionsByLinkText.putIfAbsent(pageLink, parseLinkToLinkSections(pageLink));
+                    }
+
+                    for (Map<String, Link> linkMap : linksByPage.values()) {
+                        if (linkMap.containsKey(pageLink)) {
+                            throw new ConfigurationException("Page link \"" + pageLink + "\" already registered.");
+                        }
+                    }
+                    if (links.containsKey(pageLink)) {
                         throw new ConfigurationException("Page link \"" + pageLink + "\" already registered.");
                     }
-                }
-                if (links.containsKey(pageLink)) {
-                    throw new ConfigurationException("Page link \"" + pageLink + "\" already registered.");
-                }
 
-                links.put(pageLink, link);
+                    links.put(pageLink, link);
+                }
             }
-        }
 
-        linksByPage.put(clazz, links);
-    }
-
-    /**
-     * @param clazz Page class.
-     * @return Returns link for page. If there many links for page, returns
-     *         one of them, which doesn't use parameters. Throws NoSuchLinkException
-     *         if no such link exists.
-     */
-    public static String getLink(Class<? extends Page> clazz) {
-        return getLinkByMap(clazz, Collections.<String, Object>emptyMap());
-    }
-
-    /**
-     * @param name Page name. Use @Name annotation to set page name.
-     *             Use simple class name if no @Name used.
-     * @return Returns link for page. If there many links for page, returns
-     *         one of them, which doesn't use parameters. Throws NoSuchLinkException
-     *         if no such link exists.
-     */
-    public static String getLink(String name) {
-        Class<? extends Page> clazz = classesByName.get(name);
-
-        if (clazz == null) {
-            throw new NoSuchLinkException("Can't find link for page \"" + name + "\", " +
-                    "because of no such page has been registered.");
-        } else {
-            return getLink(clazz);
+            linksByPage.put(clazz, links);
+        } finally {
+            addLinkLock.unlock();
         }
     }
 
     /**
-     * @param clazz  Page class.
-     * @param params parameters for substitution (for example link "profile/{handle}"
-     *               may use "handle" key in the map.
-     * @return Returns link for page. If there many links for page, returns
-     *         one of them, which matches better. Can throw NoSuchLinkException.
+     * @param clazz    Page class.
+     * @param linkName desired {@link Link#name() name} of the link
+     * @param params   parameters for substitution (for example link "profile/{handle}"
+     *                 may use "handle" key in the map.
+     * @return link for page. If there many links for page, returns one of them, which matches better
+     * @throws NoSuchLinkException if no such link exists
      */
-    public static String getLinkByMap(Class<? extends Page> clazz, Map<String, ?> params) {
+    @SuppressWarnings({"OverlyComplexMethod", "OverlyLongMethod"})
+    public static String getLinkByMap(Class<? extends Page> clazz, @Nullable String linkName, Map<String, ?> params) {
         Map<String, String> nonEmptyParams = new HashMap<String, String>();
         for (Map.Entry<String, ?> entry : params.entrySet()) {
             Object value = entry.getValue();
@@ -155,18 +148,20 @@ public class Links {
             }
         }
 
-        Set<String> linkTexts = linksByPage.get(clazz).keySet();
-
         int bestMatchedCount = -1;
         List<LinkSection> bestMatchedLinkSections = null;
 
-        for (String linkText : linkTexts) {
-            List<LinkSection> sections = sectionsByLinkText.get(linkText);
+        for (Map.Entry<String, Link> entry : linksByPage.get(clazz).entrySet()) {
+            if (linkName != null && !linkName.isEmpty() && !linkName.equals(entry.getValue().name())) {
+                continue;
+            }
+
+            List<LinkSection> sections = sectionsByLinkText.get(entry.getKey());
             boolean matched = true;
             int matchedCount = 0;
             for (LinkSection section : sections) {
                 if (section.isParameter()) {
-                    matchedCount++;
+                    ++matchedCount;
                     String value = nonEmptyParams.get(section.getParameterName());
                     if (value == null || (!section.getAllowedParameterValues().isEmpty() && !section.getAllowedParameterValues().contains(value))) {
                         matched = false;
@@ -181,7 +176,13 @@ public class Links {
         }
 
         if (bestMatchedLinkSections == null) {
-            throw new NoSuchLinkException("Can't find link for page " + clazz.getName() + '.');
+            if (linkName == null || linkName.isEmpty()) {
+                throw new NoSuchLinkException("Can't find link for page " + clazz.getName() + '.');
+            } else {
+                throw new NoSuchLinkException(
+                        "Can't find link with name \'" + linkName + "\' for page " + clazz.getName() + '.'
+                );
+            }
         }
 
         StringBuilder result = new StringBuilder(ApplicationContext.getInstance().getContextPath());
@@ -215,63 +216,44 @@ public class Links {
             }
         }
 
-        return result.toString();
-    }
+        String linkResult = result.toString();
 
-    private static boolean isMissingValue(Object value) {
-        return (value == null || value.toString().isEmpty());
+        for (Interceptor interceptor : interceptors) {
+            linkResult = interceptor.process(linkResult, clazz, linkName, params);
+        }
+
+        return linkResult;
     }
 
     /**
      * @param clazz  Page class.
-     * @param params Even length sequence of Objects. Even elements mean keys and odd
-     *               values of parameters map. For example ["handle", "MikeMirzayanov", "topic", 123]
-     *               means map ["handle" => "MikeMirzayanov", "topic" => 123]. Method skips params with null value.
+     * @param params parameters for substitution (for example link "profile/{handle}"
+     *               may use "handle" key in the map.
      * @return Returns link for page. If there many links for page, returns
      *         one of them, which matches better. Throws NoSuchLinkException
      *         if no such link exists.
      */
-    public static String getLink(Class<? extends Page> clazz, Object... params) {
-        Map<String, Object> map = convertArrayToMap(params);
-        return getLinkByMap(clazz, map);
+    public static String getLinkByMap(Class<? extends Page> clazz, Map<String, ?> params) {
+        return getLinkByMap(clazz, null, params);
     }
 
     /**
-     * @param name   Page class.
-     * @param params Even length sequence of Objects. Even elements mean keys and odd
-     *               values of parameters map. For example ["handle", "MikeMirzayanov", "topic", 123]
-     *               means map ["handle" => "MikeMirzayanov", "topic" => 123]. Method skips params with null value.
+     * @param name     Page name.
+     * @param linkName desired {@link Link#name() name} of the link
+     * @param params   parameters for substitution (for example link "profile/{handle}"
+     *                 may use "handle" key in the map.
      * @return Returns link for page. If there many links for page, returns
      *         one of them, which matches better. Throws NoSuchLinkException
      *         if no such link exists.
      */
-    public static String getLink(String name, Object... params) {
-        Map<String, Object> map = convertArrayToMap(params);
-        return getLinkByMap(name, map);
-    }
+    public static String getLinkByMap(String name, @Nullable String linkName, Map<String, ?> params) {
+        Class<? extends Page> clazz = classesByName.get(name);
 
-    /**
-     * @param params Array of values.
-     * @return Correspondent map.
-     */
-    private static Map<String, Object> convertArrayToMap(Object... params) {
-        if (params.length % 2 != 0) {
-            throw new IllegalArgumentException("Params should contain even number of elements.");
+        if (clazz == null) {
+            throw new NoSuchLinkException("Can't find link for page " + name + '.');
+        } else {
+            return getLinkByMap(clazz, linkName, params);
         }
-
-        Map<String, Object> map = new HashMap<String, Object>();
-
-        boolean isKey = true;
-        String key = null;
-        for (Object param : params) {
-            if (isKey) {
-                key = param.toString();
-            } else {
-                map.put(key, param);
-            }
-            isKey ^= true;
-        }
-        return map;
     }
 
     /**
@@ -283,13 +265,59 @@ public class Links {
      *         if no such link exists.
      */
     public static String getLinkByMap(String name, Map<String, ?> params) {
-        Class<? extends Page> clazz = classesByName.get(name);
+        return getLinkByMap(name, null, params);
+    }
 
-        if (clazz == null) {
-            throw new NoSuchLinkException("Can't find link for page " + name + '.');
-        } else {
-            return getLinkByMap(clazz, params);
+    private static boolean isMissingValue(Object value) {
+        return value == null || value.toString().isEmpty();
+    }
+
+    /**
+     * @param params Array of values.
+     * @return Correspondent map.
+     */
+    private static Map<String, Object> convertArrayToMap(Object... params) {
+        int paramCount = params.length;
+
+        if (paramCount == 0) {
+            return Collections.emptyMap();
         }
+
+        if (paramCount % 2 != 0) {
+            throw new IllegalArgumentException("Params should contain even number of elements.");
+        }
+
+        Map<String, Object> map = new HashMap<String, Object>();
+
+        for (int paramIndex = 0; paramIndex < paramCount; paramIndex += 2) {
+            map.put(params[paramIndex].toString(), params[paramIndex + 1]);
+        }
+
+        return map;
+    }
+
+    /**
+     * @param clazz  Page class.
+     * @param params Even length sequence of Objects. Even elements mean keys and odd
+     *               values of parameters map. For example ["handle", "MikeMirzayanov", "topic", 123]
+     *               means map ["handle" => "MikeMirzayanov", "topic" => 123]. Method skips params with null value.
+     * @return link for page. If there many links for page, returns one of them, which matches better
+     * @throws NoSuchLinkException if no such link exists
+     */
+    public static String getLink(Class<? extends Page> clazz, Object... params) {
+        return getLinkByMap(clazz, null, convertArrayToMap(params));
+    }
+
+    /**
+     * @param name   Page name.
+     * @param params Even length sequence of Objects. Even elements mean keys and odd
+     *               values of parameters map. For example ["handle", "MikeMirzayanov", "topic", 123]
+     *               means map ["handle" => "MikeMirzayanov", "topic" => 123]. Method skips params with null value.
+     * @return link for page. If there many links for page, returns one of them, which matches better
+     * @throws NoSuchLinkException if no such link exists
+     */
+    public static String getLink(String name, Object... params) {
+        return getLinkByMap(name, null, convertArrayToMap(params));
     }
 
     /**
@@ -312,10 +340,10 @@ public class Links {
             throw new IllegalArgumentException("Link \"" + link + "\" doesn't start with '/'.");
         }
 
-        String[] linkTokens = link.substring(1).split("/");
+        String[] linkTokens = StringUtil.Patterns.SLASH_PATTERN.split(link.substring(1));
 
         for (Map.Entry<Class<? extends Page>, Map<String, Link>> listEntry : linksByPage.entrySet()) {
-            final Map<String, Link> patterns = listEntry.getValue();
+            Map<String, Link> patterns = listEntry.getValue();
             if (patterns == null) {
                 continue;
             }
@@ -337,8 +365,8 @@ public class Links {
     }
 
     /**
-     * @param linkTokens    For example, ["profile", "MikeMirzayanov"] for requested link "/profile/MikeMirzayanov".
-     * @param linkText Link pattern, like "profile/{handle}".
+     * @param linkTokens For example, ["profile", "MikeMirzayanov"] for requested link "/profile/MikeMirzayanov".
+     * @param linkText   Link pattern, like "profile/{handle}".
      * @return Correspondent params map or {@code null} if not matched.
      */
     private static Map<String, String> match(String[] linkTokens, String linkText) {
@@ -347,9 +375,7 @@ public class Links {
             throw new NocturneException("Can't find sections for linkText=\"" + linkText + "\".");
         }
 
-        if (linkTokens.length != sections.size()) {
-            return null;
-        } else {
+        if (linkTokens.length == sections.size()) {
             Map<String, String> attrs = new HashMap<String, String>();
 
             for (int i = 0; i < linkTokens.length; i++) {
@@ -368,12 +394,19 @@ public class Links {
             }
 
             return attrs;
+        } else {
+            return null;
         }
     }
 
-    /** If case of getLink-like methods if they can't find requested link. */
+    /**
+     * If case of getLink-like methods if they can't find requested link.
+     */
+    @SuppressWarnings({"DeserializableClassInSecureContext", "UncheckedExceptionClass"})
     public static class NoSuchLinkException extends RuntimeException {
-        /** @param message Error message. */
+        /**
+         * @param message Error message.
+         */
         public NoSuchLinkException(String message) {
             super(message);
         }
@@ -385,7 +418,7 @@ public class Links {
                     " 'home', 'page/{index}', 'page/{index:1,2,3}'.");
         }
 
-        String[] sections = linkText.split("/");
+        String[] sections = StringUtil.Patterns.SLASH_PATTERN.split(linkText);
         List<LinkSection> linkSections = new ArrayList<LinkSection>(sections.length);
         for (String section : sections) {
             linkSections.add(new LinkSection(section));
@@ -411,14 +444,16 @@ public class Links {
                 value = null;
                 parameter = true;
 
-                String[] parts = section.substring(1, section.length() - 1).split(":");
+                String[] parts = StringUtil.Patterns.COLON_PATTERN.split(section.substring(1, section.length() - 1));
 
                 if (parts.length == 1) {
                     parameterName = parts[0];
                     allowedParameterValues = Collections.emptySet();
                 } else if (parts.length == 2) {
                     parameterName = parts[0];
-                    allowedParameterValues = new ConcurrentSkipListSet<String>(Arrays.asList(parts[1].split(",")));
+                    allowedParameterValues = new ConcurrentSkipListSet<String>(
+                            Arrays.asList(StringUtil.Patterns.COMMA_PATTERN.split(parts[1]))
+                    );
                 } else {
                     throw new ConfigurationException("Link section \"" + section + "\" has invalid format, examples of valid formats: " +
                             "\"test\", \"{userName}\", \"{id:1,2,3}\".");
@@ -453,7 +488,32 @@ public class Links {
             if (!parameter) {
                 throw new IllegalStateException("Can't read allowedParameterValues of non-parameter section \"" + section + "\".");
             }
-            return allowedParameterValues;
+            return Collections.unmodifiableSet(allowedParameterValues);
         }
+    }
+
+    /**
+     * Adds interceptor to the Links. Link will be processed by interceptors before return.
+     *
+     * @param interceptor link interceptor to add
+     */
+    public static void addInterceptor(Interceptor interceptor) {
+        interceptors.add(interceptor);
+    }
+
+    /**
+     * Custom link processor. You can add interceptor using {@link #addInterceptor(Interceptor)} method.
+     */
+    public interface Interceptor {
+        /**
+         * This method will be called to postprocess link.
+         *
+         * @param link     link to process
+         * @param clazz    page class
+         * @param linkName {@link Link#name() name} of the link
+         * @param params   parameters of the link
+         * @return processed link
+         */
+        String process(String link, Class<? extends Page> clazz, @Nullable String linkName, Map<String, ?> params);
     }
 }

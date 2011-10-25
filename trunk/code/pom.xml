@@ -5,6 +5,7 @@
     <artifactId>nocturne</artifactId>
     <version>1.1.1-SNAPSHOT</version>
     <packaging>jar</packaging>
+
     <url>http://code.google.com/p/nocturne/</url>
     <inceptionYear>2009</inceptionYear>
     <name>Nocturne web framework</name>
@@ -75,6 +76,11 @@
             <groupId>net.sf.mime-util</groupId>
             <artifactId>mime-util</artifactId>
             <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.intellij</groupId>
+            <artifactId>annotations</artifactId>
+            <version>9.0.4</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>

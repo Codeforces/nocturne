@@ -10,7 +10,7 @@ package org.nocturne.validation;
  * @author Mike Mirzayanov
  */
 public class EnglishValidator extends Validator {
-    private String message = null;
+    private String message;
 
     public EnglishValidator() {
     }
@@ -19,6 +19,7 @@ public class EnglishValidator extends Validator {
         this.message = message;
     }
 
+    @Override
     public void run(String value) throws ValidationException {
         if (value != null) {
             char[] chars = value.toCharArray();
@@ -28,10 +29,10 @@ public class EnglishValidator extends Validator {
 
             for (char c : chars) {
                 if (c < 9) {
-                    specialCount++;
+                    ++specialCount;
                 }
                 if (c > 127) {
-                    nonAsciiCount++;
+                    ++nonAsciiCount;
                 }
             }
 
