@@ -1,11 +1,14 @@
 package org.nocturne.link;
 
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.link.pages.*;
 import org.nocturne.main.ApplicationContextHelper;
 import org.nocturne.main.Page;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,16 +29,42 @@ public class LinksTest extends TestCase {
     }
 
     public void testIndexPage() {
+        internalTestIndexPageWithoutInterceptors();
+
+        Links.addInterceptor("testInterceptor", new Links.Interceptor() {
+            @Override
+            public String postprocess(
+                    String link, Class<? extends Page> clazz, @Nullable String linkName, Map<String, ?> params) {
+                return link.replace("vip", "test");
+            }
+        });
+
         assertEquals(CONTEXT_PATH + '/', Links.getLink("IndexPage"));
         assertEquals(CONTEXT_PATH + "/page/17", Links.getLink("IndexPage", "pageIndex", 17));
         assertEquals(CONTEXT_PATH + "/page/17?i=3", Links.getLink(IndexPage.class, "pageIndex", 17, "i", 3));
+        assertEquals(CONTEXT_PATH + '/', Links.getLinkByMap(IndexPage.class, null, Collections.<String, Object>emptyMap()));
+        assertEquals(CONTEXT_PATH + "/testIndex", Links.getLinkByMap(IndexPage.class, "vipLink", Collections.<String, Object>emptyMap()));
 
-        assertEqualsLinkMatchResult(Links.match("/index"), IndexPage.class, "index");
-        assertEqualsLinkMatchResult(Links.match("/index?a=b"), IndexPage.class, "index");
-        assertEqualsLinkMatchResult(Links.match("/index/a"), null, null);
-        assertEqualsLinkMatchResult(Links.match("/"), IndexPage.class, "");
-        assertEqualsLinkMatchResult(Links.match("/page/17"), IndexPage.class, "page/{pageIndex}", "pageIndex", "17");
-        assertEqualsLinkMatchResult(Links.match("/index/page/17"), IndexPage.class, "index/page/{pageIndex}", "pageIndex", "17");
+        Links.removeInterceptor("testInterceptor");
+
+        internalTestIndexPageWithoutInterceptors();
+    }
+
+    private static void internalTestIndexPageWithoutInterceptors() {
+        assertEquals(CONTEXT_PATH + '/', Links.getLink("IndexPage"));
+        assertEquals(CONTEXT_PATH + "/page/17", Links.getLink("IndexPage", "pageIndex", 17));
+        assertEquals(CONTEXT_PATH + "/page/17?i=3", Links.getLink(IndexPage.class, "pageIndex", 17, "i", 3));
+        assertEquals(CONTEXT_PATH + '/', Links.getLinkByMap(IndexPage.class, null, Collections.<String, Object>emptyMap()));
+        assertEquals(CONTEXT_PATH + "/vipIndex", Links.getLinkByMap(IndexPage.class, "vipLink", Collections.<String, Object>emptyMap()));
+
+        assertEqualsLinkMatchResultWithName(Links.match("/index"), IndexPage.class, "index", null);
+        assertEqualsLinkMatchResultWithName(Links.match("/index?a=b"), IndexPage.class, "index", null);
+        assertEqualsLinkMatchResultWithName(Links.match("/index/a"), null, null, null);
+        assertEqualsLinkMatchResultWithName(Links.match("/"), IndexPage.class, "", null);
+        assertEqualsLinkMatchResultWithName(Links.match("/page/17"), IndexPage.class, "page/{pageIndex}", null, "pageIndex", "17");
+        assertEqualsLinkMatchResultWithName(Links.match("/index/page/17"), IndexPage.class, "index/page/{pageIndex}", null, "pageIndex", "17");
+        assertEqualsLinkMatchResultWithName(Links.match("/vipIndex"), IndexPage.class, "vipIndex", "vipLink");
+        assertEqualsLinkMatchResultWithName(Links.match("/vipPage/1"), IndexPage.class, "vipPage/{pageIndex}", "vipLink", "pageIndex", "1");
     }
 
     public void testLongLinkedPage() {
@@ -104,7 +133,9 @@ public class LinksTest extends TestCase {
         }, ConfigurationException.class);
     }
 
-    private void assertEqualsLinkMatchResult(LinkMatchResult linkMatchResult, Class<? extends Page> clazz, String pattern, String... attributes) {
+    private static void assertEqualsLinkMatchResult(
+            LinkMatchResult linkMatchResult, @Nullable Class<? extends Page> clazz, @Nullable String pattern,
+            String... attributes) {
         if (clazz == null) {
             assertNull(linkMatchResult);
             return;
@@ -113,6 +144,23 @@ public class LinksTest extends TestCase {
         assertEquals(clazz, linkMatchResult.getPageClass());
         assertEquals(pattern, linkMatchResult.getPattern());
         assertEquals(convertArrayToMap(attributes), linkMatchResult.getAttributes());
+    }
+
+    private static void assertEqualsLinkMatchResultWithName(
+            LinkMatchResult linkMatchResult, @Nullable Class<? extends Page> clazz, @Nullable String pattern,
+            @Nullable String linkName, String... attributes) {
+        if (clazz == null) {
+            assertNull(linkMatchResult);
+            return;
+        }
+
+        assertEquals(clazz, linkMatchResult.getPageClass());
+        assertEquals(pattern, linkMatchResult.getPattern());
+        assertEquals(convertArrayToMap(attributes), linkMatchResult.getAttributes());
+        assertEquals(
+                linkName == null ? "" : linkName,
+                linkMatchResult.getLink().name() == null ? "" : linkMatchResult.getLink().name()
+        );
     }
 
     private static Map<String, String> convertArrayToMap(String... params) {
@@ -135,7 +183,7 @@ public class LinksTest extends TestCase {
         return map;
     }
 
-    private void assertThrows(Invokable invokable, Class<? extends Throwable> throwableClass) {
+    private static void assertThrows(Invokable invokable, Class<? extends Throwable> throwableClass) {
         Throwable throwable = null;
 
         try {
