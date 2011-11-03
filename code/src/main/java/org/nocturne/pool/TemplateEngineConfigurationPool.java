@@ -27,12 +27,13 @@ public class TemplateEngineConfigurationPool extends Pool<Configuration> {
     private static final Logger logger = Logger.getLogger(TemplateEngineConfigurationPool.class);
     private final FilterConfig filterConfig;
 
-    private static AtomicLong count = new AtomicLong(0);
+    private static final AtomicLong count = new AtomicLong(0);
 
     public TemplateEngineConfigurationPool(FilterConfig filterConfig) {
         this.filterConfig = filterConfig;
     }
 
+    @Override
     protected Configuration newInstance() {
         try {
             File directory = new File(ApplicationContext.getInstance().getTemplatesPath());
@@ -64,7 +65,7 @@ public class TemplateEngineConfigurationPool extends Pool<Configuration> {
     }
 
     @SuppressWarnings({"unchecked"})
-    private void setupTemplateLoaderClass(Configuration templateEngineConfiguration) {
+    private static void setupTemplateLoaderClass(Configuration templateEngineConfiguration) {
         templateEngineConfiguration.setTemplateLoader(new ApplicationTemplateLoader());
     }
 }
