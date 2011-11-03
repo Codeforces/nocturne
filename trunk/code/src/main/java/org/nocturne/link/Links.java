@@ -33,7 +33,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Links {
     private static final Lock addLinkLock = new ReentrantLock();
 
-    private static final int INTERCEPTOR_MAX_PERMIT_COUNT = 2 * Runtime.getRuntime().availableProcessors();
+    private static final int INTERCEPTOR_MAX_PERMIT_COUNT = 8 * Runtime.getRuntime().availableProcessors();
     private static final Semaphore interceptorSemaphore = new Semaphore(INTERCEPTOR_MAX_PERMIT_COUNT);
     private static final ConcurrentMap<String, Interceptor> interceptorByNameMap =
             new ConcurrentHashMap<String, Interceptor>();
