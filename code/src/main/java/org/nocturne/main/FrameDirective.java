@@ -22,6 +22,7 @@ public class FrameDirective implements TemplateDirectiveModel {
         // No operations.
     }
 
+    @Override
     public void execute(Environment environment, Map map, TemplateModel[] templateModels, TemplateDirectiveBody templateDirectiveBody) throws TemplateException, IOException {
         if (map.size() != 1) {
             throw new TemplateException("Frame directive expects the only 'name' argument.", environment);

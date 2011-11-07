@@ -56,6 +56,7 @@ class ReloadingClassLoader extends ClassLoader {
      * @param resolve Resolve.
      * @return Class Loaded class.
      */
+    @Override
     public Class loadClass(String name, boolean resolve) throws ClassNotFoundException {
         return delegationClassLoader.loadClass(name, resolve);
     }
@@ -111,6 +112,7 @@ class ReloadingClassLoader extends ClassLoader {
             super(urls);
         }
 
+        @Override
         protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
             // Use standard class loader?
             if (isForceToLoadUsingStandardClassLoader(name)) {

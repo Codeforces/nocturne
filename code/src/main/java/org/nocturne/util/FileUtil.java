@@ -431,6 +431,7 @@ public class FileUtil {
 
     /** Accepts not fidden files. */
     public static class NotHiddenFileFilter implements FilenameFilter {
+        @Override
         public boolean accept(File dir, String name) {
             return !new File(dir, name).isHidden();
         }

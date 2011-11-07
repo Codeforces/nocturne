@@ -56,6 +56,7 @@ public class ApplicationTemplateLoader implements TemplateLoader {
         }
     }
 
+    @Override
     public Object findTemplateSource(String s) throws IOException {
         if (applicationContext.isDebug()) {
             for (Module module : modules) {
@@ -69,6 +70,7 @@ public class ApplicationTemplateLoader implements TemplateLoader {
         return fileTemplateLoader.findTemplateSource(s);
     }
 
+    @Override
     public long getLastModified(Object o) {
         if (applicationContext.isDebug() && loadersByTemplate.containsKey(o)) {
             return loadersByTemplate.get(o).getLastModified(o);
@@ -76,6 +78,7 @@ public class ApplicationTemplateLoader implements TemplateLoader {
         return fileTemplateLoader.getLastModified(o);
     }
 
+    @Override
     public Reader getReader(Object o, String s) throws IOException {
         logger.info("Invoked getReader [s=" + s + ", o=" + o + "].");
         
@@ -86,6 +89,7 @@ public class ApplicationTemplateLoader implements TemplateLoader {
         return fileTemplateLoader.getReader(o, s);
     }
 
+    @Override
     public void closeTemplateSource(Object o) throws IOException {
         if (applicationContext.isDebug() && loadersByTemplate.containsKey(o)) {
             TemplateLoader loader = loadersByTemplate.get(o);

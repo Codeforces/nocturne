@@ -30,6 +30,7 @@ public class OptionValidator extends Validator {
      *          localized via captions value inside ValidationException,
      *          like {@code return new ValidationException($("Field can't be empty"));}.
      */
+    @Override
     public void run(String value) throws ValidationException {
         for (Object option : options) {
             if (option == null && value == null) {

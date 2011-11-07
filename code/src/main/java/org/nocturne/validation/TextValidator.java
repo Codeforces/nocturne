@@ -6,6 +6,7 @@ package org.nocturne.validation;
  * @author Mike Mirzayanov
  */
 public class TextValidator extends Validator {
+    @Override
     public void run(String value) throws ValidationException {
         for (int i = 0; i < value.length(); i++) {
             if (value.charAt(i) < 9) {

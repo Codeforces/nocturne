@@ -1038,6 +1038,7 @@ public abstract class Component {
      */
     public boolean runValidation() {
         return runValidation(new ErrorValidationHandler() {
+            @Override
             public void onError(String fieldName, String errorText) {
                 // No operations.
             }
@@ -1056,6 +1057,7 @@ public abstract class Component {
         final Map<String, String> errors = new LinkedHashMap<String, String>();
 
         boolean result = runValidation(new ErrorValidationHandler() {
+            @Override
             public void onError(String fieldName, String errorText) {
                 errors.put("error__" + fieldName, errorText);
             }
@@ -1107,7 +1109,7 @@ public abstract class Component {
             }
         }
 
-        getResponse().setContentType("application/json");
+        response.setContentType("application/json");
         Writer writer = getWriter();
         try {
             writer.write(gson.toJson(params, mapType));

@@ -33,6 +33,7 @@ public class DebugResourceFilter implements Filter {
         // No operations.
     }
 
+    @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         if (ReloadingContext.getInstance().isDebug()) {
             DispatchFilter.updateRequestDispatcher();
@@ -135,6 +136,7 @@ public class DebugResourceFilter implements Filter {
         throw new org.nocturne.exception.ServletException("Can't set content type for " + path + '.');
     }
 
+    @Override
     public void destroy() {
     }
 }

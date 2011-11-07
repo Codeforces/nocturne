@@ -15,6 +15,7 @@ public class WordValidator extends Validator {
      *                             localized via captions value inside ValidationException,
      *                             like {@code return new ValidationException($("Field can't be empty"));}.
      */
+    @Override
     public void run(String value) throws ValidationException {
         if (!value.matches("\\w+")) {
             throw new ValidationException($("Field should contain letters, digits and underscore characters"));

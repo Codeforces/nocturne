@@ -37,6 +37,7 @@ public @interface Parameter {
         /** Do not strip any characters. */
         NONE {
             /** @see org.nocturne.annotation.Parameter.StripMode#strip(String) */
+            @Override
             public String strip(String value) {
                 return value;
             }
@@ -45,6 +46,7 @@ public @interface Parameter {
         /** Leave only safe chars: strip slashes, quotes, angle brackets, ampersand and low-code chars. Also makes trim(). */
         SAFE {
             /** @see org.nocturne.annotation.Parameter.StripMode#strip(String) */
+            @Override
             public String strip(String value) {
                 if (value != null) {
                     char[] chars = value.toCharArray();
@@ -71,6 +73,7 @@ public @interface Parameter {
             }
 
             /** @see org.nocturne.annotation.Parameter.StripMode#strip(String) */
+            @Override
             public String strip(String value) {
                 if (value != null) {
                     char[] chars = value.toCharArray();
