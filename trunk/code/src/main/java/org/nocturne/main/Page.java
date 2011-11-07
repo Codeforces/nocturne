@@ -185,6 +185,7 @@ public abstract class Page extends Component {
         }
     }
 
+    @Override
     void prepareForAction() {
         setupCurrentPage();
         super.prepareForAction();

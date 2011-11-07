@@ -29,6 +29,7 @@ public class EmailValidator extends Validator {
         this.message = message;
     }
 
+    @Override
     public void run(String value) throws ValidationException {
         boolean invalid = false;
 

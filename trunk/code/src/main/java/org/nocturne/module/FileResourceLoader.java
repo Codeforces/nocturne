@@ -16,6 +16,7 @@ public class FileResourceLoader implements ResourceLoader {
         this.baseDir = baseDir;
     }
 
+    @Override
     public InputStream getResourceInputStream(String path) throws IOException {
         File file = new File(baseDir, path);
 

@@ -28,6 +28,7 @@ public class RequiredValidator extends Validator {
         this.message = message;
     }
 
+    @Override
     public void run(String value) throws ValidationException {
         if (StringUtil.isEmptyOrNull(value)) {
             throw new ValidationException($(message));

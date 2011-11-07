@@ -6,27 +6,28 @@ package org.nocturne.validation;
 import java.util.regex.Pattern;
 
 /**
- * Validates that specified value is integer. Optionaly checks that value is in the range.
+ * Validates that specified value is long. Optionaly checks that value is in the range.
  *
- * @author Mike Mirzayanov
+ * @author Maxim Shipko (sladethe@gmail.com)
+ *         Date: 07.11.11
  */
-public class IntegerValidator extends Validator {
-    private static final Pattern INTEGER_MATCH_PATTERN = Pattern.compile("[\\-]?[0-9]+");
+public class LongValidator extends Validator {
+    private static final Pattern LONG_MATCH_PATTERN = Pattern.compile("[\\-]?[0-9]+");
 
     /**
-     * Minimal integer value.
+     * Minimal long value.
      */
-    private int minimalValue = Integer.MIN_VALUE;
+    private long minimalValue = Long.MIN_VALUE;
 
     /**
-     * Maximal integer value.
+     * Maximal long value.
      */
-    private int maximalValue = Integer.MAX_VALUE;
+    private long maximalValue = Long.MAX_VALUE;
 
     /**
-     * Integer validator which doesn't check range.
+     * Long validator which doesn't check range.
      */
-    public IntegerValidator() {
+    public LongValidator() {
     }
 
     /**
@@ -35,30 +36,30 @@ public class IntegerValidator extends Validator {
      * @param minimalValue min value.
      * @param maximalValue max value.
      */
-    public IntegerValidator(int minimalValue, int maximalValue) {
+    public LongValidator(long minimalValue, long maximalValue) {
         this.minimalValue = minimalValue;
         this.maximalValue = maximalValue;
     }
 
     /**
      * @param value Value to be analyzed.
-     * @throws org.nocturne.validation.ValidationException
+     * @throws ValidationException
      *          On validation error. It is good idea to pass
      *          localized via captions value inside ValidationException,
      *          like {@code return new ValidationException($("Field can't be empty"));}.
      */
     @Override
     public void run(String value) throws ValidationException {
-        if (value == null || !INTEGER_MATCH_PATTERN.matcher(value).matches()) {
-            throw new ValidationException($("Field should contain integer value"));
+        if (value == null || !LONG_MATCH_PATTERN.matcher(value).matches()) {
+            throw new ValidationException($("Field should contain long integer value"));
         }
 
-        int numeric;
+        long numeric;
 
         try {
-            numeric = Integer.parseInt(value);
+            numeric = Long.parseLong(value);
         } catch (Exception ignored) {
-            throw new ValidationException($("Field should contain integer value"));
+            throw new ValidationException($("Field should contain long integer value"));
         }
 
         if (numeric < minimalValue) {

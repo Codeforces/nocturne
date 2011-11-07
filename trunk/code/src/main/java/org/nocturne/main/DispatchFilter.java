@@ -40,6 +40,7 @@ public class DispatchFilter implements Filter {
             = new RequestDispatcher();
     private static FilterConfig filterConfig;
 
+    @Override
     public void init(FilterConfig config) throws ServletException {
         if (reloadingContext.isDebug()) {
             initDebugMode(config);
@@ -60,6 +61,7 @@ public class DispatchFilter implements Filter {
         }
     }
 
+    @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         servletRequest.setCharacterEncoding("UTF-8");
         servletResponse.setCharacterEncoding("UTF-8");
@@ -88,6 +90,7 @@ public class DispatchFilter implements Filter {
         }
     }
 
+    @Override
     public void destroy() {
         if (reloadingContext.isDebug()) {
             destroyDebugMode();

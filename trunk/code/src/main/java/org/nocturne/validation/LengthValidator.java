@@ -37,6 +37,7 @@ public class LengthValidator extends Validator {
      *          localized via captions value inside ValidationException,
      *          like {@code return new ValidationException($("Field can't be empty"));}.
      */
+    @Override
     public void run(String value) throws ValidationException {
         int length = value.length();
 

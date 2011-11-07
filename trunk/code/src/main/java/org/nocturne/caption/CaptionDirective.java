@@ -30,6 +30,7 @@ public class CaptionDirective implements TemplateDirectiveModel {
     /** Singleton instance. */
     private static CaptionDirective INSTANCE = new CaptionDirective();
 
+    @Override
     @SuppressWarnings({"unchecked"})
     public void execute(Environment env, Map params, TemplateModel[] loopVars, TemplateDirectiveBody body) throws TemplateException, IOException {
         char[] chars = null;
