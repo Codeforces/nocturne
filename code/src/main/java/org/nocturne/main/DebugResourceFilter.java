@@ -16,6 +16,7 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 /**
@@ -44,7 +45,7 @@ public class DebugResourceFilter implements Filter {
                 Object object;
 
                 try {
-                    object = DispatchFilter.lastReloadingClassLoader.loadClass(DebugResourceFilter.class.getName()).newInstance();
+                    object = DispatchFilter.lastReloadingClassLoader.loadClass(DebugResourceFilter.class.getName()).getConstructor().newInstance();
                 } catch (Exception e) {
                     logger.error("Can't create instance of DebugResourceFilter.", e);
                     throw new NocturneException("Can't create instance of DebugResourceFilter.", e);
@@ -62,7 +63,7 @@ public class DebugResourceFilter implements Filter {
         }
     }
 
-    private void handleDebugModeDoFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
+    private static void handleDebugModeDoFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
         if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
             HttpServletRequest httpRequest = (HttpServletRequest) request;
             String path = httpRequest.getServletPath();
@@ -88,12 +89,12 @@ public class DebugResourceFilter implements Filter {
         }
     }
 
-    private boolean processModuleResource(Module module, String path, ServletResponse response) throws IOException {
+    private static boolean processModuleResource(Module module, String path, ServletResponse response) throws IOException {
         InputStream inputStream = module.getResourceLoader().getResourceInputStream(path);
         return writeResourceByPathAndStream(response, path, inputStream);
     }
 
-    private boolean writeResourceByPathAndStream(ServletResponse response, String path, InputStream inputStream) throws IOException {
+    private static boolean writeResourceByPathAndStream(ServletResponse response, String path, InputStream inputStream) throws IOException {
         if (inputStream != null) {
             OutputStream outputStream = response.getOutputStream();
 
@@ -125,7 +126,7 @@ public class DebugResourceFilter implements Filter {
         }
     }
                                                         
-    private void setupContentType(String path, ServletResponse response) {
+    private static void setupContentType(String path, ServletResponse response) {
         String type = MimeUtil.getFirstMimeType(MimeUtil.getMimeType(FileUtil.getExt(new File(path))));
 
         if (type != null) {

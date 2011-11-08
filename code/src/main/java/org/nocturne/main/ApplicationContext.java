@@ -41,15 +41,17 @@ public class ApplicationContext {
     private static final ApplicationContext INSTANCE =
             new ApplicationContext();
 
+    private static final Object[] EMPTY_OBJECT_ARRAY = {};
+
     /**
      * Current page. Stored as ThreadLocal.
      */
-    private ThreadLocal<Page> currentPage = new ThreadLocal<Page>();
+    private final ThreadLocal<Page> currentPage = new ThreadLocal<Page>();
 
     /**
      * Current component. Stored as ThreadLocal.
      */
-    private ThreadLocal<Component> currentComponent = new ThreadLocal<Component>();
+    private final ThreadLocal<Component> currentComponent = new ThreadLocal<Component>();
 
     /**
      * Is in debug mode?
@@ -173,12 +175,12 @@ public class ApplicationContext {
     /**
      * RequestContext for current thread.
      */
-    private ThreadLocal<RequestContext> requestsPerThread = new ThreadLocal<RequestContext>();
+    private final ThreadLocal<RequestContext> requestsPerThread = new ThreadLocal<RequestContext>();
 
     /**
      * Reloading class loader for current thread, used in debug mode only.
      */
-    private ThreadLocal<ClassLoader> reloadingClassLoaderPerThread = new ThreadLocal<ClassLoader>();
+    private final ThreadLocal<ClassLoader> reloadingClassLoaderPerThread = new ThreadLocal<ClassLoader>();
 
     /**
      * Current reloading class loader.
@@ -193,10 +195,10 @@ public class ApplicationContext {
     /**
      * ApplicationContext is initialized.
      */
-    private AtomicBoolean initialized = new AtomicBoolean(false);
+    private final AtomicBoolean initialized = new AtomicBoolean(false);
 
-    private Lock initializedLock = new ReentrantLock();
-    private Condition initializedCondition = initializedLock.newCondition();
+    private final Lock initializedLock = new ReentrantLock();
+    private final Condition initializedCondition = initializedLock.newCondition();
 
     void setInitialized() {
         initializedLock.lock();
@@ -225,7 +227,7 @@ public class ApplicationContext {
      *         class loader (for production mode).
      */
     public ClassLoader getReloadingClassLoader() {
-        if (isDebug()) {
+        if (debug) {
             return reloadingClassLoaderPerThread.get();
         } else {
             return reloadingClassLoader;
@@ -254,7 +256,7 @@ public class ApplicationContext {
      * @return Directory or null in the production mode.
      */
     public String getDebugCaptionsDir() {
-        if (isDebug()) {
+        if (debug) {
             return debugCaptionsDir;
         } else {
             return null;
@@ -273,7 +275,7 @@ public class ApplicationContext {
      * @return List of allowed languages, use property nocturne.allowed-languages.
      */
     public List<String> getAllowedLanguages() {
-        return allowedLanguages;
+        return Collections.unmodifiableList(allowedLanguages);
     }
 
     /**
@@ -287,14 +289,14 @@ public class ApplicationContext {
      * @return List of annotation classes to override default strategy, should be used on classes or fields.
      */
     public Set<String> getResetAnnotations() {
-        return resetAnnotations;
+        return Collections.unmodifiableSet(resetAnnotations);
     }
 
     /**
      * @return List of annotation classes to override default strategy, should be used on classes or fields.
      */
     public Set<String> getPersistAnnotations() {
-        return persistAnnotations;
+        return Collections.unmodifiableSet(persistAnnotations);
     }
 
     void setResetStrategy(ResetStrategy resetStrategy) {
@@ -507,7 +509,7 @@ public class ApplicationContext {
     }
 
     void setAllowedLanguages(List<String> allowedLanguages) {
-        this.allowedLanguages = allowedLanguages;
+        this.allowedLanguages = new ArrayList<String>(allowedLanguages);
     }
 
     void setServletContext(ServletContext servletContext) {
@@ -550,7 +552,7 @@ public class ApplicationContext {
     }
 
     void setReloadingClassLoader(ClassLoader loader) {
-        if (isDebug()) {
+        if (debug) {
             reloadingClassLoaderPerThread.set(loader);
         } else {
             reloadingClassLoader = loader;
@@ -569,20 +571,20 @@ public class ApplicationContext {
         }
         reloadingClassPaths.add(dir);
 
-        if (!isDebug()) {
-            ReloadingContext.getInstance().addReloadingClassPath(dir);
-        } else {
+        if (debug) {
             ReloadingContext context = ReloadingContext.getInstance();
             try {
                 ReflectionUtil.invoke(context, "addReloadingClassPath", dir);
             } catch (ReflectionException e) {
                 throw new NocturneException("Can't call addReloadingClassPath for ReloadingContext.", e);
             }
+        } else {
+            ReloadingContext.getInstance().addReloadingClassPath(dir);
         }
     }
 
     public void addClassReloadingException(String packageOrClassName) {
-        if (isDebug()) {
+        if (debug) {
             classReloadingExceptions.add(packageOrClassName);
             ReloadingContext.getInstance().addClassReloadingException(packageOrClassName);
         }
@@ -594,7 +596,7 @@ public class ApplicationContext {
      *         Usually, it is not good idea, because captions are part of view layer.
      */
     public String $(String shortcut) {
-        return $(shortcut, new Object[]{});
+        return $(shortcut, EMPTY_OBJECT_ARRAY);
     }
 
     /**
@@ -610,10 +612,10 @@ public class ApplicationContext {
         if (captions == null) {
             synchronized (this) {
                 try {
-                    Class<? extends Captions> clazz = (Class<? extends Captions>) getClass().getClassLoader().loadClass(getCaptionsImplClass());
-                    captions = getInjector().getInstance(clazz);
+                    Class<? extends Captions> clazz = (Class<? extends Captions>) getClass().getClassLoader().loadClass(captionsImplClass);
+                    captions = injector.getInstance(clazz);
                 } catch (ClassNotFoundException e) {
-                    throw new ConfigurationException("Class " + getCaptionsImplClass() + " should implement Captions.", e);
+                    throw new ConfigurationException("Class " + captionsImplClass + " should implement Captions.", e);
                 }
             }
         }
@@ -635,10 +637,10 @@ public class ApplicationContext {
         if (captions == null) {
             synchronized (this) {
                 try {
-                    Class<? extends Captions> clazz = (Class<? extends Captions>) getClass().getClassLoader().loadClass(getCaptionsImplClass());
-                    captions = getInjector().getInstance(clazz);
+                    Class<? extends Captions> clazz = (Class<? extends Captions>) getClass().getClassLoader().loadClass(captionsImplClass);
+                    captions = injector.getInstance(clazz);
                 } catch (ClassNotFoundException e) {
-                    throw new ConfigurationException("Class " + getCaptionsImplClass() + " should implement Captions.", e);
+                    throw new ConfigurationException("Class " + captionsImplClass + " should implement Captions.", e);
                 }
             }
         }
@@ -659,10 +661,10 @@ public class ApplicationContext {
         if (captions == null) {
             synchronized (this) {
                 try {
-                    Class<? extends Captions> clazz = (Class<? extends Captions>) getClass().getClassLoader().loadClass(getCaptionsImplClass());
-                    captions = getInjector().getInstance(clazz);
+                    Class<? extends Captions> clazz = (Class<? extends Captions>) getClass().getClassLoader().loadClass(captionsImplClass);
+                    captions = injector.getInstance(clazz);
                 } catch (ClassNotFoundException e) {
-                    throw new ConfigurationException("Class " + getCaptionsImplClass() + " should implement Captions.", e);
+                    throw new ConfigurationException("Class " + captionsImplClass + " should implement Captions.", e);
                 }
             }
         }
@@ -681,26 +683,26 @@ public class ApplicationContext {
      * @return List of loaded modules.
      */
     public List<Module> getModules() {
-        return modules;
+        return Collections.unmodifiableList(modules);
     }
 
     void setModules(List<Module> modules) {
-        this.modules = modules;
+        this.modules = new ArrayList<Module>(modules);
     }
 
     /**
      * @return Prefix before attributes in request which
      *         will be injected as parameters in Components.
      */
-    public String getAdditionalParamsRequestAttributePrefix() {
+    public static String getAdditionalParamsRequestAttributePrefix() {
         return "nocturne.additional-parameter.";
     }
 
-    private String getActionRequestPageClassName() {
+    private static String getActionRequestPageClassName() {
         return "nocturne.request-page-class-name";
     }
 
-    private String getActionRequestParamName() {
+    private static String getActionRequestParamName() {
         return "nocturne.request-action";
     }
 
@@ -743,7 +745,7 @@ public class ApplicationContext {
      * @param runnable Runnable to be executed after ApplicationContext has been initialized.
      */
     public void executeAfterInitialization(final Runnable runnable) {
-        new Thread() {
+        new Thread(new Runnable() {
             @Override
             public void run() {
                 initializedLock.lock();
@@ -751,7 +753,7 @@ public class ApplicationContext {
                     while (!isInitialized()) {
                         try {
                             initializedCondition.await();
-                        } catch (InterruptedException e) {
+                        } catch (InterruptedException ignored) {
                             // No operations.
                         }
                     }
@@ -760,7 +762,7 @@ public class ApplicationContext {
                     initializedLock.unlock();
                 }
             }
-        }.start();
+        }).start();
     }
 
     /**
@@ -837,7 +839,7 @@ public class ApplicationContext {
                     lang = (String) session.getAttribute("nocturne.language");
                 }
                 if (lang == null) {
-                    String requestUrl = getRequest().getRequestURL().toString();
+                    String requestUrl = request.getRequestURL().toString();
                     if (requestUrl.contains(".ru/") || requestUrl.endsWith(".ru")) {
                         lang = "ru";
                     }
@@ -849,7 +851,7 @@ public class ApplicationContext {
             }
         }
 
-        private Locale localeByLanguage(String language) {
+        private static Locale localeByLanguage(String language) {
             if (ApplicationContext.getInstance().getAllowedLanguages().contains(language)) {
                 return new Locale(language);
             } else {
