@@ -37,6 +37,8 @@ import java.util.*;
  * @author Mike Mirzayanov
  */
 public abstract class Component {
+    private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+
     /**
      * Has been initialized?
      */
@@ -66,12 +68,12 @@ public abstract class Component {
     /**
      * Freemarker template.
      */
-    private Template template = null;
+    private Template template;
 
     /**
      * Map to store template variables.
      */
-    private Map<String, Object> templateMap = new HashMap<String, Object>();
+    private final Map<String, Object> templateMap = new HashMap<String, Object>();
 
     /**
      * Map to store frame contents after parse().
@@ -111,7 +113,7 @@ public abstract class Component {
     /**
      * Object to inject parameters from request.
      */
-    private ParametersInjector parametersInjector = new ParametersInjector(this);
+    private final ParametersInjector parametersInjector = new ParametersInjector(this);
 
     /**
      * Parent component (needed for frames).
@@ -121,24 +123,24 @@ public abstract class Component {
     /**
      * Http servlet response writer.
      */
-    private PrintWriter writer = null;
+    private PrintWriter writer;
 
     /**
      * Stores cached instances for #getInstance(clazz, index) method.
      */
-    private Map<Class<?>, List<Object>> cacheForGetInstance
+    private final Map<Class<?>, List<Object>> cacheForGetInstance
             = new HashMap<Class<?>, List<Object>>();
 
     /**
      * Stores current indecies of instances for #getInstance(clazz).
      */
-    private Map<Class<?>, Integer> instanceIndexForCacheForGetInstance =
+    private final Map<Class<?>, Integer> instanceIndexForCacheForGetInstance =
             new HashMap<Class<?>, Integer>();
 
     /**
      * Stores information about action, validation and invalid methods for component.
      */
-    private static Map<Class<? extends Component>, ActionMap> actionMaps
+    private static final Map<Class<? extends Component>, ActionMap> actionMaps
             = new Hashtable<Class<? extends Component>, ActionMap>();
 
     /**
@@ -149,7 +151,7 @@ public abstract class Component {
     /**
      * Map, containing parameters, which will be checked before request.getParameter().
      */
-    private Map<String, String> overrideParameters = new HashMap<String, String>();
+    private final Map<String, String> overrideParameters = new HashMap<String, String>();
 
     /**
      * Stores params from request.
@@ -159,7 +161,7 @@ public abstract class Component {
     /**
      * Object to clean fields between requests.
      */
-    private FieldsReseter fieldsReseter = null;
+    private FieldsReseter fieldsReseter;
 
     /**
      * @return Component cache handler. Use it if you want to avoid typical
@@ -197,13 +199,13 @@ public abstract class Component {
             FastMethod validateMethod = actionMap.getValidateMethod(actionParameter);
             Boolean validationResult = true;
             if (validateMethod != null) {
-                validationResult = (Boolean) validateMethod.invoke(this, new Object[0]);
+                validationResult = (Boolean) validateMethod.invoke(this, EMPTY_OBJECT_ARRAY);
             }
 
             if (validationResult) {
                 FastMethod actionMethod = actionMap.getActionMethod(actionParameter);
                 if (actionMethod != null) {
-                    actionMethod.invoke(this, new Object[0]);
+                    actionMethod.invoke(this, EMPTY_OBJECT_ARRAY);
                 } else {
                     throw new NocturneException("Can't find action method for component "
                             + getClass().getName() + " and action parameter = " + actionParameter + '.');
@@ -211,7 +213,7 @@ public abstract class Component {
             } else {
                 FastMethod invalidMethod = actionMap.getInvalidMethod(actionParameter);
                 if (invalidMethod != null) {
-                    invalidMethod.invoke(this, new Object[0]);
+                    invalidMethod.invoke(this, EMPTY_OBJECT_ARRAY);
                 }
             }
         } catch (InvocationTargetException e) {
@@ -242,7 +244,7 @@ public abstract class Component {
     public OutputStream getOutputStream() {
         if (outputStream == null) {
             try {
-                outputStream = getResponse().getOutputStream();
+                outputStream = response.getOutputStream();
             } catch (IOException e) {
                 throw new ServletException("Can't get response output stream.", e);
             }
@@ -481,22 +483,22 @@ public abstract class Component {
      *         not call the method getTemplate() manually.
      */
     public Template getTemplate() {
-        if (!skipTemplate) {
+        if (skipTemplate) {
+            template = null;
+        } else {
             if (template == null || !template.getName().equals(templateFileName)) {
                 try {
-                    template = getTemplateEngineConfiguration().getTemplate(templateFileName, ApplicationContext.getInstance().getLocale());
+                    template = templateEngineConfiguration.getTemplate(templateFileName, ApplicationContext.getInstance().getLocale());
                 } catch (IOException e) {
                     throw new FreemarkerException("Can't get freemarker template [name=" + templateFileName + "].", e);
                 }
             }
-        } else {
-            template = null;
         }
         //ApplicationContext.getInstance().setComponentByTemplate(template, this);
         return template;
     }
 
-    private void ensureArgumentIs(String key, Object value, String expectedKey, Object expectedValue) {
+    private static void ensureArgumentIs(String key, Object value, String expectedKey, Object expectedValue) {
         if (key.equals(expectedKey) && !expectedValue.equals(value)) {
             throw new IllegalArgumentException("Argument '" + key + "' is reserved for internal usage.");
         }
@@ -536,7 +538,7 @@ public abstract class Component {
         getCurrentPage().internalGetGlobalTemplateMap().put(key, value);
     }
 
-    private void validateParameter(String key, Object value) {
+    private static void validateParameter(String key, Object value) {
         ensureArgumentIs(key, value, "frame", FrameDirective.getInstance());
         ensureArgumentIs(key, value, "css", getCurrentPage().getCssSet());
         ensureArgumentIs(key, value, "js", getCurrentPage().getJsSet());
@@ -799,10 +801,10 @@ public abstract class Component {
     }
 
     void setup(Frame frame) {
-        frame.setRequest(getRequest());
-        frame.setResponse(getResponse());
-        frame.setFilterConfig(getFilterConfig());
-        frame.setTemplateEngineConfiguration(getTemplateEngineConfiguration());
+        frame.setRequest(request);
+        frame.setResponse(response);
+        frame.setFilterConfig(filterConfig);
+        frame.setTemplateEngineConfiguration(templateEngineConfiguration);
     }
 
     String getFrameHtml(String key) {
@@ -862,7 +864,7 @@ public abstract class Component {
         frameMap = new HashMap<String, String>();
         overrideParameters.clear();
 
-        parametersInjector.inject(getRequest());
+        parametersInjector.inject(request);
 
         put("frame", FrameDirective.getInstance());
         put("link", LinkDirective.getInstance());
@@ -909,7 +911,7 @@ public abstract class Component {
                 target = ApplicationContext.getInstance().getContextPath() + '/' + target;
             }
 
-            getResponse().sendRedirect(target);
+            response.sendRedirect(target);
         } catch (IOException e) {
             throw new ServletException("Can't redirect to " + target + '.', e);
         }
@@ -923,7 +925,7 @@ public abstract class Component {
      */
     public void abortWithError(int code) {
         try {
-            getResponse().sendError(code);
+            response.sendError(code);
         } catch (IOException e) {
             throw new ServletException("Can't send error " + code + '.', e);
         }
@@ -949,8 +951,8 @@ public abstract class Component {
      * Redirects to the same page.
      */
     public void abortWithReload() {
-        String url = getRequest().getRequestURL().toString();
-        String queryString = getRequest().getQueryString();
+        String url = request.getRequestURL().toString();
+        String queryString = request.getQueryString();
         abortWithRedirect(url + (queryString != null ? '?' + queryString : ""));
     }
 
@@ -979,10 +981,10 @@ public abstract class Component {
         Map parameterMap = getRequestParams();
         for (Object key : parameterMap.keySet()) {
             Object value = parameterMap.get(key);
-            if (value != null) {
-                setupTemplateMapByParameter(key.toString());
-            } else {
+            if (value == null) {
                 put(key.toString(), null);
+            } else {
+                setupTemplateMapByParameter(key.toString());
             }
         }
 
@@ -1067,7 +1069,7 @@ public abstract class Component {
             synchronized (gson) {
                 Type mapType = new TypeToken<Map<String, String>>() {
                 }.getType();
-                getResponse().setContentType("application/json");
+                response.setContentType("application/json");
                 Writer writer = getWriter();
                 try {
                     writer.write(gson.toJson(errors, mapType));
@@ -1119,7 +1121,7 @@ public abstract class Component {
         }
     }
 
-    private Page getCurrentPage() {
+    private static Page getCurrentPage() {
         return ApplicationContext.getInstance().getCurrentPage();
     }
 
