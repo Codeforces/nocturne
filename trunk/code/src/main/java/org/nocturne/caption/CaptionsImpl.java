@@ -137,7 +137,7 @@ public class CaptionsImpl implements Captions {
 
     /** Method loadPropertiesForProduction ... */
     private void loadPropertiesForProduction() {
-        if (propertiesMap.size() == 0) {
+        if (propertiesMap.isEmpty()) {
             List<String> languages = ApplicationContext.getInstance().getAllowedLanguages();
             for (String language : languages) {
                 InputStream inputStream = getClass().getResourceAsStream(getCaptionsFileName(language));

@@ -28,16 +28,16 @@ public class ApplicationTemplateLoader implements TemplateLoader {
     private static final Logger logger = Logger.getLogger(ApplicationTemplateLoader.class);
 
     /** List of loaded modules. */
-    private List<Module> modules;
+    private final List<Module> modules;
 
     /** Instance of ApplicationContext - just shortcut. */
-    private ApplicationContext applicationContext = ApplicationContext.getInstance();
+    private final ApplicationContext applicationContext = ApplicationContext.getInstance();
 
     /** For debug mode stores loader by loaded object. */
-    private Map<Object, TemplateLoader> loadersByTemplate = new WeakHashMap<Object, TemplateLoader>();
+    private final Map<Object, TemplateLoader> loadersByTemplate = new WeakHashMap<Object, TemplateLoader>();
 
     /** Usual file template loader, uses nocturne.templates-path. */
-    private FileTemplateLoader fileTemplateLoader;
+    private final FileTemplateLoader fileTemplateLoader;
 
     /** New ApplicationTemplateLoader. */
     public ApplicationTemplateLoader() {
