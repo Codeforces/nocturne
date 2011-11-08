@@ -159,7 +159,7 @@ public abstract class Page extends Component {
 
                             result = stringWriter.getBuffer().toString();
                             cacheHandler.postprocess(this, result);
-                            ResponsePostprocessor postprocessor = getResponsePostprocessor();
+                            ResponsePostprocessor postprocessor = responsePostprocessor;
                             if (postprocessor != null) {
                                 result = postprocessor.postprocess(result);
                             }
@@ -176,7 +176,7 @@ public abstract class Page extends Component {
             } else {
                 getOutputStream().write(result.getBytes("UTF-8"));
             }
-        } catch (AbortException e) {
+        } catch (AbortException ignored) {
             // No operations.
         } catch (IOException e) {
             throw new FreemarkerException("Can't write page " + getClass().getName() + '.', e);
@@ -190,8 +190,8 @@ public abstract class Page extends Component {
         setupCurrentPage();
         super.prepareForAction();
 
-        put("css", getCssSet());
-        put("js", getJsSet());
+        put("css", cssSet);
+        put("js", jsSet);
 
         requestCache.clear();
         processChain = false;
