@@ -10,6 +10,7 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import net.sf.cglib.reflect.FastMethod;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 import org.nocturne.cache.CacheHandler;
 import org.nocturne.caption.CaptionDirective;
 import org.nocturne.exception.*;
@@ -73,7 +74,7 @@ public abstract class Component {
     /**
      * Map to store template variables.
      */
-    private final Map<String, Object> templateMap = new HashMap<String, Object>();
+    private Map<String, Object> templateMap;
 
     /**
      * Map to store frame contents after parse().
@@ -132,10 +133,9 @@ public abstract class Component {
             = new HashMap<Class<?>, List<Object>>();
 
     /**
-     * Stores current indecies of instances for #getInstance(clazz).
+     * Stores current indices of instances for #getInstance(clazz).
      */
-    private final Map<Class<?>, Integer> instanceIndexForCacheForGetInstance =
-            new HashMap<Class<?>, Integer>();
+    private Map<Class<?>, Integer> instanceIndexForCacheForGetInstance;
 
     /**
      * Stores information about action, validation and invalid methods for component.
@@ -151,7 +151,7 @@ public abstract class Component {
     /**
      * Map, containing parameters, which will be checked before request.getParameter().
      */
-    private final Map<String, String> overrideParameters = new HashMap<String, String>();
+    private Map<String, String> overrideParameters;
 
     /**
      * Stores params from request.
@@ -520,7 +520,7 @@ public abstract class Component {
      * @param key   Variable name.
      * @param value Variable value.
      */
-    public void put(String key, Object value) {
+    public void put(String key, @Nullable Object value) {
         validateParameter(key, value);
 
         internalGetTemplateMap().put(key, value);
@@ -853,16 +853,15 @@ public abstract class Component {
         parentComponent = ApplicationContext.getInstance().getCurrentComponent();
         ApplicationContext.getInstance().setCurrentComponent(this);
 
-        internalGetTemplateMap().clear();
-        instanceIndexForCacheForGetInstance.clear();
-
+        templateMap = Collections.synchronizedMap(new HashMap<String, Object>());
+        instanceIndexForCacheForGetInstance = Collections.synchronizedMap(new HashMap<Class<?>, Integer>());
         template = null;
         skipTemplate = false;
         outputStream = null;
         writer = null;
         validators = new LinkedHashMap<String, List<Validator>>();
         frameMap = new HashMap<String, String>();
-        overrideParameters.clear();
+        overrideParameters = Collections.synchronizedMap(new HashMap<String, String>());
 
         parametersInjector.inject(request);
 

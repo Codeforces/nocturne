@@ -10,15 +10,12 @@ import org.nocturne.exception.AbortException;
 import org.nocturne.exception.FreemarkerException;
 import org.nocturne.exception.NocturneException;
 import org.nocturne.exception.ReflectionException;
-import org.nocturne.util.ReflectionUtil;
 import org.nocturne.postprocess.ResponsePostprocessor;
+import org.nocturne.util.ReflectionUtil;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Main controller class. Read <a href="http://code.google.com/p/nocturne/wiki/RequestLifeCycle_RU">http://code.google.com/p/nocturne/wiki/RequestLifeCycle_RU</a>
@@ -31,7 +28,7 @@ public abstract class Page extends Component {
     /**
      * Global template variables map.
      */
-    private Map<String, Object> globalTemplateMap = new HashMap<String, Object>();
+    private Map<String, Object> globalTemplateMap;
 
     /**
      * Stores additional css resources added by addCss() from the page or internal frames.
@@ -51,7 +48,7 @@ public abstract class Page extends Component {
     /**
      * Request-scoped cache. For internal usage.
      */
-    private Map<String, Object> requestCache = new HashMap<String, Object>();
+    private Map<String, Object> requestCache;
 
     /**
      * Flag, which stores should workflow be passed to filterChain.
@@ -188,15 +185,16 @@ public abstract class Page extends Component {
     @Override
     void prepareForAction() {
         setupCurrentPage();
+
+        globalTemplateMap = Collections.synchronizedMap(new HashMap<String, Object>());
+        requestCache = Collections.synchronizedMap(new HashMap<String, Object>());
+
         super.prepareForAction();
 
         put("css", cssSet);
         put("js", jsSet);
 
-        requestCache.clear();
         processChain = false;
-
-        internalGetGlobalTemplateMap().clear();
     }
 
     private void setupCurrentPage() {

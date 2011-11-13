@@ -305,15 +305,24 @@ public class Links {
     }
 
     /**
-     * @param clazz  Page class.
+     * @param pageClass  Page class.
+     * @return link for page. If there many links for page, returns one of them, which matches better
+     * @throws NoSuchLinkException if no such link exists
+     */
+    public static String getLink(Class<? extends Page> pageClass) {
+        return getLinkByMap(pageClass, null, Collections.<String, Object>emptyMap());
+    }
+
+    /**
+     * @param pageClass  Page class.
      * @param params Even length sequence of Objects. Even elements mean keys and odd
      *               values of parameters map. For example ["handle", "MikeMirzayanov", "topic", 123]
      *               means map ["handle" => "MikeMirzayanov", "topic" => 123]. Method skips params with null value.
      * @return link for page. If there many links for page, returns one of them, which matches better
      * @throws NoSuchLinkException if no such link exists
      */
-    public static String getLink(Class<? extends Page> clazz, Object... params) {
-        return getLinkByMap(clazz, null, convertArrayToMap(params));
+    public static String getLink(Class<? extends Page> pageClass, Object... params) {
+        return getLinkByMap(pageClass, null, convertArrayToMap(params));
     }
 
     /**
