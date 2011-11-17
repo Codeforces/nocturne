@@ -28,24 +28,21 @@ import java.util.List;
  * @author Mike Mirzayanov
  */
 public class DispatchFilter implements Filter {
-    private static ReloadingContext reloadingContext
-            = ReloadingContext.getInstance();
+    private static final ReloadingContext reloadingContext = ReloadingContext.getInstance();
 
-    private static long lastDebugModeAccess = 0;
-    private static long lastDebugModeAccessReloadingClassPathHashCode = 0;
+    private static long lastDebugModeAccess;
+    private static long lastDebugModeAccessReloadingClassPathHashCode;
     static ClassLoader lastReloadingClassLoader;
     private static Object debugModeRequestDispatcher;
 
-    private static RequestDispatcher productionModeRequestDispatcher
-            = new RequestDispatcher();
+    private static RequestDispatcher productionModeRequestDispatcher = new RequestDispatcher();
     private static FilterConfig filterConfig;
 
     @Override
     public void init(FilterConfig config) throws ServletException {
+        productionModeRequestDispatcher.init(config);
         if (reloadingContext.isDebug()) {
             initDebugMode(config);
-        } else {
-            productionModeRequestDispatcher.init(config);
         }
 
         filterConfig = config;
@@ -115,7 +112,9 @@ public class DispatchFilter implements Filter {
         if (previousClassLoader != lastReloadingClassLoader || debugModeRequestDispatcher == null) {
             try {
                 destroyDebugMode();
-                debugModeRequestDispatcher = lastReloadingClassLoader.loadClass(RequestDispatcher.class.getName()).newInstance();
+                debugModeRequestDispatcher = lastReloadingClassLoader.loadClass(
+                        RequestDispatcher.class.getName()
+                ).getConstructor().newInstance();
                 ReflectionUtil.invoke(debugModeRequestDispatcher, "setReloadingClassLoader", lastReloadingClassLoader);
                 initDebugMode(filterConfig);
             } catch (Exception e) {
@@ -135,12 +134,12 @@ public class DispatchFilter implements Filter {
                 long hashCode = hashCode(reloadingContext.getReloadingClassPaths());
                 //System.out.println("DEBUG: hashCode invoked in " + (System.currentTimeMillis() - start) + " ms.");
 
-                if (hashCode != lastDebugModeAccessReloadingClassPathHashCode) {
+                if (hashCode == lastDebugModeAccessReloadingClassPathHashCode) {
+                    //System.out.println("DEBUG: Hashes matched");
+                } else {
                     //System.out.println("DEBUG: ReloadingClassLoader created because of hash mismatch.");
                     lastReloadingClassLoader = new ReloadingClassLoader();
                     lastDebugModeAccessReloadingClassPathHashCode = hashCode;
-                } else {
-                    //System.out.println("DEBUG: Hashes matched");
                 }
                 lastDebugModeAccess = System.currentTimeMillis();
             }
@@ -176,11 +175,6 @@ public class DispatchFilter implements Filter {
 
     private static boolean useInHashCode(File file) {
         String ext = FileUtil.getExt(file);
-        return ".class".equalsIgnoreCase(ext)
-                || ".properties".equalsIgnoreCase(ext);
+        return ".class".equalsIgnoreCase(ext) || ".properties".equalsIgnoreCase(ext);
     }
-//
-//    static {
-//        ReloadingContextLoader.run();
-//    }
 }
