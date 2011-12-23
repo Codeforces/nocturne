@@ -25,9 +25,9 @@ import java.io.InputStream;
  * @author Mike Mirzayanov
  */
 public class RequestUtil {
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({"unchecked", "OverlyLongMethod", "OverlyComplexMethod"})
     public static Map<String, String> getRequestParams(HttpServletRequest request) {
-        if (request.getMethod().equalsIgnoreCase("post")) {
+        if ("post".equalsIgnoreCase(request.getMethod())) {
             try {
                 FileItemFactory factory = new DiskFileItemFactory();
                 ServletFileUpload upload = new ServletFileUpload(factory);
@@ -48,7 +48,7 @@ public class RequestUtil {
                         request.setAttribute(item.getFieldName() + "::name", item.getName());
                     }
                 }
-            } catch (Exception e) {
+            } catch (Exception ignored) {
                 // No operations.
             }
         }
@@ -97,16 +97,16 @@ public class RequestUtil {
         Map<String, String> parameters = new HashMap<String, String>();
         try {
             String query = request.getQueryString();
-            if (query != null && query.length() > 0) {
+            if (query != null && !query.isEmpty()) {
                 String[] tokens = query.split("&");
                 for (String token : tokens) {
-                    if (token.length() > 0) {
+                    if (!token.isEmpty()) {
                         int index = token.indexOf('=');
                         String key = token.substring(0, index);
                         String value = token.substring(index + 1);
                         try {
                             parameters.put(key, URLDecoder.decode(value, "UTF-8"));
-                        } catch (IllegalArgumentException e) {
+                        } catch (IllegalArgumentException ignored) {
                             // No operations.
                         }
                     }
