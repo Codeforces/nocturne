@@ -1,15 +1,14 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.module;
 
 import freemarker.cache.TemplateLoader;
+import org.apache.commons.io.FileUtils;
 import org.nocturne.exception.ModuleInitializationException;
 import org.nocturne.main.ApplicationContext;
 import org.nocturne.util.FileUtil;
 import org.nocturne.util.StreamUtil;
-import org.apache.commons.io.FileUtils;
 
 import javax.servlet.ServletContext;
 import java.io.*;
@@ -24,35 +23,53 @@ import java.util.jar.JarFile;
  * @author Mike Mirzayanov.
  */
 public class Module {
-    /** Module name. */
+    /**
+     * Module name.
+     */
     private String name;
 
-    /** Module jar file in WEB-INF/lib (or in other directory of classpath) */
-    private JarFile file;
+    /**
+     * Module jar file in WEB-INF/lib (or in other directory of classpath)
+     */
+    private final JarFile file;
 
-    /** Directories for debug. */
-    private DebugContext debugContext = new DebugContext();
+    /**
+     * Directories for debug.
+     */
+    private final DebugContext debugContext = new DebugContext();
 
-    /** Module priority. Modules with highter priority will be loaded later and can override previously loaded modules setup. */
+    /**
+     * Module priority. Modules with highter priority will be loaded later and can override previously loaded modules setup.
+     */
     private int priority;
 
-    /** Module freemarker template loader. */
+    /**
+     * Module freemarker template loader.
+     */
     private TemplateLoader templateLoader;
 
-    /** Module resource loader. */
+    /**
+     * Module resource loader.
+     */
     private ResourceLoader resourceLoader;
 
-    /** Specific module configuration. Each module contains its own implementation of this interface. */
+    /**
+     * Specific module configuration. Each module contains its own implementation of this interface.
+     */
     private Configuration configuration;
 
-    /** Each module can specify implementation of Runnable to be loaded on module startup (once). */
+    /**
+     * Each module can specify implementation of Runnable to be loaded on module startup (once).
+     */
     private String startupClassName;
 
     private ApplicationContext getApplicationContext() {
         return ApplicationContext.getInstance();
     }
 
-    /** @param url URL containing path to module JAR-file. */
+    /**
+     * @param url URL containing path to module JAR-file.
+     */
     public Module(URL url) {
         try {
             file = new JarFile(FileUtils.toFile(url));
@@ -61,47 +78,65 @@ public class Module {
         }
     }
 
-    /** @return Each module can specify implementation of Runnable to be loaded on */
+    /**
+     * @return Each module can specify implementation of Runnable to be loaded on
+     */
     public String getStartupClassName() {
         return startupClassName;
     }
 
-    /** @return Specific module configuration. Each module contains its own implementation of this interface. */
+    /**
+     * @return Specific module configuration. Each module contains its own implementation of this interface.
+     */
     public Configuration getConfiguration() {
         return configuration;
     }
 
-    /** @return Module name. */
+    /**
+     * @return Module name.
+     */
     public String getName() {
         return name;
     }
 
-    /** @return Module freemarker template loader. */
+    /**
+     * @return Module freemarker template loader.
+     */
     public TemplateLoader getTemplateLoader() {
         return templateLoader;
     }
 
-    /** @return Module resource loader. */
+    /**
+     * @return Module resource loader.
+     */
     public ResourceLoader getResourceLoader() {
         return resourceLoader;
     }
 
-    /** @return Module priority. Modules with highter priority will be loaded later and can override previously loaded modules setup. */
+    /**
+     * @return Module priority. Modules with highter priority will be loaded later and can override previously loaded modules setup.
+     */
     public int getPriority() {
         return priority;
     }
 
-    /** @return Module jar file in WEB-INF/lib (or in other directory of classpath). */
+    /**
+     * @return Module jar file in WEB-INF/lib (or in other directory of classpath).
+     */
     public JarFile getFile() {
         return file;
     }
 
-    /** @return Directories for debug. */
+    /**
+     * @return Directories for debug.
+     */
     public DebugContext getDebugContext() {
         return debugContext;
     }
 
-    /** Internal nocturne method to read module properties and construct Module instance completely. */
+    /**
+     * Internal nocturne method to read module properties and construct Module instance completely.
+     */
     public void init() {
         JarEntry webappEntry = file.getJarEntry("module.xml");
 
@@ -333,7 +368,9 @@ public class Module {
         return file.getName().matches("module-.*\\.jar");
     }
 
-    /** Directories where to find files of the modules which can be reloaded in the development. */
+    /**
+     * Directories where to find files of the modules which can be reloaded in the development.
+     */
     static class DebugContext {
         private String webappDir;
         private String templateDir;

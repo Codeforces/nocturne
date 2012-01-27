@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.caption;
 
 import freemarker.core.Environment;
@@ -27,8 +26,10 @@ import java.util.Set;
  * @author Mike Mirzayanov
  */
 public class CaptionDirective implements TemplateDirectiveModel {
-    /** Singleton instance. */
-    private static CaptionDirective INSTANCE = new CaptionDirective();
+    /**
+     * Singleton instance.
+     */
+    private static final CaptionDirective INSTANCE = new CaptionDirective();
 
     @Override
     @SuppressWarnings({"unchecked"})
@@ -86,7 +87,9 @@ public class CaptionDirective implements TemplateDirectiveModel {
         env.getOut().write(value);
     }
 
-    /** @return Returns singleton instance. */
+    /**
+     * @return Returns singleton instance.
+     */
     public static CaptionDirective getInstance() {
         return INSTANCE;
     }

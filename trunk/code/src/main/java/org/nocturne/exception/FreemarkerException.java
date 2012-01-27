@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.exception;
 
 /**
@@ -19,9 +18,9 @@ public class FreemarkerException extends RuntimeException {
 
     /**
      * @param message Error message.
-     * @param cause Cause.
+     * @param cause   Cause.
      */
     public FreemarkerException(String message, Throwable cause) {
-        super(message, cause);    
+        super(message, cause);
     }
 }

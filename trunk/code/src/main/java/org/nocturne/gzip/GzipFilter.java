@@ -8,11 +8,10 @@
  */
 package org.nocturne.gzip;
 
-import org.nocturne.gzip.GzipResponseWrapper;
-
-import java.io.*;
 import javax.servlet.*;
-import javax.servlet.http.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 public class GzipFilter implements Filter {
     @Override

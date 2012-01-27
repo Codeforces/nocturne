@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.main;
 
 import freemarker.cache.FileTemplateLoader;
@@ -24,22 +23,34 @@ import java.util.WeakHashMap;
  * loads template from modules DebugContext in debug mode.
  */
 public class ApplicationTemplateLoader implements TemplateLoader {
-    /** Logger. */
+    /**
+     * Logger.
+     */
     private static final Logger logger = Logger.getLogger(ApplicationTemplateLoader.class);
 
-    /** List of loaded modules. */
+    /**
+     * List of loaded modules.
+     */
     private final List<Module> modules;
 
-    /** Instance of ApplicationContext - just shortcut. */
+    /**
+     * Instance of ApplicationContext - just shortcut.
+     */
     private final ApplicationContext applicationContext = ApplicationContext.getInstance();
 
-    /** For debug mode stores loader by loaded object. */
+    /**
+     * For debug mode stores loader by loaded object.
+     */
     private final Map<Object, TemplateLoader> loadersByTemplate = new WeakHashMap<Object, TemplateLoader>();
 
-    /** Usual file template loader, uses nocturne.templates-path. */
+    /**
+     * Usual file template loader, uses nocturne.templates-path.
+     */
     private final FileTemplateLoader fileTemplateLoader;
 
-    /** New ApplicationTemplateLoader. */
+    /**
+     * New ApplicationTemplateLoader.
+     */
     public ApplicationTemplateLoader() {
         modules = applicationContext.getModules();
 
@@ -81,7 +92,7 @@ public class ApplicationTemplateLoader implements TemplateLoader {
     @Override
     public Reader getReader(Object o, String s) throws IOException {
         logger.info("Invoked getReader [s=" + s + ", o=" + o + "].");
-        
+
         if (applicationContext.isDebug() && loadersByTemplate.containsKey(o)) {
             return loadersByTemplate.get(o).getReader(o, s);
         }

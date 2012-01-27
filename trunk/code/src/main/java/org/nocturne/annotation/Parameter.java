@@ -1,13 +1,13 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.annotation;
 
-import static java.lang.annotation.ElementType.FIELD;
 import java.lang.annotation.Retention;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * If your component (page or frame) has field marked with
@@ -26,15 +26,23 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 @Target(FIELD)
 public @interface Parameter {
-    /** @return POST or GET parameter name. Don't set it if it is the same with class field name. */
+    /**
+     * @return POST or GET parameter name. Don't set it if it is the same with class field name.
+     */
     String name() default "";
 
-    /** @return What strategy to strip characters to use. Default value is the most strict StripMode.ID. */
+    /**
+     * @return What strategy to strip characters to use. Default value is the most strict StripMode.ID.
+     */
     StripMode stripMode() default StripMode.ID;
 
-    /** How to strip parameter value. */
+    /**
+     * How to strip parameter value.
+     */
     enum StripMode {
-        /** Do not strip any characters. */
+        /**
+         * Do not strip any characters.
+         */
         NONE {
             /** @see org.nocturne.annotation.Parameter.StripMode#strip(String) */
             @Override
@@ -43,7 +51,9 @@ public @interface Parameter {
             }
         },
 
-        /** Leave only safe chars: strip slashes, quotes, angle brackets, ampersand and low-code chars. Also makes trim(). */
+        /**
+         * Leave only safe chars: strip slashes, quotes, angle brackets, ampersand and low-code chars. Also makes trim().
+         */
         SAFE {
             /** @see org.nocturne.annotation.Parameter.StripMode#strip(String) */
             @Override
@@ -63,7 +73,9 @@ public @interface Parameter {
             }
         },
 
-        /** Leave only chars which can be part of java ID (see Character.isJavaIdentifierPart). */
+        /**
+         * Leave only chars which can be part of java ID (see Character.isJavaIdentifierPart).
+         */
         ID {
             private boolean isValidChar(char c) {
                 return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')

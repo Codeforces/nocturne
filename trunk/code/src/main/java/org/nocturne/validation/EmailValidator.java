@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.validation;
 
 import org.nocturne.util.StringUtil;
@@ -12,10 +11,14 @@ import org.nocturne.util.StringUtil;
  * @author Mike Mirzayanov
  */
 public class EmailValidator extends Validator {
-    /** Shortcut for error message. */
+    /**
+     * Shortcut for error message.
+     */
     private String message = "Field should contain valid email";
 
-    /** Creates validator with default error message: Field should contain valid email. */
+    /**
+     * Creates validator with default error message: Field should contain valid email.
+     */
     public EmailValidator() {
     }
 

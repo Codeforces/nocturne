@@ -1,16 +1,17 @@
 package org.nocturne.gzip;
 
-import java.io.*;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.zip.GZIPOutputStream;
-import javax.servlet.*;
-import javax.servlet.http.*;
 
 public class GzipResponseStream extends ServletOutputStream {
-    private ByteArrayOutputStream baos;
-    private GZIPOutputStream gzipStream;
+    private final ByteArrayOutputStream baos;
+    private final GZIPOutputStream gzipStream;
     private boolean closed;
-    private HttpServletResponse response;
-    private ServletOutputStream output;
+    private final HttpServletResponse response;
+    private final ServletOutputStream output;
 
     public GzipResponseStream(HttpServletResponse response) throws IOException {
         super();

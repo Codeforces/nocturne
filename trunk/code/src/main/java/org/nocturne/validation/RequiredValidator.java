@@ -10,10 +10,14 @@ import org.nocturne.util.StringUtil;
  * @author Mike Mirzayanov
  */
 public class RequiredValidator extends Validator {
-    /** Shortcut for error message. */
-    private String message;
+    /**
+     * Shortcut for error message.
+     */
+    private final String message;
 
-    /** Creates validator with default error message: Field should not be empty. */
+    /**
+     * Creates validator with default error message: Field should not be empty.
+     */
     public RequiredValidator() {
         this("Field should not be empty");
     }

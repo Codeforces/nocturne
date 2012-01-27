@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.exception;
 
 /**
@@ -10,7 +9,9 @@ package org.nocturne.exception;
  * @author Mike Mirzayanov
  */
 public class ConfigurationException extends RuntimeException {
-    /** @param message Error message. */
+    /**
+     * @param message Error message.
+     */
     public ConfigurationException(String message) {
         super(message);
     }

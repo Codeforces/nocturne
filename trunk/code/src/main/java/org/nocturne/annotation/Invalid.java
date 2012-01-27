@@ -1,13 +1,12 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.annotation;
 
 import java.lang.annotation.ElementType;
-import java.lang.annotation.Target;
-import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Set it before page method which should be executed for specified
@@ -19,6 +18,8 @@ import java.lang.annotation.Retention;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Invalid {
-    /** @return Action name. */
+    /**
+     * @return Action name.
+     */
     String value() default "";
 }

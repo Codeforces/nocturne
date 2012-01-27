@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.main;
 
 import com.google.gson.Gson;
@@ -10,7 +9,6 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import net.sf.cglib.reflect.FastMethod;
 import org.apache.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
 import org.nocturne.cache.CacheHandler;
 import org.nocturne.caption.CaptionDirective;
 import org.nocturne.exception.*;
@@ -22,6 +20,7 @@ import org.nocturne.util.RequestUtil;
 import org.nocturne.validation.ValidationException;
 import org.nocturne.validation.Validator;
 
+import javax.annotation.Nullable;
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,6 +29,8 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Base class for Page and Frame (controllers). You should not use
@@ -140,8 +141,7 @@ public abstract class Component {
     /**
      * Stores information about action, validation and invalid methods for component.
      */
-    private static final Map<Class<? extends Component>, ActionMap> actionMaps
-            = new Hashtable<Class<? extends Component>, ActionMap>();
+    private static final ConcurrentMap<Class<? extends Component>, ActionMap> actionMaps = new ConcurrentHashMap<Class<? extends Component>, ActionMap>();
 
     /**
      * Template file name: simple class name + ".ftl" by default.
@@ -184,7 +184,7 @@ public abstract class Component {
     /**
      * @return Action name or empty string if not specified.
      */
-    protected String getActionName() {
+    protected static String getActionName() {
         return ApplicationContext.getInstance().getRequestAction();
     }
 
@@ -217,11 +217,11 @@ public abstract class Component {
                 }
             }
         } catch (InvocationTargetException e) {
-            if (!(e.getCause() instanceof AbortException)) {
+            if (e.getCause() instanceof AbortException) {
+                throw (AbortException) e.getCause();
+            } else {
                 throw new NocturneException("Can't invoke validate or action method for component class "
                         + getClass().getName() + " [action=" + actionParameter + "].", e);
-            } else {
-                throw (AbortException) e.getCause();
             }
         }
     }
@@ -1064,7 +1064,7 @@ public abstract class Component {
             }
         });
 
-        if (errors.size() > 0) {
+        if (!errors.isEmpty()) {
             synchronized (gson) {
                 Type mapType = new TypeToken<Map<String, String>>() {
                 }.getType();
@@ -1180,7 +1180,7 @@ public abstract class Component {
     /* init */ {
         synchronized (getClass()) {
             if (!actionMaps.containsKey(getClass())) {
-                actionMaps.put(getClass(), new ActionMap(getClass()));
+                actionMaps.putIfAbsent(getClass(), new ActionMap(getClass()));
             }
         }
     }

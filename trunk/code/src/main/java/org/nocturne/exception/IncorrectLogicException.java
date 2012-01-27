@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.exception;
 
 /**
@@ -12,7 +11,9 @@ package org.nocturne.exception;
  * @author Mike Mirzayanov
  */
 public class IncorrectLogicException extends RuntimeException {
-    /** @param message Error message. */
+    /**
+     * @param message Error message.
+     */
     public IncorrectLogicException(String message) {
         super(message);
     }

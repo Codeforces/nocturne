@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.validation;
 
 import java.util.regex.Pattern;
@@ -15,12 +14,12 @@ public class PatternValidator extends Validator {
     /**
      * Regex pattern.
      */
-    private Pattern pattern;
+    private final Pattern pattern;
 
     /**
      * Shortcut for error message.
      */
-    private String message;
+    private final String message;
 
     /**
      * @param pattern Validated strings will be checked to match the given pattern.

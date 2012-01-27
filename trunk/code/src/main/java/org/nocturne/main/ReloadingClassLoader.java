@@ -1,14 +1,16 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.main;
 
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author Mike Mirzayanov
@@ -22,7 +24,7 @@ class ReloadingClassLoader extends ClassLoader {
     /**
      * Class loader for delegation.
      */
-    private DelegationClassLoader delegationClassLoader;
+    private final DelegationClassLoader delegationClassLoader;
 
     /**
      * Creates new instance of ReloadingClassLoader.

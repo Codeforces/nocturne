@@ -1,10 +1,8 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.link;
 
-import org.jetbrains.annotations.Nullable;
 import org.nocturne.annotation.Name;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.exception.NocturneException;
@@ -12,6 +10,7 @@ import org.nocturne.main.ApplicationContext;
 import org.nocturne.main.Page;
 import org.nocturne.util.StringUtil;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -305,7 +304,7 @@ public class Links {
     }
 
     /**
-     * @param pageClass  Page class.
+     * @param pageClass Page class.
      * @return link for page. If there many links for page, returns one of them, which matches better
      * @throws NoSuchLinkException if no such link exists
      */
@@ -314,10 +313,10 @@ public class Links {
     }
 
     /**
-     * @param pageClass  Page class.
-     * @param params Even length sequence of Objects. Even elements mean keys and odd
-     *               values of parameters map. For example ["handle", "MikeMirzayanov", "topic", 123]
-     *               means map ["handle" => "MikeMirzayanov", "topic" => 123]. Method skips params with null value.
+     * @param pageClass Page class.
+     * @param params    Even length sequence of Objects. Even elements mean keys and odd
+     *                  values of parameters map. For example ["handle", "MikeMirzayanov", "topic", 123]
+     *                  means map ["handle" => "MikeMirzayanov", "topic" => 123]. Method skips params with null value.
      * @return link for page. If there many links for page, returns one of them, which matches better
      * @throws NoSuchLinkException if no such link exists
      */

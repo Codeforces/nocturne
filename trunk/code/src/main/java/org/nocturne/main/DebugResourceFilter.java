@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.main;
 
 import eu.medsea.util.MimeUtil;
@@ -16,7 +15,6 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 /**
@@ -26,7 +24,9 @@ import java.util.List;
  * resources in IDE it will load renewed version.
  */
 public class DebugResourceFilter implements Filter {
-    /** Logger.  */
+    /**
+     * Logger.
+     */
     private static final Logger logger = Logger.getLogger(DebugResourceFilter.class);
 
     @Override
@@ -125,7 +125,7 @@ public class DebugResourceFilter implements Filter {
             return false;
         }
     }
-                                                        
+
     private static void setupContentType(String path, ServletResponse response) {
         String type = MimeUtil.getFirstMimeType(MimeUtil.getMimeType(FileUtil.getExt(new File(path))));
 

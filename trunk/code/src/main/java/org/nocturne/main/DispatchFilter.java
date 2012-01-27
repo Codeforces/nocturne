@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.main;
 
 import org.nocturne.exception.NocturneException;
@@ -35,7 +34,7 @@ public class DispatchFilter implements Filter {
     static ClassLoader lastReloadingClassLoader;
     private static Object debugModeRequestDispatcher;
 
-    private static RequestDispatcher productionModeRequestDispatcher = new RequestDispatcher();
+    private static final RequestDispatcher productionModeRequestDispatcher = new RequestDispatcher();
     private static FilterConfig filterConfig;
 
     @Override

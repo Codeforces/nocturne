@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.link;
 
 import org.nocturne.main.Page;
@@ -16,16 +15,24 @@ import java.util.Map;
  * @author Andrew Lazarev
  */
 public class LinkMatchResult {
-    /** Page matched by given link. */
+    /**
+     * Page matched by given link.
+     */
     private final Class<? extends Page> pageClass;
 
-    /** Part of link value, matched pattern. */
+    /**
+     * Part of link value, matched pattern.
+     */
     private final String pattern;
 
-    /** Attributes extracted from given link. */
+    /**
+     * Attributes extracted from given link.
+     */
     private final Map<String, String> attributes;
 
-    /** Matched link directive. */
+    /**
+     * Matched link directive.
+     */
     private final Link link;
 
     /**
@@ -43,12 +50,16 @@ public class LinkMatchResult {
         this.link = link;
     }
 
-    /** @return Matched page class. */
+    /**
+     * @return Matched page class.
+     */
     public Class<? extends Page> getPageClass() {
         return pageClass;
     }
 
-    /** @return Pattern which was matched. */
+    /**
+     * @return Pattern which was matched.
+     */
     public String getPattern() {
         return pattern;
     }
@@ -63,7 +74,9 @@ public class LinkMatchResult {
         return attributes;
     }
 
-    /** @return Returns matched link. */
+    /**
+     * @return Returns matched link.
+     */
     public Link getLink() {
         return link;
     }

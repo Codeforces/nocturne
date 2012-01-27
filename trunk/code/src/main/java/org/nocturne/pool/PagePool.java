@@ -1,12 +1,11 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.pool;
 
+import org.apache.log4j.Logger;
 import org.nocturne.main.Page;
 import org.nocturne.main.PageLoader;
-import org.apache.log4j.Logger;
 
 /**
  * Stores all the instances of the specific page class.
@@ -16,7 +15,9 @@ import org.apache.log4j.Logger;
 public class PagePool extends Pool<Page> {
     private static final Logger logger = Logger.getLogger(PagePool.class);
 
-    /** Generates page instances. */
+    /**
+     * Generates page instances.
+     */
     private final PageLoader pageLoader;
 
     /**  */
@@ -25,7 +26,7 @@ public class PagePool extends Pool<Page> {
     /**
      * Constructor PagePool creates a new PagePool instance.
      *
-     * @param pageLoader of type PageLoader
+     * @param pageLoader    of type PageLoader
      * @param pageClassName of type String
      */
     public PagePool(PageLoader pageLoader, String pageClassName) {

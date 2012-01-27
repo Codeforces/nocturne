@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.exception;
 
 /**
@@ -11,7 +10,9 @@ package org.nocturne.exception;
  * @author Mike Mirzayanov
  */
 public class ServletException extends RuntimeException {
-    /** @param message Error message. */
+    /**
+     * @param message Error message.
+     */
     public ServletException(String message) {
         super(message);
     }

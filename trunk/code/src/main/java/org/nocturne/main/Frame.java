@@ -1,12 +1,11 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.main;
 
 import freemarker.template.TemplateException;
-import org.nocturne.exception.FreemarkerException;
 import org.nocturne.cache.CacheHandler;
+import org.nocturne.exception.FreemarkerException;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -46,7 +45,9 @@ public abstract class Frame extends Component {
                 Events.fireAfterAction(this);
                 finalizeAction();
 
-                if (!isSkipTemplate()) {
+                if (isSkipTemplate()) {
+                    return null;
+                } else {
                     StringWriter writer = new StringWriter(4096);
                     Map<String, Object> params = new HashMap<String, Object>(internalGetTemplateMap());
                     params.putAll(ApplicationContext.getInstance().getCurrentPage().internalGetGlobalTemplateMap());
@@ -58,8 +59,6 @@ public abstract class Frame extends Component {
                         cacheHandler.postprocess(this, result);
                     }
                     return result;
-                } else {
-                    return null;
                 }
             } else {
                 return result;

@@ -43,10 +43,9 @@ public class LongValidator extends Validator {
 
     /**
      * @param value Value to be analyzed.
-     * @throws ValidationException
-     *          On validation error. It is good idea to pass
-     *          localized via captions value inside ValidationException,
-     *          like {@code return new ValidationException($("Field can't be empty"));}.
+     * @throws ValidationException On validation error. It is good idea to pass
+     *                             localized via captions value inside ValidationException,
+     *                             like {@code return new ValidationException($("Field can't be empty"));}.
      */
     @Override
     public void run(String value) throws ValidationException {

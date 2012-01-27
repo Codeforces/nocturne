@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.exception;
 
 /**
@@ -14,7 +13,9 @@ package org.nocturne.exception;
  * @author Mike Mirzayanov
  */
 public class AbortException extends RuntimeException {
-    /** @param message Abort information message (not used). */
+    /**
+     * @param message Abort information message (not used).
+     */
     public AbortException(String message) {
         super(message);
     }
