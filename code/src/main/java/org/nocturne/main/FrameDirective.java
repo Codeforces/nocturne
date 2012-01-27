@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.main;
 
 import freemarker.core.Environment;

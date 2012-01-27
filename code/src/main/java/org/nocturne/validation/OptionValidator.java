@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.validation;
 
 /**
@@ -11,8 +10,10 @@ package org.nocturne.validation;
  * @author Mike Mirzayanov
  */
 public class OptionValidator extends Validator {
-    /** Possible options. */
-    private Object[] options;
+    /**
+     * Possible options.
+     */
+    private final Object[] options;
 
     /**
      * Constructs validator with given list of possible options.

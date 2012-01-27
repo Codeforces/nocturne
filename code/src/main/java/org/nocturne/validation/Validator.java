@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.validation;
 
 import org.nocturne.main.ApplicationContext;

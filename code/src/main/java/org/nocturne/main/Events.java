@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.main;
 
 import org.nocturne.exception.IncorrectLogicException;
@@ -86,8 +85,10 @@ public class Events {
     }
 
     private static class Scope {
-        /** Stores listeners for each . */
-        private Map<Class<?>, Set<Listener>> listenersByEvent =
+        /**
+         * Stores listeners for each .
+         */
+        private final Map<Class<?>, Set<Listener>> listenersByEvent =
                 new LinkedHashMap<Class<?>, Set<Listener>>();
 
         public <T> void listen(Class<T> eventClass, Listener<T> listener) {

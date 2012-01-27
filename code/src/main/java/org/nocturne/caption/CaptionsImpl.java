@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.caption;
 
 import com.google.inject.Singleton;
@@ -28,13 +27,19 @@ import java.util.regex.Pattern;
  */
 @Singleton
 public class CaptionsImpl implements Captions {
-    /** Stores properties per language. */
+    /**
+     * Stores properties per language.
+     */
     private final Map<String, Properties> propertiesMap = new Hashtable<String, Properties>();
 
-    /** Magic value to store empty value. */
+    /**
+     * Magic value to store empty value.
+     */
     private static final String NULL = "nocturne.null";
 
-    /** Constructs new CaptionsImpl. */
+    /**
+     * Constructs new CaptionsImpl.
+     */
     public CaptionsImpl() {
         // Load properties on startup.
         loadProperties();
@@ -87,7 +92,9 @@ public class CaptionsImpl implements Captions {
         }
     }
 
-    /** Synchronizes all the properties and saves them. */
+    /**
+     * Synchronizes all the properties and saves them.
+     */
     private void saveProperties() {
         // Find all possible keys.
         Set<String> keys = new TreeSet<String>();
@@ -126,7 +133,9 @@ public class CaptionsImpl implements Captions {
         }
     }
 
-    /** Method loadProperties ... */
+    /**
+     * Method loadProperties ...
+     */
     private void loadProperties() {
         if (ApplicationContext.getInstance().isDebug()) {
             loadPropertiesForDebug();
@@ -135,7 +144,9 @@ public class CaptionsImpl implements Captions {
         }
     }
 
-    /** Method loadPropertiesForProduction ... */
+    /**
+     * Method loadPropertiesForProduction ...
+     */
     private void loadPropertiesForProduction() {
         if (propertiesMap.isEmpty()) {
             List<String> languages = ApplicationContext.getInstance().getAllowedLanguages();
@@ -156,7 +167,9 @@ public class CaptionsImpl implements Captions {
         }
     }
 
-    /** Method loadPropertiesForDebug ... */
+    /**
+     * Method loadPropertiesForDebug ...
+     */
     private void loadPropertiesForDebug() {
         File dir = new File(ApplicationContext.getInstance().getDebugCaptionsDir());
 

@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.module;
 
 import java.io.File;
@@ -10,7 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class FileResourceLoader implements ResourceLoader {
-    private File baseDir;
+    private final File baseDir;
 
     public FileResourceLoader(File baseDir) {
         this.baseDir = baseDir;

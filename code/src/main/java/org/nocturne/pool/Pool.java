@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.pool;
 
 import org.apache.log4j.Logger;
@@ -71,7 +70,7 @@ public abstract class Pool<T> {
         if (instances.size() > 1000) {
             T t = instances.peek();
             if (t != null) {
-                logger.warn("Queue " + getClass() + " [t=" + t.getClass().getName()+ "] is too large.");
+                logger.warn("Queue " + getClass() + " [t=" + t.getClass().getName() + "] is too large.");
             }
             while (instances.size() > 500) {
                 instances.remove();

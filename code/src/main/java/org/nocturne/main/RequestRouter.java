@@ -1,13 +1,14 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.main;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
-/** @author Mike Mirzayanov */
+/**
+ * @author Mike Mirzayanov
+ */
 public interface RequestRouter {
     /**
      * Override this method to return Resolution instance.
@@ -16,7 +17,7 @@ public interface RequestRouter {
      *     return new Resolution("your.application.pages." + path.substring(1));
      * </pre>
      * }
-     *
+     * <p/>
      * Should be thread-safe.
      *
      * @param path         Page path, for example "/login";
@@ -29,15 +30,21 @@ public interface RequestRouter {
      * Incapsultes response from ReuestRouter: the controller class,
      * action and override parameters.
      */
-    public static class Resolution {
-        /** Controller class name. */
-        private String pageClassName;
+    class Resolution {
+        /**
+         * Controller class name.
+         */
+        private final String pageClassName;
 
-        /** Action name. */
-        private String action;
+        /**
+         * Action name.
+         */
+        private final String action;
 
-        /** Parameters which will be also injected for @Parameter annotation. */
-        private Map<String, String> overrideParameters = new HashMap<String, String>();
+        /**
+         * Parameters which will be also injected for @Parameter annotation.
+         */
+        private final Map<String, String> overrideParameters = new HashMap<String, String>();
 
         /**
          * @param pageClassName Controller class name.
@@ -56,17 +63,23 @@ public interface RequestRouter {
             overrideParameters.put(key, value);
         }
 
-        /** @return Controller class name. */
+        /**
+         * @return Controller class name.
+         */
         public String getPageClassName() {
             return pageClassName;
         }
 
-        /** @return Action name or empty string if not specified. */
+        /**
+         * @return Action name or empty string if not specified.
+         */
         public String getAction() {
             return action;
         }
 
-        /** @return Parameters which will be also injected for @Parameter annotation. */
+        /**
+         * @return Parameters which will be also injected for @Parameter annotation.
+         */
         public Map<String, String> getOverrideParameters() {
             return overrideParameters;
         }

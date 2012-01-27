@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.main;
 
 import com.google.inject.Binder;
@@ -13,7 +12,7 @@ import java.util.List;
 /**
  * Wraps IoC module specified by nocturne.guice-module-class-name and invokes
  * IoC modules for all registered application modules.
- * 
+ *
  * @author Mike Mirzayanov
  */
 class GenericIocModule implements Module {

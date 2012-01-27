@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.validation;
 
 /**
@@ -11,11 +10,15 @@ package org.nocturne.validation;
  * @author Andrew Lazarev
  */
 public class StringCharactersValidator extends Validator {
-    /** Alphabet. */
-    private String alphabet;
+    /**
+     * Alphabet.
+     */
+    private final String alphabet;
 
-    /** Shortcut for error message. */
-    private String message;
+    /**
+     * Shortcut for error message.
+     */
+    private final String message;
 
     /**
      * @param alphabet All characters from validated value will be checked to be in alphabet.

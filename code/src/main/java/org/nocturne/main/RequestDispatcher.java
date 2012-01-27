@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.main;
 
 import freemarker.template.Configuration;
@@ -31,7 +30,7 @@ public class RequestDispatcher {
     /**
      * Logger.
      */
-    private static Logger logger = Logger.getLogger(DispatchFilter.class);
+    private static final Logger logger = Logger.getLogger(DispatchFilter.class);
 
     /**
      * Context.
@@ -47,7 +46,7 @@ public class RequestDispatcher {
     /**
      * Page loader for production mode.
      */
-    private PageLoader pageLoader
+    private final PageLoader pageLoader
             = new PageLoader();
 
     /**

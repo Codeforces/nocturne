@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.main;
 
 import org.nocturne.annotation.Parameter;
@@ -27,7 +26,7 @@ public class ParametersInjector {
     /**
      * Injection target object.
      */
-    private Object component;
+    private final Object component;
 
     /**
      * Stores information about
@@ -234,8 +233,8 @@ public class ParametersInjector {
     }
 
     private static class InjectField {
-        private Field field;
-        private Parameter parameter;
+        private final Field field;
+        private final Parameter parameter;
 
         private InjectField(Field field, Parameter parameter) {
             this.field = field;

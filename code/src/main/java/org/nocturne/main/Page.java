@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.main;
 
 import freemarker.template.TemplateException;
@@ -33,12 +32,12 @@ public abstract class Page extends Component {
     /**
      * Stores additional css resources added by addCss() from the page or internal frames.
      */
-    private Set<String> cssSet = new HashSet<String>();
+    private final Set<String> cssSet = new HashSet<String>();
 
     /**
      * Stores additional js resources added by addJs() from the page or internal frames.
      */
-    private Set<String> jsSet = new HashSet<String>();
+    private final Set<String> jsSet = new HashSet<String>();
 
     /**
      * Default is null, which means no postprocessing.
@@ -177,7 +176,7 @@ public abstract class Page extends Component {
             // No operations.
         } catch (IOException e) {
             throw new FreemarkerException("Can't write page " + getClass().getName() + '.', e);
-        }  finally {
+        } finally {
             finalizeAfterAction();
         }
     }

@@ -1,9 +1,10 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.util;
 
+import com.google.common.primitives.Ints;
+import org.apache.commons.io.IOUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
@@ -24,7 +25,9 @@ import java.nio.channels.FileChannel;
  * @author Mike Mirzayanov
  */
 public class FileUtil {
-    /** Stores xpath factory. */
+    /**
+     * Stores xpath factory.
+     */
     private static final XPathFactory XPATH_FACTORY = XPathFactory.newInstance();
 
     /**
@@ -77,7 +80,7 @@ public class FileUtil {
             }
         }
 
-        String children[] = source.list();
+        String[] children = source.list();
 
         for (String child : children) {
             File nextSource = new File(source, child);
@@ -123,16 +126,16 @@ public class FileUtil {
      * @param file File to be deleted.
      */
     public static void deleteTotalyAsync(final File file) {
-        new Thread() {
+        new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     deleteTotaly(file);
-                } catch (Throwable e) {
+                } catch (Throwable ignored) {
                     // No operations.
                 }
             }
-        }.start();
+        }).start();
     }
 
     /**
@@ -141,7 +144,7 @@ public class FileUtil {
      * @throws IOException if can't read data.
      */
     public static String readFromReader(Reader reader) throws IOException {
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         try {
             char[] chunk = new char[65536];
             while (true) {
@@ -154,13 +157,7 @@ public class FileUtil {
         } catch (IOException e) {
             throw new IOException("Can't read from reader.", e);
         } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    // No operation.
-                }
-            }
+            IOUtils.closeQuietly(reader);
         }
         return result.toString();
     }
@@ -200,13 +197,7 @@ public class FileUtil {
             writer.write(content);
             writer.close();
         } finally {
-            if (writer != null) {
-                try {
-                    writer.close();
-                } catch (IOException e) {
-                    // No operation.
-                }
-            }
+            IOUtils.closeQuietly(writer);
         }
     }
 
@@ -289,7 +280,7 @@ public class FileUtil {
 
             Object result = expression.evaluate(new InputSource(xml), type);
             if (type == XPathConstants.NUMBER) {
-                result = (((Double) result).intValue());
+                result = ((Double) result).intValue();
                 return (T) result;
             } else {
                 return (T) result;
@@ -307,9 +298,8 @@ public class FileUtil {
      */
     public static void writeXml(File file, Document document) {
         Source source = new DOMSource(document);
-        Transformer transformer;
         try {
-            transformer = TransformerFactory.newInstance().newTransformer();
+            Transformer transformer = TransformerFactory.newInstance().newTransformer();
             transformer.setOutputProperty(OutputKeys.STANDALONE, "yes");
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.setOutputProperty(OutputKeys.ENCODING, "utf-8");
@@ -364,7 +354,7 @@ public class FileUtil {
     }
 
     public static byte[] _getBytes(File file) throws IOException {
-        int size = (int) file.length();
+        int size = Ints.checkedCast(file.length());
         InputStream stream = new FileInputStream(file);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(size);
         byte[] chunk = new byte[1048576];
@@ -391,7 +381,7 @@ public class FileUtil {
             long size = file.length();
             FileInputStream stream = new FileInputStream(file);
             FileChannel channel = stream.getChannel();
-            ByteBuffer bytes = ByteBuffer.allocate((int) size);
+            ByteBuffer bytes = ByteBuffer.allocate(Ints.checkedCast(size));
             channel.read(bytes);
             channel.close();
             stream.close();
@@ -419,7 +409,7 @@ public class FileUtil {
             }
             FileInputStream stream = new FileInputStream(file);
             FileChannel channel = stream.getChannel();
-            ByteBuffer bytes = ByteBuffer.allocate((int) size);
+            ByteBuffer bytes = ByteBuffer.allocate(Ints.checkedCast(size));
             channel.read(bytes);
             channel.close();
             stream.close();
@@ -429,7 +419,9 @@ public class FileUtil {
         }
     }
 
-    /** Accepts not fidden files. */
+    /**
+     * Accepts not fidden files.
+     */
     public static class NotHiddenFileFilter implements FilenameFilter {
         @Override
         public boolean accept(File dir, String name) {
@@ -444,7 +436,7 @@ public class FileUtil {
     public static String getName(File file) {
         String name = file.getName();
         if (name.contains(".")) {
-            return name.substring(0, name.lastIndexOf("."));
+            return name.substring(0, name.lastIndexOf('.'));
         } else {
             return name;
         }
@@ -457,7 +449,7 @@ public class FileUtil {
     public static String getExt(File file) {
         String name = file.getName();
         if (name.contains(".")) {
-            return name.substring(name.lastIndexOf(".")).toLowerCase();
+            return name.substring(name.lastIndexOf('.')).toLowerCase();
         } else {
             return "";
         }

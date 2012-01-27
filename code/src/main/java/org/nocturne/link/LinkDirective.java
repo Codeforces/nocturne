@@ -45,8 +45,8 @@ public class LinkDirective implements TemplateDirectiveModel {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static String getLink(Map params, String name) {
-        //noinspection unchecked
         return Links.getLinkByMap(name, params);
     }
 

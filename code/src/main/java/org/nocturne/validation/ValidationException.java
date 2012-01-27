@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.validation;
 
 /**
@@ -10,7 +9,9 @@ package org.nocturne.validation;
  * @author Mike Mirzayanov
  */
 public class ValidationException extends Exception {
-    /** @param message Validation error message. Will be displayed for users. */
+    /**
+     * @param message Validation error message. Will be displayed for users.
+     */
     public ValidationException(String message) {
         super(message);
     }

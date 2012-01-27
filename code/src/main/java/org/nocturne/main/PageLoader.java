@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.main;
 
 import org.apache.log4j.Logger;
@@ -114,5 +113,5 @@ public class PageLoader {
         for (PagePool pool : pools) {
             pool.close();
         }
-   }
+    }
 }

@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.validation;
 
 /**
@@ -10,13 +9,19 @@ package org.nocturne.validation;
  * @author Mike Mirzayanov
  */
 public class LengthValidator extends Validator {
-    /** Minimal length. */
+    /**
+     * Minimal length.
+     */
     private int minimalLength = Integer.MIN_VALUE;
 
-    /** Maximal length. */
+    /**
+     * Maximal length.
+     */
     private int maximalLength = Integer.MAX_VALUE;
 
-    /** @param minimalLength Minimal length. */
+    /**
+     * @param minimalLength Minimal length.
+     */
     public LengthValidator(int minimalLength) {
         this.minimalLength = minimalLength;
     }

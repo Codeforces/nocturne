@@ -1,13 +1,12 @@
 package org.nocturne.link;
 
 import junit.framework.TestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.link.pages.*;
 import org.nocturne.main.ApplicationContextHelper;
 import org.nocturne.main.Page;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

@@ -1,7 +1,6 @@
 /*
  * Copyright 2009 Mike Mirzayanov
  */
-
 package org.nocturne.exception;
 
 /**
@@ -19,7 +18,9 @@ public class ReflectionException extends Exception {
         super(message, cause);
     }
 
-    /** @param message Error message. */
+    /**
+     * @param message Error message.
+     */
     public ReflectionException(String message) {
         super(message);
     }
