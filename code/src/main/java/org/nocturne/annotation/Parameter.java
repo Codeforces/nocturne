@@ -44,7 +44,6 @@ public @interface Parameter {
          * Do not strip any characters.
          */
         NONE {
-            /** @see org.nocturne.annotation.Parameter.StripMode#strip(String) */
             @Override
             public String strip(String value) {
                 return value;
@@ -55,7 +54,6 @@ public @interface Parameter {
          * Leave only safe chars: strip slashes, quotes, angle brackets, ampersand and low-code chars. Also makes trim().
          */
         SAFE {
-            /** @see org.nocturne.annotation.Parameter.StripMode#strip(String) */
             @Override
             public String strip(String value) {
                 if (value != null) {
@@ -78,13 +76,12 @@ public @interface Parameter {
          */
         ID {
             private boolean isValidChar(char c) {
-                return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')
-                        || ('0' <= c && c <= '9') || (c == '_')
+                return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+                        || (c >= '0' && c <= '9') || (c == '_')
                         || (c == '-')
                         || (c == '.');
             }
 
-            /** @see org.nocturne.annotation.Parameter.StripMode#strip(String) */
             @Override
             public String strip(String value) {
                 if (value != null) {
