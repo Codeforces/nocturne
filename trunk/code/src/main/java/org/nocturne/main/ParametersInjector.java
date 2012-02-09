@@ -101,12 +101,13 @@ public class ParametersInjector {
 
         if (clazz.equals(Boolean.class) || clazz.equals(boolean.class)) {
             processed = true;
-            if (value.equalsIgnoreCase("on") || value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("1") || value.equalsIgnoreCase("y")) {
+            if ("true".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value)
+                    || "yes".equalsIgnoreCase(value) || "1".equalsIgnoreCase(value) || "y".equalsIgnoreCase(value)) {
                 assign = true;
             } else {
                 try {
                     assign = Boolean.valueOf(value);
-                } catch (Exception e) {
+                } catch (Exception ignored) {
                     assign = false;
                 }
             }
@@ -116,7 +117,7 @@ public class ParametersInjector {
             processed = true;
             try {
                 assign = Integer.valueOf(value);
-            } catch (Exception e) {
+            } catch (Exception ignored) {
                 assign = 0;
             }
         }
@@ -125,7 +126,7 @@ public class ParametersInjector {
             processed = true;
             try {
                 assign = Long.valueOf(value);
-            } catch (Exception e) {
+            } catch (Exception ignored) {
                 assign = 0L;
             }
         }
@@ -134,7 +135,7 @@ public class ParametersInjector {
             processed = true;
             try {
                 assign = Double.valueOf(value);
-            } catch (Exception e) {
+            } catch (Exception ignored) {
                 assign = 0.0;
             }
         }
@@ -143,7 +144,7 @@ public class ParametersInjector {
             processed = true;
             try {
                 assign = Float.valueOf(value);
-            } catch (Exception e) {
+            } catch (Exception ignored) {
                 assign = 0.0F;
             }
         }
@@ -158,11 +159,11 @@ public class ParametersInjector {
             }
         }
 
-        if (!processed) {
+        if (processed) {
+            setFieldValue(field, assign);
+        } else {
             throw new ConfigurationException("Field " + field.field.getName() + " of "
                     + field.field.getDeclaringClass().getName() + " has unexpected type " + clazz.getName() + '.');
-        } else {
-            setFieldValue(field, assign);
         }
     }
 
@@ -182,23 +183,23 @@ public class ParametersInjector {
         }
 
         if (clazz.equals(boolean.class)) {
-            assign = false;
+            assign = Boolean.FALSE;
         }
 
         if (clazz.equals(int.class)) {
-            assign = Integer.valueOf(0);
+            assign = 0;
         }
 
         if (clazz.equals(long.class)) {
-            assign = Long.valueOf(0L);
+            assign = 0L;
         }
 
         if (clazz.equals(double.class)) {
-            assign = Double.valueOf(0.0);
+            assign = 0.0D;
         }
 
         if (clazz.equals(float.class)) {
-            assign = Float.valueOf(0.0F);
+            assign = 0.0F;
         }
 
         setFieldValue(field, assign);
@@ -210,7 +211,7 @@ public class ParametersInjector {
             field.field.set(component, assign);
         } catch (IllegalAccessException e) {
             throw new IllegalArgumentException("Don't have access to set field " + field.field.getName() + " of "
-                    + field.field.getDeclaringClass().getName() + '.');
+                    + field.field.getDeclaringClass().getName() + '.', e);
         }
     }
 

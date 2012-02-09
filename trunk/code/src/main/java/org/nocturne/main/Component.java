@@ -666,7 +666,8 @@ public abstract class Component {
      */
     public boolean getBoolean(String key) {
         String value = getString(key);
-        return "true".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value);
+        return "true".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value)
+                || "yes".equalsIgnoreCase(value) || "1".equalsIgnoreCase(value) || "y".equalsIgnoreCase(value);
     }
 
     /**
@@ -677,7 +678,7 @@ public abstract class Component {
     public int getInteger(String key) {
         try {
             return Integer.parseInt(getString(key));
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException ignored) {
             return 0;
         }
     }
@@ -690,7 +691,7 @@ public abstract class Component {
     public long getLong(String key) {
         try {
             return Long.parseLong(getString(key));
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException ignored) {
             return 0L;
         }
     }
@@ -703,7 +704,7 @@ public abstract class Component {
     public double getDouble(String key) {
         try {
             return Double.parseDouble(getString(key));
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException ignored) {
             return 0.0;
         }
     }
@@ -716,7 +717,7 @@ public abstract class Component {
     public double getFloat(String key) {
         try {
             return Float.parseFloat(getString(key));
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException ignored) {
             return 0.0F;
         }
     }
@@ -798,6 +799,7 @@ public abstract class Component {
      * Override it to initialize component instance after action.
      */
     public void finalizeAction() {
+        // No operations.
     }
 
     void setup(Frame frame) {
@@ -975,8 +977,6 @@ public abstract class Component {
     }
 
     private boolean runValidation(ErrorValidationHandler handler) {
-        boolean failed = false;
-
         Map parameterMap = getRequestParams();
         for (Object key : parameterMap.keySet()) {
             Object value = parameterMap.get(key);
@@ -986,6 +986,8 @@ public abstract class Component {
                 setupTemplateMapByParameter(key.toString());
             }
         }
+
+        boolean failed = false;
 
         for (Map.Entry<String, List<Validator>> entry : validators.entrySet()) {
             String parameter = entry.getKey();
