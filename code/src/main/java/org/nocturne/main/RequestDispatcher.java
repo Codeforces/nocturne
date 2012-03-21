@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Writer;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -113,6 +114,7 @@ public class RequestDispatcher {
             processChain = page.isProcessChain();
 
             page.getOutputStream().flush();
+            page.getWriter().flush();
         } catch (Exception e) {
             pageThrowable = e;
             if (!isClientAbortException(e)) {
@@ -240,6 +242,7 @@ public class RequestDispatcher {
             runResult.setProcessChain((Boolean) ReflectionUtil.invoke(page, "isProcessChain"));
 
             ((OutputStream) ReflectionUtil.invoke(page, "getOutputStream")).flush();
+            ((Writer) ReflectionUtil.invoke(page, "getWriter")).flush();
         } catch (ReflectionException e) {
             throw new NocturneException("Can't run method via reflection.", e);
         } finally {
