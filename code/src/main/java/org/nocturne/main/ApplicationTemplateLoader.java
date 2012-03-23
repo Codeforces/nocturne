@@ -91,8 +91,6 @@ public class ApplicationTemplateLoader implements TemplateLoader {
 
     @Override
     public Reader getReader(Object o, String s) throws IOException {
-        logger.info("Invoked getReader [s=" + s + ", o=" + o + "].");
-
         if (applicationContext.isDebug() && loadersByTemplate.containsKey(o)) {
             return loadersByTemplate.get(o).getReader(o, s);
         }
