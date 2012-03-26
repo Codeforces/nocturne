@@ -25,15 +25,23 @@ import java.util.Set;
  *
  * @author Mike Mirzayanov
  */
+@SuppressWarnings("Singleton")
 public class CaptionDirective implements TemplateDirectiveModel {
     /**
      * Singleton instance.
      */
     private static final CaptionDirective INSTANCE = new CaptionDirective();
 
+    private static final Object[] EMPTY_OBJECT_ARRAY = {};
+
+    private CaptionDirective() {
+        // No operations.
+    }
+
     @Override
     @SuppressWarnings({"unchecked"})
-    public void execute(Environment env, Map params, TemplateModel[] loopVars, TemplateDirectiveBody body) throws TemplateException, IOException {
+    public void execute(Environment env, Map params, TemplateModel[] loopVars, TemplateDirectiveBody body)
+            throws TemplateException, IOException {
         char[] chars = null;
 
         if (body != null) {
@@ -44,11 +52,15 @@ public class CaptionDirective implements TemplateDirectiveModel {
         }
 
         if (params.containsKey("key") && chars != null && chars.length > 0) {
-            throw new TemplateModelException("Caption directive expectes key parameter or directive body, but not in the same time.");
+            throw new TemplateModelException(
+                    "Caption directive expects key parameter or directive body, but not in the same time."
+            );
         }
 
         if (!params.containsKey("key") && (chars == null || chars.length == 0)) {
-            throw new TemplateModelException("Caption directive expectes key parameter or directive body, but no one found.");
+            throw new TemplateModelException(
+                    "Caption directive expects either key parameter or directive body, but none found."
+            );
         }
 
         Set<String> keys = params.keySet();
@@ -64,11 +76,11 @@ public class CaptionDirective implements TemplateDirectiveModel {
         Object p = params.get("params");
         keys.remove("params");
 
-        if (keys.size() != 0) {
+        if (!keys.isEmpty()) {
             throw new TemplateModelException("Caption directive contains unexpected params.");
         }
 
-        Object[] args = new Object[0];
+        Object[] args = EMPTY_OBJECT_ARRAY;
 
         if (p instanceof SimpleSequence) {
             SimpleSequence sequence = (SimpleSequence) p;
@@ -76,7 +88,7 @@ public class CaptionDirective implements TemplateDirectiveModel {
             for (int i = 0; i < sequence.size(); i++) {
                 Object arg = sequence.get(i);
                 if (arg instanceof SimpleNumber) {
-                    args[i] = ((SimpleNumber) arg).getAsNumber();
+                    args[i] = ((TemplateNumberModel) arg).getAsNumber();
                 } else {
                     args[i] = arg.toString();
                 }
