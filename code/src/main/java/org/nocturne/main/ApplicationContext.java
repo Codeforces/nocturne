@@ -611,7 +611,8 @@ public class ApplicationContext {
         if (captions == null) {
             synchronized (this) {
                 try {
-                    Class<? extends Captions> clazz = (Class<? extends Captions>) getClass().getClassLoader().loadClass(captionsImplClass);
+                    Class<? extends Captions> clazz
+                            = (Class<? extends Captions>) getClass().getClassLoader().loadClass(captionsImplClass);
                     captions = injector.getInstance(clazz);
                 } catch (ClassNotFoundException e) {
                     throw new ConfigurationException("Class " + captionsImplClass + " should implement Captions.", e);
