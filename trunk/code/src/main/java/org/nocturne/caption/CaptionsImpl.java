@@ -27,6 +27,8 @@ import java.util.regex.Pattern;
  */
 @Singleton
 public class CaptionsImpl implements Captions {
+    private static final Pattern CAPTIONS_FILE_PATTERN = Pattern.compile("captions_[\\w]{2}\\.properties");
+
     /**
      * Stores properties per language.
      */
@@ -75,7 +77,7 @@ public class CaptionsImpl implements Captions {
             // Is it NOT default locale?
             if (defaultLocale == locale) {
                 // Set default.
-                properties.put(shortcut, shortcut);
+                properties.setProperty(shortcut, shortcut);
             }
             // Use default locale to find value.
             value = find(defaultLocale, shortcut, args);
@@ -98,23 +100,23 @@ public class CaptionsImpl implements Captions {
     private void saveProperties() {
         // Find all possible keys.
         Set<String> keys = new TreeSet<String>();
-        for (String lang : propertiesMap.keySet()) {
-            Set<Object> names = propertiesMap.get(lang).keySet();
+        for (Map.Entry<String, Properties> entry : propertiesMap.entrySet()) {
+            Set<Object> names = entry.getValue().keySet();
             for (Object name : names) {
                 keys.add(name.toString());
             }
         }
 
         // Add empty value for each key if no such found.
-        for (String lang : propertiesMap.keySet()) {
-            Properties properties = propertiesMap.get(lang);
+        for (Map.Entry<String, Properties> entry : propertiesMap.entrySet()) {
+            Properties properties = entry.getValue();
             for (String key : keys) {
                 if (!properties.containsKey(key)) {
-                    properties.put(key, NULL);
+                    properties.setProperty(key, NULL);
                 }
             }
             // And save properties.
-            save(properties, lang);
+            save(properties, entry.getKey());
         }
     }
 
@@ -122,7 +124,7 @@ public class CaptionsImpl implements Captions {
      * @param properties Properties to be saved in the file.
      * @param language   Language.
      */
-    private void save(Properties properties, String language) {
+    private static void save(Properties properties, String language) {
         File file = new File(ApplicationContext.getInstance().getDebugCaptionsDir(), getCaptionsFileName(language));
         try {
             Writer writer = new OutputStreamWriter(new FileOutputStream(file), ApplicationContext.getInstance().getCaptionFilesEncoding());
@@ -171,12 +173,12 @@ public class CaptionsImpl implements Captions {
      * Method loadPropertiesForDebug ...
      */
     private void loadPropertiesForDebug() {
-        File dir = new File(ApplicationContext.getInstance().getDebugCaptionsDir());
+        File debugCaptionsDir = new File(ApplicationContext.getInstance().getDebugCaptionsDir());
 
-        File[] captionFiles = dir.listFiles(new FilenameFilter() {
+        File[] captionFiles = debugCaptionsDir.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
-                return name.matches("captions_[\\w]{2}\\.properties");
+                return CAPTIONS_FILE_PATTERN.matcher(name).matches();
             }
         });
 
@@ -195,7 +197,7 @@ public class CaptionsImpl implements Captions {
                         properties.load(reader);
                         propertiesMap.put(language, properties);
                         reader.close();
-                    } catch (IOException e) {
+                    } catch (IOException ignored) {
                         // No operations.
                     }
                 }
@@ -209,7 +211,7 @@ public class CaptionsImpl implements Captions {
      * @param language of type String
      * @return String
      */
-    private String getCaptionsFileName(String language) {
+    private static String getCaptionsFileName(String language) {
         return "/captions_" + language + ".properties";
     }
 }

@@ -33,7 +33,7 @@ public class FieldsReseter {
     private final List<Field> fieldsToReset = new ArrayList<Field>();
     private final ResetStrategy componentStrategy;
 
-    private boolean hasResetAnnotation(AnnotatedElement annotatedElement) {
+    private static boolean hasResetAnnotation(AnnotatedElement annotatedElement) {
         Boolean result = RESET_ANNOTATIONS_CACHE.get(annotatedElement);
         if (result != null) {
             return result;
@@ -52,7 +52,7 @@ public class FieldsReseter {
         return result;
     }
 
-    private boolean hasPersistAnnotation(AnnotatedElement annotatedElement) {
+    private static boolean hasPersistAnnotation(AnnotatedElement annotatedElement) {
         Boolean result = PERSIST_ANNOTATIONS_CACHE.get(annotatedElement);
         if (result != null) {
             return result;
@@ -91,10 +91,12 @@ public class FieldsReseter {
                     continue;
                 }
 
-                ResetStrategy fieldStrategy = getStrategy(componentStrategy,
-                        hasResetAnnotation(declaredField),
-                        hasPersistAnnotation(declaredField),
-                        declaredField.toString());
+                ResetStrategy fieldStrategy = getStrategy(
+                        componentStrategy,
+                        hasResetAnnotation(declaredField), hasPersistAnnotation(declaredField),
+                        declaredField.toString()
+                );
+
                 if (fieldStrategy == ResetStrategy.RESET) {
                     fieldsToReset.add(declaredField);
                 }
@@ -103,10 +105,10 @@ public class FieldsReseter {
         }
     }
 
-    private boolean isNocturneComponent(Class<?> clazz) {
-        return clazz.getCanonicalName().equals(Component.class.getCanonicalName()) ||
-                clazz.getCanonicalName().equals(Page.class.getCanonicalName()) ||
-                clazz.getCanonicalName().equals(Frame.class.getCanonicalName());
+    private static boolean isNocturneComponent(Class<?> clazz) {
+        return clazz.getCanonicalName().equals(Component.class.getCanonicalName())
+                || clazz.getCanonicalName().equals(Page.class.getCanonicalName())
+                || clazz.getCanonicalName().equals(Frame.class.getCanonicalName());
     }
 
     public void resetFields() {
@@ -126,7 +128,7 @@ public class FieldsReseter {
 
             try {
                 field.set(component, null);
-            } catch (IllegalAccessException e) {
+            } catch (IllegalAccessException ignored) {
                 // No operations.
             }
         } finally {
@@ -139,13 +141,14 @@ public class FieldsReseter {
         if (type != void.class) {
             try {
                 field.set(component, PRIMITIVES_DEFAULT_VALUES.get(type));
-            } catch (IllegalAccessException e) {
+            } catch (IllegalAccessException ignored) {
                 // No operations.
             }
         }
     }
 
-    private static ResetStrategy getStrategy(ResetStrategy defaultStrategy, boolean hasReset, boolean hasPersist, String name) {
+    private static ResetStrategy getStrategy(
+            ResetStrategy defaultStrategy, boolean hasReset, boolean hasPersist, String name) {
         if (hasPersist && hasReset) {
             throw new ConfigurationException("It is impossible to use " +
                     "Reset and Persist at the same time [name=" + name + "].");
@@ -165,8 +168,8 @@ public class FieldsReseter {
     static {
         PRIMITIVES_DEFAULT_VALUES.put(int.class, 0);
         PRIMITIVES_DEFAULT_VALUES.put(long.class, 0L);
-        PRIMITIVES_DEFAULT_VALUES.put(double.class, 0D);
-        PRIMITIVES_DEFAULT_VALUES.put(float.class, 0F);
+        PRIMITIVES_DEFAULT_VALUES.put(double.class, 0.0D);
+        PRIMITIVES_DEFAULT_VALUES.put(float.class, 0.0F);
         PRIMITIVES_DEFAULT_VALUES.put(byte.class, (byte) 0);
         PRIMITIVES_DEFAULT_VALUES.put(short.class, (short) 0);
         PRIMITIVES_DEFAULT_VALUES.put(boolean.class, false);
