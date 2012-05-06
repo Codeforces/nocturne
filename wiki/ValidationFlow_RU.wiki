@@ -30,6 +30,7 @@ validation метод выглядит так:
             <td>&nbsp;</td>
             <td><span class="field-error">${error__login!}</span></td>
         </tr>
+        </#if>
 }}}
 
 В коде как выше, в случае невалидной формы значение поля будет сохранено, а в случае, если 
@@ -45,6 +46,9 @@ public class UserChangePage extends Page {
     
     @Parameter
     private int age;
+
+    @Inject
+    private UserDao userDao;
 
     @Validate("add")
     public boolean validateAddUser() {
