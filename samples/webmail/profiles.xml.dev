@@ -4,7 +4,7 @@
         <profile>
             <id>development-settings</id>
             <properties>
-                <development.home>Z:/Projects/nocturne/samples/webmail</development.home>
+                <development.home>P:/nocturne/samples/webmail</development.home>
                 <nocturne.debug>true</nocturne.debug>
                 <logging.path>${development.home}/webmail.log</logging.path>
 
