@@ -19,6 +19,7 @@ import org.nocturne.util.ReflectionUtil;
 import org.nocturne.util.RequestUtil;
 import org.nocturne.validation.ValidationException;
 import org.nocturne.validation.Validator;
+import sun.net.www.protocol.http.HttpURLConnection;
 
 import javax.annotation.Nullable;
 import javax.servlet.FilterConfig;
@@ -39,8 +40,6 @@ import java.util.concurrent.ConcurrentMap;
  * @author Mike Mirzayanov
  */
 public abstract class Component {
-    private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
-
     /**
      * Has been initialized?
      */
@@ -199,13 +198,15 @@ public abstract class Component {
             FastMethod validateMethod = actionMap.getValidateMethod(actionParameter);
             Boolean validationResult = true;
             if (validateMethod != null) {
-                validationResult = (Boolean) validateMethod.invoke(this, EMPTY_OBJECT_ARRAY);
+                validationResult = (Boolean) validateMethod.invoke(this, parametersInjector.setupParameters(getRequest(), validateMethod));
             }
 
             if (validationResult) {
-                FastMethod actionMethod = actionMap.getActionMethod(actionParameter);
+                ActionMap.ActionMethod actionMethod = actionMap.getActionMethod(actionParameter);
+                // TODO: Can't be applied now because of Codeforces frames.
+                // ensureHttpMethod(actionMethod);
                 if (actionMethod != null) {
-                    actionMethod.invoke(this, EMPTY_OBJECT_ARRAY);
+                    actionMethod.getMethod().invoke(this, parametersInjector.setupParameters(getRequest(), actionMethod.getMethod()));
                 } else {
                     throw new NocturneException("Can't find action method for component "
                             + getClass().getName() + " and action parameter = " + actionParameter + '.');
@@ -213,7 +214,7 @@ public abstract class Component {
             } else {
                 FastMethod invalidMethod = actionMap.getInvalidMethod(actionParameter);
                 if (invalidMethod != null) {
-                    invalidMethod.invoke(this, EMPTY_OBJECT_ARRAY);
+                    invalidMethod.invoke(this, parametersInjector.setupParameters(getRequest(), invalidMethod));
                 }
             }
         } catch (InvocationTargetException e) {
@@ -223,6 +224,27 @@ public abstract class Component {
                 throw new NocturneException("Can't invoke validate or action method for component class "
                         + getClass().getName() + " [action=" + actionParameter + "].", e);
             }
+        }
+    }
+
+    private void ensureHttpMethod(ActionMap.ActionMethod actionMethod) {
+        HttpMethod requestMethod = HttpMethod.valueOf(getRequest().getMethod().toUpperCase());
+
+        if (actionMethod.getAction() == null && requestMethod != HttpMethod.GET) {
+            abortWithError(HttpURLConnection.HTTP_BAD_REQUEST, "HTTP requestMethod GET is not supported by "
+                    + getClass().getSimpleName() + "#" + actionMethod.getMethod().getName());
+        }
+
+        if (actionMethod.getAction() != null) {
+            for (HttpMethod httpMethod : actionMethod.getAction().method()) {
+                if (httpMethod == requestMethod) {
+                    return;
+                }
+            }
+
+            abortWithError(HttpURLConnection.HTTP_BAD_REQUEST, "HTTP requestMethod " + requestMethod
+                    + " is not supported by "
+                    + getClass().getSimpleName() + "#" + actionMethod.getMethod().getName());
         }
     }
 
@@ -922,7 +944,21 @@ public abstract class Component {
     /**
      * Aborts execution and sends error to browser.
      *
-     * @param code (for example 404, prefered to use HttpURLConnection.HTTP_* constants).
+     * @param code (for example 404, preferred to use HttpURLConnection.HTTP_* constants).
+     */
+    public void abortWithError(int code, String message) {
+        try {
+            response.sendError(code, message);
+        } catch (IOException e) {
+            throw new ServletException("Can't send error " + code + '.', e);
+        }
+        throw new AbortException("Send error [code = " + code + ", message = \"" + message + "\"].");
+    }
+
+    /**
+     * Aborts execution and sends error to browser.
+     *
+     * @param code (for example 404, preferred to use HttpURLConnection.HTTP_* constants).
      */
     public void abortWithError(int code) {
         try {
@@ -1050,9 +1086,10 @@ public abstract class Component {
 
     /**
      * See runValidation(), but additionally it prints all the errors in JSON
-     * to output writer. For example, it can print: {@code
+     * to output writer. For example, it can print:
+     * <pre>
      * {"error__login": "Login is already in use"}
-     * }
+     * </pre>
      *
      * @return boolean {@code true} if validation passed.
      */
@@ -1091,8 +1128,8 @@ public abstract class Component {
      * For each value (Object) will be called toString() and printed json data
      * will contain keys and values as strings.
      *
-     * @param keys If at least one key is specified then the method take care only about
-     *             templateMap entries (putted key-value pairs), such that key in keys array.
+     * @param keys If at least one key is specified then the method takes care only about
+     *             templateMap entries (putted key-value pairs), such that key is in keys array.
      *             If keys are not specified, method returns all the entries.
      */
     public void printTemplateMapAsStringsUsingJson(String... keys) {

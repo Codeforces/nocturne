@@ -3,6 +3,8 @@
  */
 package org.nocturne.annotation;
 
+import org.nocturne.main.HttpMethod;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -13,7 +15,7 @@ import java.lang.annotation.Target;
  * action. Action is a string parameter with name "action".
  * <p/>
  * If you have set @Action without value, it means that default action
- * bacame the annotated method but not action().
+ * became the annotated method but not action().
  * <p/>
  * If there is validation method (see @Validate.class) action method
  * will be invoked only on if validation passed.
@@ -27,4 +29,9 @@ public @interface Action {
      * @return Action name.
      */
     String value() default "";
+
+    /**
+     * @return HTTP method to be handled by the action.
+     */
+    HttpMethod[] method() default {HttpMethod.GET};
 }

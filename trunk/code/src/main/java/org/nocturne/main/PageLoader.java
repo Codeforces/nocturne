@@ -46,7 +46,7 @@ public class PageLoader {
                 initialized = true;
             } finally {
                 lock.unlock();
-                logger.info("Page loader has been initialized.");
+                logger.debug("Page loader has been initialized.");
             }
         }
     }

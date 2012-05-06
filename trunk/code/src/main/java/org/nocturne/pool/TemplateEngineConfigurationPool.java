@@ -56,7 +56,7 @@ public class TemplateEngineConfigurationPool extends Pool<Configuration> {
             setupTemplateLoaderClass(templateEngineConfiguration);
             templateEngineConfiguration.setObjectWrapper(new DefaultObjectWrapper());
 
-            logger.info("Created instance of Configuration [count=" + count.incrementAndGet() + "].");
+            logger.debug("Created instance of Configuration [count=" + count.incrementAndGet() + "].");
             return templateEngineConfiguration;
         } catch (IOException e) {
             throw new FreemarkerException("Can't create template engine.", e);

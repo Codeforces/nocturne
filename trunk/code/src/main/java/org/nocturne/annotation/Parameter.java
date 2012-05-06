@@ -7,12 +7,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * If your component (page or frame) has field marked with
- * Parameter annotation then nocturne will set it automatically before
- * beforeAction phase.
+ * If your component (page or frame) has fields marked with
+ * a @Parameter then nocturne will set them automatically before
+ * beforeAction phase. Also nocturne takes care about parameters of
+ * action/validate/invalid Controller method parameters.
  * <p/>
  * Strip mode controls valid values for parameter.
  * <p/>
@@ -24,7 +26,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * @author Mike Mirzayanov
  */
 @Retention(RUNTIME)
-@Target(FIELD)
+@Target({FIELD, PARAMETER})
 public @interface Parameter {
     /**
      * @return POST or GET parameter name. Don't set it if it is the same with class field name.
