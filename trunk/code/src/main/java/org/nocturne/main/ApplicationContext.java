@@ -550,6 +550,13 @@ public class ApplicationContext {
         return requestsPerThread.get().getRequest();
     }
 
+    /**
+     * @return Returns current servlet response instance.
+     */
+    public HttpServletResponse getResponse() {
+        return requestsPerThread.get().getResponse();
+    }
+
     void setReloadingClassLoader(ClassLoader loader) {
         if (debug) {
             reloadingClassLoaderPerThread.set(loader);
