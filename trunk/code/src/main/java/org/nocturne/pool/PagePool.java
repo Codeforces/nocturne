@@ -47,15 +47,6 @@ public class PagePool extends Pool<Page> {
      */
     @Override
     protected int getAcquireIncrement() {
-        int createdCount = getCreatedCount();
-
-        if (createdCount < 1000) {
-            int result = Math.max(25, createdCount + 1);
-            logger.debug("PagePool will create " + pageClassName + ": " + result + " [large step]");
-            return result;
-        } else {
-            logger.debug("PagePool will create " + pageClassName + ": " + 25 + " [small step]");
-            return 25;
-        }
+        return 25;
     }
 }
