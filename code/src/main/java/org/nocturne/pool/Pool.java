@@ -16,7 +16,7 @@ import java.util.Queue;
 public abstract class Pool<T> {
     private static final Logger logger = Logger.getLogger(Pool.class);
     private final Queue<T> instances = new LinkedList<T>();
-    private int createdCount;
+    private volatile int createdCount;
 
     /**
      * Override it to define the method how pool should get new instance.

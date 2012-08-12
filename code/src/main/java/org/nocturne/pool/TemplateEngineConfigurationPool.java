@@ -27,9 +27,15 @@ public class TemplateEngineConfigurationPool extends Pool<Configuration> {
     private final FilterConfig filterConfig;
 
     private static final AtomicLong count = new AtomicLong(0);
+    private volatile TemplateEngineConfigurationHandler handler;
 
     public TemplateEngineConfigurationPool(FilterConfig filterConfig) {
         this.filterConfig = filterConfig;
+        this.handler = null;
+    }
+
+    public void setInstanceHandler(TemplateEngineConfigurationHandler handler) {
+        this.handler = handler;
     }
 
     @Override
@@ -57,6 +63,10 @@ public class TemplateEngineConfigurationPool extends Pool<Configuration> {
             templateEngineConfiguration.setObjectWrapper(new DefaultObjectWrapper());
 
             logger.debug("Created instance of Configuration [count=" + count.incrementAndGet() + "].");
+
+            if (handler != null) {
+                handler.onInstance(templateEngineConfiguration);
+            }
             return templateEngineConfiguration;
         } catch (IOException e) {
             throw new FreemarkerException("Can't create template engine.", e);
@@ -66,5 +76,9 @@ public class TemplateEngineConfigurationPool extends Pool<Configuration> {
     @SuppressWarnings({"unchecked"})
     private static void setupTemplateLoaderClass(Configuration templateEngineConfiguration) {
         templateEngineConfiguration.setTemplateLoader(new ApplicationTemplateLoader());
+    }
+
+    public interface TemplateEngineConfigurationHandler {
+        void onInstance(Configuration configuration);
     }
 }

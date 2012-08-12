@@ -14,12 +14,11 @@ import org.nocturne.caption.CaptionDirective;
 import org.nocturne.exception.*;
 import org.nocturne.link.LinkDirective;
 import org.nocturne.link.Links;
-import org.nocturne.reset.FieldsReseter;
+import org.nocturne.reset.FieldsResetter;
 import org.nocturne.util.ReflectionUtil;
 import org.nocturne.util.RequestUtil;
 import org.nocturne.validation.ValidationException;
 import org.nocturne.validation.Validator;
-import sun.net.www.protocol.http.HttpURLConnection;
 
 import javax.annotation.Nullable;
 import javax.servlet.FilterConfig;
@@ -161,7 +160,7 @@ public abstract class Component {
     /**
      * Object to clean fields between requests.
      */
-    private FieldsReseter fieldsReseter;
+    private FieldsResetter fieldsResetter;
 
     /**
      * @return Component cache handler. Use it if you want to avoid typical
@@ -232,7 +231,7 @@ public abstract class Component {
         HttpMethod requestMethod = HttpMethod.valueOf(getRequest().getMethod().toUpperCase());
 
         if (actionMethod.getAction() == null && requestMethod != HttpMethod.GET) {
-            abortWithError(HttpURLConnection.HTTP_BAD_REQUEST, "HTTP requestMethod GET is not supported by "
+            abortWithError(HttpServletResponse.SC_BAD_REQUEST, "HTTP requestMethod GET is not supported by "
                     + getClass().getSimpleName() + "#" + actionMethod.getMethod().getName());
         }
 
@@ -243,7 +242,7 @@ public abstract class Component {
                 }
             }
 
-            abortWithError(HttpURLConnection.HTTP_BAD_REQUEST, "HTTP requestMethod " + requestMethod
+            abortWithError(HttpServletResponse.SC_BAD_REQUEST, "HTTP requestMethod " + requestMethod
                     + " is not supported by "
                     + getClass().getSimpleName() + "#" + actionMethod.getMethod().getName());
         }
@@ -802,7 +801,7 @@ public abstract class Component {
      * The method will be called exactly once for each instance.
      */
     public void init() {
-        fieldsReseter = new FieldsReseter(this);
+        // No operations.
     }
 
     /**
@@ -908,7 +907,15 @@ public abstract class Component {
             ApplicationContext.getInstance().setCurrentComponent(parentComponent);
         }
 
-        fieldsReseter.resetFields();
+        resetFields();
+    }
+
+    void resetFields() {
+        if (fieldsResetter == null) {
+            fieldsResetter = new FieldsResetter(this);
+        }
+
+        fieldsResetter.resetFields();
     }
 
     void initializeIfNeeded() {

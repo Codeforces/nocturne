@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author Mike Mirzayanov
  */
-public class FieldsReseter {
+public class FieldsResetter {
     private static final Map<Class<?>, Object> PRIMITIVES_DEFAULT_VALUES
             = new ConcurrentHashMap<Class<?>, Object>();
 
@@ -71,7 +71,7 @@ public class FieldsReseter {
         return result;
     }
 
-    public FieldsReseter(Component component) {
+    public FieldsResetter(Component component) {
         componentStrategy = getStrategy(ApplicationContext.getInstance().getResetStrategy(),
                 hasResetAnnotation(component.getClass()),
                 hasPersistAnnotation(component.getClass()),

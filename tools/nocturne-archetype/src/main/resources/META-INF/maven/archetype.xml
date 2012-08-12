@@ -15,10 +15,8 @@
     <resource>src/main/webapp/WEB-INF/templates/IndexPage.ftl</resource>
     <resource>src/main/webapp/css/reset.css</resource>
 
-    <resource>build.bat</resource>
-    <resource>build-dev.bat</resource>
-    <resource>build-production.bat</resource>
-    <resource>profiles.xml.dev</resource>
-    <resource>profiles.xml.prod</resource>
+    <resource>make.bat</resource>
+    <resource>profiles/profiles.xml.dev</resource>
+    <resource>profiles/profiles.xml.prod</resource>
   </resources>
 </archetype>
