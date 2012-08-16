@@ -31,18 +31,6 @@ class GenericIocModule implements Module {
 
     @Override
     public void configure(Binder binder) {
-        if (module != null) {
-            module.configure(binder);
-        }
-
-        List<org.nocturne.module.Module> modules =
-                ApplicationContext.getInstance().getModules();
-
-        for (org.nocturne.module.Module i : modules) {
-            Configuration configuration = i.getConfiguration();
-            configuration.bind(binder);
-        }
-
         binder.bindListener(new ClassToTypeLiteralMatcherAdapter(Matchers.subclassesOf(Component.class)), new TypeListener() {
             @Override
             public <I> void hear(final TypeLiteral<I> typeLiteral, TypeEncounter<I> typeEncounter) {
@@ -55,7 +43,20 @@ class GenericIocModule implements Module {
                 });
             }
         });
-   }
+
+        if (module != null) {
+            module.configure(binder);
+        }
+
+        List<org.nocturne.module.Module> modules =
+                ApplicationContext.getInstance().getModules();
+
+        for (org.nocturne.module.Module i : modules) {
+            Configuration configuration = i.getConfiguration();
+            configuration.bind(binder);
+        }
+
+    }
 
     private static final class ClassToTypeLiteralMatcherAdapter extends
             AbstractMatcher<TypeLiteral> {

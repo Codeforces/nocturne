@@ -81,13 +81,19 @@ public class FieldsResetter {
         addFieldsToReset();
     }
 
+    private boolean isGuiceOrCglibField(Field field) {
+        return field.getName().contains("$") && (field.getDeclaringClass().getName().contains("$$")
+                || field.getDeclaringClass().getName().contains("EnhancerByGuice"));
+    }
+
     private void addFieldsToReset() {
         Class<?> clazz = component.getClass();
         while (!isNocturneComponent(clazz)) {
             Field[] declaredFields = clazz.getDeclaredFields();
             for (Field declaredField : declaredFields) {
                 if (Modifier.isStatic(declaredField.getModifiers())
-                        || Modifier.isFinal(declaredField.getModifiers())) {
+                        || Modifier.isFinal(declaredField.getModifiers())
+                        || isGuiceOrCglibField(declaredField)) {
                     continue;
                 }
 
