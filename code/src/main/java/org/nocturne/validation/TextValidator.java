@@ -1,5 +1,7 @@
 package org.nocturne.validation;
 
+import org.apache.commons.lang.ArrayUtils;
+
 /**
  * Checks that parameter doesn't contain binary characters (with codes less than 9).
  *
@@ -9,17 +11,18 @@ public class TextValidator extends Validator {
     /**
      * Shortcut for error message.
      */
-    private String message = "Field can't contain binary data";
+    private final String message;
 
     /**
      * Parameters for message caption.
      */
-    private Object[] messageParams = { };
+    private final Object[] messageParams;
 
     /**
      * Creates validator with default error message: Field can't contain binary data.
      */
     public TextValidator() {
+        this("Field can't contain binary data", ArrayUtils.EMPTY_OBJECT_ARRAY);
     }
 
     /**
@@ -35,7 +38,7 @@ public class TextValidator extends Validator {
 
     @Override
     public void run(String value) throws ValidationException {
-        for (int i = 0; i < value.length(); i++) {
+        for (int i = 0; i < value.length(); ++i) {
             if (value.charAt(i) < 9) {
                 throw new ValidationException($(message, messageParams));
             }

@@ -8,6 +8,7 @@ package org.nocturne.validation;
  *
  * @author Mike Mirzayanov
  */
+@SuppressWarnings("DeserializableClassInSecureContext")
 public class ValidationException extends Exception {
     /**
      * @param message Validation error message. Will be displayed for users.

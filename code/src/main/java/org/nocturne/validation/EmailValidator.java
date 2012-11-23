@@ -5,21 +5,26 @@ package org.nocturne.validation;
 
 import org.nocturne.util.StringUtil;
 
+import java.util.regex.Pattern;
+
 /**
  * Validates email. Doesn't use RFC. Use very loyal rules.
  *
  * @author Mike Mirzayanov
  */
 public class EmailValidator extends Validator {
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("[^@<>&\"\'/\\\\\\s]+@[^@<>&\"\'/\\\\\\s]+\\.[a-z]+");
+
     /**
      * Shortcut for error message.
      */
-    private String message = "Field should contain valid email";
+    private final String message;
 
     /**
      * Creates validator with default error message: Field should contain valid email.
      */
     public EmailValidator() {
+        this("Field should contain valid email");
     }
 
     /**
@@ -48,7 +53,7 @@ public class EmailValidator extends Validator {
             }
         }
 
-        if (!invalid && !value.matches("[^@<>&\"\'/\\\\\\s]+@[^@<>&\"\'/\\\\\\s]+\\.[a-z]+")) {
+        if (!invalid && !EMAIL_PATTERN.matcher(value).matches()) {
             invalid = true;
         }
 

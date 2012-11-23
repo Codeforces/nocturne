@@ -22,12 +22,10 @@ public class EnglishValidator extends Validator {
     @Override
     public void run(String value) throws ValidationException {
         if (value != null) {
-            char[] chars = value.toCharArray();
-
             int specialCount = 0;
             int nonAsciiCount = 0;
 
-            for (char c : chars) {
+            for (char c : value.toCharArray()) {
                 if (c < 9) {
                     ++specialCount;
                 }
@@ -37,8 +35,7 @@ public class EnglishValidator extends Validator {
             }
 
             if (specialCount > 0 || nonAsciiCount > value.length() / 2) {
-                String msg = message != null ?
-                        message : $("Field should contain value in English");
+                String msg = message != null ? message : $("Field should contain value in English");
                 throw new ValidationException(msg);
             }
         }

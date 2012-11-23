@@ -62,11 +62,11 @@ public class LongValidator extends Validator {
         }
 
         if (numeric < minimalValue) {
-            throw new ValidationException($("Field should be at least {0}", minimalValue));
+            throw new ValidationException($("Field should be at least {0,number,#}", minimalValue));
         }
 
         if (numeric > maximalValue) {
-            throw new ValidationException($("Field should be no more than {0}", maximalValue));
+            throw new ValidationException($("Field should be no more than {0,number,#}", maximalValue));
         }
     }
 }

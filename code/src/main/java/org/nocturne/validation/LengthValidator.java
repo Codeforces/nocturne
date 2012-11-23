@@ -48,13 +48,13 @@ public class LengthValidator extends Validator {
 
         if (length < minimalLength) {
             throw new ValidationException(
-                    $("Field should contain at least {0} characters", minimalLength)
+                    $("Field should contain at least {0,number,#} characters", minimalLength)
             );
         }
 
         if (length > maximalLength) {
             throw new ValidationException(
-                    $("Field should contain no more than {0} characters", maximalLength)
+                    $("Field should contain no more than {0,number,#} characters", maximalLength)
             );
         }
     }
