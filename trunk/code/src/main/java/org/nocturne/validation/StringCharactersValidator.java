@@ -31,7 +31,7 @@ public class StringCharactersValidator extends Validator {
 
     @Override
     public void run(String value) throws ValidationException {
-        for (int i = 0; i < value.length(); i++) {
+        for (int i = 0; i < value.length(); ++i) {
             if (alphabet.indexOf(value.charAt(i)) == -1) {
                 throw new ValidationException($(message));
             }

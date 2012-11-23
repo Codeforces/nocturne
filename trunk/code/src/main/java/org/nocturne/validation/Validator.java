@@ -10,6 +10,7 @@ import org.nocturne.main.ApplicationContext;
  *
  * @author Mike Mirzayanov
  */
+@SuppressWarnings("DollarSignInName")
 public abstract class Validator {
     /**
      * @param value Value to be analyzed.
@@ -17,7 +18,7 @@ public abstract class Validator {
      *                             localized via captions value inside ValidationException,
      *                             like {@code return new ValidationException($("Field can't be empty"));}.
      */
-    abstract public void run(String value) throws ValidationException;
+    public abstract void run(String value) throws ValidationException;
 
     /**
      * @param shortcut Shortcut value.
