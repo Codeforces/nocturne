@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Each component has an private instance of ParametersInjector.
@@ -25,6 +26,9 @@ import java.util.*;
  * @author Mike Mirzayanov
  */
 public class ParametersInjector {
+    private static final Pattern INTEGRAL_VALUE_PATTERN = Pattern.compile("0|(-?[1-9][0-9]*)");
+    private static final Pattern REAL_VALUE_PATTERN = Pattern.compile("(0|(-?[1-9][0-9]*))((\\.[0-9]+)?)");
+
     /**
      * Injection target object.
      */
@@ -170,7 +174,11 @@ public class ParametersInjector {
         if (clazz.equals(Integer.class) || clazz.equals(int.class)) {
             processed = true;
             try {
-                assign = Integer.valueOf(value);
+                if (INTEGRAL_VALUE_PATTERN.matcher(value).matches()) {
+                    assign = Integer.valueOf(value);
+                } else {
+                    assign = 0;
+                }
             } catch (Exception ignored) {
                 assign = 0;
             }
@@ -179,7 +187,11 @@ public class ParametersInjector {
         if (clazz.equals(Long.class) || clazz.equals(long.class)) {
             processed = true;
             try {
-                assign = Long.valueOf(value);
+                if (INTEGRAL_VALUE_PATTERN.matcher(value).matches()) {
+                    assign = Long.valueOf(value);
+                } else {
+                    assign = 0L;
+                }
             } catch (Exception ignored) {
                 assign = 0L;
             }
@@ -188,7 +200,11 @@ public class ParametersInjector {
         if (clazz.equals(Double.class) || clazz.equals(double.class)) {
             processed = true;
             try {
-                assign = Double.valueOf(value);
+                if (REAL_VALUE_PATTERN.matcher(value).matches()) {
+                    assign = Double.valueOf(value);
+                } else {
+                    assign = 0.0;
+                }
             } catch (Exception ignored) {
                 assign = 0.0;
             }
@@ -197,7 +213,11 @@ public class ParametersInjector {
         if (clazz.equals(Float.class) || clazz.equals(float.class)) {
             processed = true;
             try {
-                assign = Float.valueOf(value);
+                if (REAL_VALUE_PATTERN.matcher(value).matches()) {
+                    assign = Float.valueOf(value);
+                } else {
+                    assign = 0.0F;
+                }
             } catch (Exception ignored) {
                 assign = 0.0F;
             }
