@@ -24,8 +24,15 @@ import java.util.Map;
  * @author Mike Mirzayanov
  */
 public class RequestUtil {
+    private static final String GET_REQUEST_PARAMS_CACHED_RESULT = "Codeforces::getRequestParamsCachedResult";
+
     @SuppressWarnings({"unchecked", "OverlyLongMethod", "OverlyComplexMethod"})
     public static Map<String, String> getRequestParams(HttpServletRequest request) {
+        Object cachedResult = request.getAttribute(GET_REQUEST_PARAMS_CACHED_RESULT);
+        if (cachedResult != null && cachedResult instanceof Map) {
+            return (Map<String, String>) cachedResult;
+        }
+
         if ("post".equalsIgnoreCase(request.getMethod())) {
             try {
                 FileItemFactory factory = new DiskFileItemFactory();
@@ -83,6 +90,7 @@ public class RequestUtil {
             throw new NocturneException("Can't use encoding UTF-8.", e);
         }
 
+        request.setAttribute(GET_REQUEST_PARAMS_CACHED_RESULT, result);
         return result;
     }
 
