@@ -131,6 +131,7 @@ public abstract class Page extends Component {
             String result = null;
             if (cacheHandler != null && !isSkipTemplate()) {
                 result = cacheHandler.intercept(this);
+                result = handleRequestPostprocessor(result);
             }
 
             if (result == null) {
@@ -155,11 +156,8 @@ public abstract class Page extends Component {
 
                             result = stringWriter.getBuffer().toString();
                             cacheHandler.postprocess(this, result);
-                            ResponsePostprocessor postprocessor = responsePostprocessor;
-                            if (postprocessor != null) {
-                                result = postprocessor.postprocess(result);
-                            }
-                            getOutputStream().write(result.getBytes("UTF-8"));
+
+                            result = handleRequestPostprocessor(result);
                         }
                     } catch (TemplateException e) {
                         throw new FreemarkerException("Can't parse template for page " + getClass().getName() + '.', e);
@@ -169,7 +167,9 @@ public abstract class Page extends Component {
                         }
                     }
                 }
-            } else {
+            }
+
+            if (result != null) {
                 getOutputStream().write(result.getBytes("UTF-8"));
             }
         } catch (AbortException ignored) {
@@ -179,6 +179,14 @@ public abstract class Page extends Component {
         } finally {
             finalizeAfterAction();
         }
+    }
+
+    private String handleRequestPostprocessor(String result) {
+        ResponsePostprocessor postprocessor = responsePostprocessor;
+        if (postprocessor != null) {
+            result = postprocessor.postprocess(this, result);
+        }
+        return result;
     }
 
     @Override
