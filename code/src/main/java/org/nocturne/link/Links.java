@@ -10,6 +10,7 @@ import org.nocturne.main.ApplicationContext;
 import org.nocturne.main.Page;
 import org.nocturne.util.StringUtil;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,9 +70,39 @@ public class Links {
         return result;
     }
 
-    private static String getNameViaReflection(Class<? extends Page> clazz) {
-        Name name = clazz.getAnnotation(Name.class);
+    /**
+     * Use the method to get page link name. Do not use page.getClass().getSimpleName() because of two reasons:
+     * - page can have @Name annotation,
+     * - page can be actually inherited from expected ConcretePage class because of IoC.
+     *
+     * @param page Page instance.
+     * @return Page link name.
+     */
+    public static String getLinkName(@Nonnull Page page) {
+        return getLinkName(page.getClass());
+    }
 
+    /**
+     * Use the method to get page class link name. Do not use pageClass.getSimpleName() because of two reasons:
+     * - page class can have @Name annotation,
+     * - page class can be actually inherited from expected ConcretePage class because of IoC.
+     *
+     * @param pageClass Page class.
+     * @return Page link name.
+     */
+    public static String getLinkName(@Nonnull Class<? extends Page> pageClass) {
+        Class<?> clazz = pageClass;
+
+        while (clazz != null && clazz.getAnnotation(Link.class) == null && clazz.getAnnotation(LinkSet.class) == null) {
+            clazz = clazz.getSuperclass();
+        }
+
+        if (clazz == null) {
+            throw new NocturneException("Page class should have @Link or @LinkSet annotation, but "
+                    + pageClass.getName() + " hasn't.");
+        }
+
+        Name name = clazz.getAnnotation(Name.class);
         if (name == null) {
             return clazz.getSimpleName();
         } else {
@@ -93,14 +124,14 @@ public class Links {
                 throw new ConfigurationException("Can't find link for page " + clazz.getName() + '.');
             }
 
-            String name = getNameViaReflection(clazz);
+            String name = getLinkName(clazz);
             if (classesByName.containsKey(name) && !clazz.equals(classesByName.get(name))) {
                 throw new ConfigurationException("Can't add page which is not unique by it's name: "
                         + clazz.getName() + '.');
             }
             classesByName.put(name, clazz);
 
-            Map<String, Link> links = linksByPage.get(clazz);
+            Map<String, Link> links = getLinksByPageClass(clazz);
             if (links == null) {
                 // It is important that used synchronizedMap, because of "synchronized(links) {..}" later in code.
                 links = Collections.synchronizedMap(new LinkedHashMap<String, Link>());
@@ -153,7 +184,7 @@ public class Links {
         int bestMatchedCount = -1;
         List<LinkSection> bestMatchedLinkSections = null;
 
-        for (Map.Entry<String, Link> entry : linksByPage.get(clazz).entrySet()) {
+        for (Map.Entry<String, Link> entry : getLinksByPageClass(clazz).entrySet()) {
             if (linkName != null && !linkName.isEmpty() && !linkName.equals(entry.getValue().name())) {
                 continue;
             }
@@ -572,6 +603,15 @@ public class Links {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Argument \'name\' is \'null\' or empty.");
         }
+    }
+
+    private static Map<String, Link> getLinksByPageClass(Class<? extends Page> clazz) {
+        Map<String, Link> links;
+        Class parentClass = clazz;
+        while ((links = linksByPage.get(parentClass)) == null && parentClass.getSuperclass() != null) {
+            parentClass = parentClass.getSuperclass();
+        }
+        return links;
     }
 
     /**
