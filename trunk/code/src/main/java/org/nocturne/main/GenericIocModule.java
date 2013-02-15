@@ -51,22 +51,21 @@ class GenericIocModule implements Module {
         List<org.nocturne.module.Module> modules =
                 ApplicationContext.getInstance().getModules();
 
-        for (org.nocturne.module.Module i : modules) {
-            Configuration configuration = i.getConfiguration();
+        for (org.nocturne.module.Module item : modules) {
+            Configuration configuration = item.getConfiguration();
             configuration.bind(binder);
         }
 
     }
 
-    private static final class ClassToTypeLiteralMatcherAdapter extends
-            AbstractMatcher<TypeLiteral> {
+    private static final class ClassToTypeLiteralMatcherAdapter extends AbstractMatcher<TypeLiteral> {
         private final Matcher<Class> classMatcher;
 
-        public ClassToTypeLiteralMatcherAdapter(Matcher<Class>
-                                                        classMatcher) {
+        private ClassToTypeLiteralMatcherAdapter(Matcher<Class> classMatcher) {
             this.classMatcher = classMatcher;
         }
 
+        @Override
         public boolean matches(TypeLiteral typeLiteral) {
             return classMatcher.matches(typeLiteral.getRawType());
         }
