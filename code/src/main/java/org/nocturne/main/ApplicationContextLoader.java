@@ -20,9 +20,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -341,14 +343,11 @@ class ApplicationContextLoader {
         String guiceModuleClassName = ApplicationContext.getInstance().getGuiceModuleClassName();
         GenericIocModule module = new GenericIocModule();
 
-        if (guiceModuleClassName != null) {
+        if (!StringUtil.isEmptyOrNull(guiceModuleClassName)) {
             try {
-                com.google.inject.Module applicationModule = (com.google.inject.Module) ApplicationContext.class.getClassLoader().loadClass(
-                        guiceModuleClassName
-                ).getConstructor().newInstance();
-                module.setModule(applicationModule);
+                module.setModule(getApplicationModule(guiceModuleClassName));
             } catch (Exception e) {
-                throw new ConfigurationException("Can't load application guice module.", e);
+                throw new ConfigurationException("Can't load application Guice module.", e);
             }
         }
 
@@ -369,6 +368,49 @@ class ApplicationContextLoader {
         } else {
             ApplicationContext.getInstance().setInjector(injector);
         }
+    }
+
+    private static com.google.inject.Module getApplicationModule(String guiceModuleClassName) throws Exception {
+        Class<?> moduleClass = ApplicationContext.class.getClassLoader().loadClass(guiceModuleClassName);
+        AtomicReference<Exception> exception = new AtomicReference<Exception>();
+
+        try {
+            return (com.google.inject.Module) moduleClass.getConstructor().newInstance();
+        } catch (Exception e) {
+            exception.compareAndSet(null, e);
+        }
+
+        try {
+            Method getInstanceMethod = moduleClass.getMethod("getInstance");
+            if (Modifier.isStatic(getInstanceMethod.getModifiers())
+                    && com.google.inject.Module.class.isAssignableFrom(getInstanceMethod.getReturnType())) {
+                return (com.google.inject.Module) getInstanceMethod.invoke(null);
+            }
+        } catch (Exception e) {
+            exception.compareAndSet(null, e);
+        }
+
+        try {
+            Method createInstanceMethod = moduleClass.getMethod("createInstance");
+            if (Modifier.isStatic(createInstanceMethod.getModifiers())
+                    && com.google.inject.Module.class.isAssignableFrom(createInstanceMethod.getReturnType())) {
+                return (com.google.inject.Module) createInstanceMethod.invoke(null);
+            }
+        } catch (Exception e) {
+            exception.compareAndSet(null, e);
+        }
+
+        try {
+            Method newInstanceMethod = moduleClass.getMethod("newInstance");
+            if (Modifier.isStatic(newInstanceMethod.getModifiers())
+                    && com.google.inject.Module.class.isAssignableFrom(newInstanceMethod.getReturnType())) {
+                return (com.google.inject.Module) newInstanceMethod.invoke(null);
+            }
+        } catch (Exception e) {
+            exception.compareAndSet(null, e);
+        }
+
+        throw exception.get();
     }
 
     private static void runModuleStartups() {
