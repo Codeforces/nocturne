@@ -188,6 +188,14 @@ public abstract class Component {
     }
 
     /**
+     * Use it to interrupt current method and skip validate/invalid/action methods (if any and not invoked yet).
+     * Could be called from initializeAction, validate/invalid/action methods or finalizeAction.
+     */
+    protected void interrupt() {
+        throw new InterruptException("Interrupted [componentClass=" + getClass().getName() + "].");
+    }
+
+    /**
      * This is internal nocturne method. Do not call it.
      *
      * @param actionParameter Action name.
@@ -218,12 +226,16 @@ public abstract class Component {
                 }
             }
         } catch (InvocationTargetException e) {
+            if (e.getCause() instanceof InterruptException) {
+                throw (InterruptException) e.getCause();
+            }
+
             if (e.getCause() instanceof AbortException) {
                 throw (AbortException) e.getCause();
-            } else {
-                throw new NocturneException("Can't invoke validate or action method for component class "
-                        + getClass().getName() + " [action=" + actionParameter + "].", e);
             }
+
+            throw new NocturneException("Can't invoke validate or action method for component class "
+                    + getClass().getName() + " [action=" + actionParameter + "].", e);
         }
     }
 

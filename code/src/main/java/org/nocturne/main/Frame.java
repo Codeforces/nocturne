@@ -6,6 +6,7 @@ package org.nocturne.main;
 import freemarker.template.TemplateException;
 import org.nocturne.cache.CacheHandler;
 import org.nocturne.exception.FreemarkerException;
+import org.nocturne.exception.InterruptException;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -39,11 +40,29 @@ public abstract class Frame extends Component {
 
         try {
             if (result == null) {
-                initializeAction();
-                Events.fireBeforeAction(this);
-                internalRunAction(getActionName());
-                Events.fireAfterAction(this);
-                finalizeAction();
+                boolean interrupted = false;
+
+                try {
+                    initializeAction();
+                } catch (InterruptException e) {
+                    interrupted = true;
+                }
+
+                if (!interrupted) {
+                    Events.fireBeforeAction(this);
+                    try {
+                        internalRunAction(getActionName());
+                    } catch (InterruptException e) {
+                        // No operations.
+                    }
+                    Events.fireAfterAction(this);
+                }
+
+                try {
+                    finalizeAction();
+                } catch (InterruptException e) {
+                    // No operations.
+                }
 
                 if (isSkipTemplate()) {
                     return null;
