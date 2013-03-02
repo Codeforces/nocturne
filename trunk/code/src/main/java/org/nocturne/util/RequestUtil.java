@@ -71,6 +71,10 @@ public class RequestUtil {
                 }
             }
             result.put(key, value.toString());
+            if (key.endsWith("[]")) {
+                key = key.substring(0, key.length() - 2);
+                result.put(key, value.toString());
+            }
         }
 
         try {

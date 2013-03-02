@@ -5,10 +5,7 @@ package org.nocturne.main;
 
 import freemarker.template.TemplateException;
 import org.nocturne.cache.CacheHandler;
-import org.nocturne.exception.AbortException;
-import org.nocturne.exception.FreemarkerException;
-import org.nocturne.exception.NocturneException;
-import org.nocturne.exception.ReflectionException;
+import org.nocturne.exception.*;
 import org.nocturne.postprocess.ResponsePostprocessor;
 import org.nocturne.util.ReflectionUtil;
 
@@ -135,11 +132,29 @@ public abstract class Page extends Component {
             }
 
             if (result == null) {
-                initializeAction();
-                Events.fireBeforeAction(this);
-                internalRunAction(getActionName());
-                Events.fireAfterAction(this);
-                finalizeAction();
+                boolean interrupted = false;
+
+                try {
+                    initializeAction();
+                } catch (InterruptException e) {
+                    interrupted = true;
+                }
+
+                if (!interrupted) {
+                    Events.fireBeforeAction(this);
+                    try {
+                        internalRunAction(getActionName());
+                    } catch (InterruptException e) {
+                        // No operations.
+                    }
+                    Events.fireAfterAction(this);
+                }
+
+                try {
+                    finalizeAction();
+                } catch (InterruptException e) {
+                    // No operations.
+                }
 
                 if (!isSkipTemplate()) {
                     Map<String, Object> params = new HashMap<String, Object>(internalGetTemplateMap());
