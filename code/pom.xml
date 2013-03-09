@@ -3,11 +3,11 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.nocturne</groupId>
     <artifactId>nocturne</artifactId>
-    <version>1.2.1-SNAPSHOT</version>
+    <version>1.2.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <url>http://code.google.com/p/nocturne/</url>
-    <inceptionYear>2009-2012</inceptionYear>
+    <inceptionYear>2009-2013</inceptionYear>
     <name>Nocturne web framework</name>
     <description>Nocturne is a lightweight Java MVC framework with hot-swap any code feature out of the box
     </description>
@@ -80,7 +80,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>12.0.1</version>
+            <version>14.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.inject</groupId>
