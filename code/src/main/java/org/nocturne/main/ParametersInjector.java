@@ -160,7 +160,8 @@ public class ParametersInjector {
         if (clazz.equals(Boolean.class) || clazz.equals(boolean.class)) {
             processed = true;
             if ("true".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value)
-                    || "yes".equalsIgnoreCase(value) || "1".equalsIgnoreCase(value) || "y".equalsIgnoreCase(value)) {
+                    || "yes".equalsIgnoreCase(value) || "1".equalsIgnoreCase(value)
+                    || "y".equalsIgnoreCase(value) || "checked".equalsIgnoreCase(value)) {
                 assign = true;
             } else {
                 try {

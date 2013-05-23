@@ -701,7 +701,8 @@ public abstract class Component {
     public boolean getBoolean(String key) {
         String value = getString(key);
         return "true".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value)
-                || "yes".equalsIgnoreCase(value) || "1".equalsIgnoreCase(value) || "y".equalsIgnoreCase(value);
+                || "yes".equalsIgnoreCase(value) || "1".equalsIgnoreCase(value)
+                || "y".equalsIgnoreCase(value) || "checked".equalsIgnoreCase(value);
     }
 
     /**
