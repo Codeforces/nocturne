@@ -89,10 +89,27 @@ public class PreprocessFreemarkerFileTemplateLoader extends FileTemplateLoader {
         }
     }
 
+    /**
+     * Use it to override or setup template source by it's name. Parameter {@code content} will be used
+     * as a template source even if ftl-file exists. Current time will be used in cache routine
+     * as last modification time of template content.
+     *
+     * @param name Template name (for example, "IndexPage.ftl")
+     * @param content Template source
+     */
     public static void addTemplateSource(String name, String content) {
         templateSourceByName.put(name, new InmemoryTemplateSource(name, content));
     }
 
+    /**
+     * Use it to override or setup template source by it's name. Parameter {@code content} will be used
+     * as a template source even if ftl-file exists. Parameter {@code modificationTime} will be used in cache routine
+     * as last modification time of template content.
+     *
+     * @param name Template name (for example, "IndexPage.ftl")
+     * @param content Template source
+     * @param modificationTime Last modification time of template content
+     */
     public static void addTemplateSource(String name, String content, long modificationTime) {
         templateSourceByName.put(name, new InmemoryTemplateSource(name, content, modificationTime));
     }
