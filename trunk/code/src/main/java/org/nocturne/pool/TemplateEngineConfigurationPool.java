@@ -24,6 +24,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class TemplateEngineConfigurationPool extends Pool<Configuration> {
     private static final Logger logger = Logger.getLogger(TemplateEngineConfigurationPool.class);
+    private static final int TEMPLATE_UPDATE_TIME_SECONDS = 60;
+
     private final FilterConfig filterConfig;
 
     private static final AtomicLong count = new AtomicLong(0);
@@ -56,7 +58,7 @@ public class TemplateEngineConfigurationPool extends Pool<Configuration> {
             templateEngineConfiguration.setDefaultEncoding("UTF-8");
 
             if (!ReloadingContext.getInstance().isDebug()) {
-                templateEngineConfiguration.setTemplateUpdateDelay(Integer.MAX_VALUE);
+                templateEngineConfiguration.setTemplateUpdateDelay(TEMPLATE_UPDATE_TIME_SECONDS);
             }
 
             setupTemplateLoaderClass(templateEngineConfiguration);
