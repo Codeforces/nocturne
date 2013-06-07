@@ -72,7 +72,7 @@ class ReloadingClassLoader extends ClassLoader {
      * @throws ClassNotFoundException when Can't load class.
      */
     @SuppressWarnings({"UnusedDeclaration"})
-    private Class loadUsingStandardClassLoader(String name, boolean resolve) throws ClassNotFoundException {
+    private static Class loadUsingStandardClassLoader(String name, boolean resolve) throws ClassNotFoundException {
         return Thread.currentThread().getContextClassLoader().loadClass(name);
     }
 
@@ -80,7 +80,7 @@ class ReloadingClassLoader extends ClassLoader {
      * @param name Class name.
      * @return boolean {@code true} iff this class should be loaded by standard class.
      */
-    private boolean isForceToLoadUsingStandardClassLoader(String name) {
+    private static boolean isForceToLoadUsingStandardClassLoader(String name) {
         boolean reload = false;
 
         String nameWithDot = name + '.';

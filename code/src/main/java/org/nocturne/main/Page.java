@@ -219,6 +219,11 @@ public abstract class Page extends Component {
         processChain = false;
     }
 
+    @Override
+    protected final void setupRequestParams() {
+        setupRequestParamsForPage();
+    }
+
     private void setupCurrentPage() {
         if (ApplicationContext.getInstance().isDebug()) {
             try {

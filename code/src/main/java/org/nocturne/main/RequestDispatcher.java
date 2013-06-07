@@ -17,9 +17,8 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.Flushable;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Writer;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -28,16 +27,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Mike Mirzayanov
  */
 public class RequestDispatcher {
-    /**
-     * Logger.
-     */
-    private static final Logger logger = Logger.getLogger(DispatchFilter.class);
+    private static final Logger logger = Logger.getLogger(RequestDispatcher.class);
 
-    /**
-     * Context.
-     */
-    private final ApplicationContext applicationContext
-            = ApplicationContext.getInstance();
+    private final ApplicationContext applicationContext = ApplicationContext.getInstance();
 
     /**
      * Freemarker configuration.
@@ -47,8 +39,7 @@ public class RequestDispatcher {
     /**
      * Page loader for production mode.
      */
-    private final PageLoader pageLoader
-            = new PageLoader();
+    private final PageLoader pageLoader = new PageLoader();
 
     /**
      * Servlet config.
@@ -69,7 +60,7 @@ public class RequestDispatcher {
         this.reloadingClassLoader = reloadingClassLoader;
     }
 
-    private boolean isClientAbortException(Exception e) {
+    private static boolean isClientAbortException(Exception e) {
         return e != null && (e.getClass().getName().contains("ClientAbortException")
                 || (e.getCause() != null && e.getCause().getClass().getName().contains("ClientAbortException")));
     }
@@ -88,7 +79,7 @@ public class RequestDispatcher {
 
         String path = request.getServletPath();
 
-        Map<String, String> parameterMap = RequestUtil.getRequestParams(request);
+        Map<String, List<String>> parameterMap = RequestUtil.getRequestParams(request);
         Page page = pageLoader.loadPage(path, parameterMap);
 
         if (page == null) {
@@ -104,7 +95,7 @@ public class RequestDispatcher {
         try {
             page.setTemplateEngineConfiguration(templateEngineConfiguration);
             page.setRequest(request);
-            page.setFilterConfig(getFilterConfig());
+            page.setFilterConfig(filterConfig);
             page.setResponse(response);
 
             setupPageRequestListener(page);
@@ -173,7 +164,7 @@ public class RequestDispatcher {
     }
 
     /**
-     * @return filterConfig Retuns filter configuration instance.
+     * @return filterConfig Returns filter configuration instance.
      */
     private FilterConfig getFilterConfig() {
         return filterConfig;
@@ -195,7 +186,7 @@ public class RequestDispatcher {
 
         try {
             Class pageLoaderClass = reloadingClassLoader.loadClass(PageLoader.class.getName());
-            Object pageLoader = pageLoaderClass.newInstance();
+            @SuppressWarnings("unchecked") Object pageLoader = pageLoaderClass.getConstructor().newInstance();
 
             page = ReflectionUtil.invoke(pageLoader, "loadPage", request.getServletPath(),
                     RequestUtil.getRequestParams(request));
@@ -234,15 +225,15 @@ public class RequestDispatcher {
             ReflectionUtil.invoke(page, "setTemplateEngineConfiguration", templateEngineConfiguration);
             ReflectionUtil.invoke(page, "setRequest", request);
             ReflectionUtil.invoke(page, "setResponse", response);
-            ReflectionUtil.invoke(page, "setFilterConfig", getFilterConfig());
+            ReflectionUtil.invoke(page, "setFilterConfig", filterConfig);
 
             setupPageRequestListener(page);
             handleBeforeProcessPage(page);
             ReflectionUtil.invoke(page, "parseTemplate");
             runResult.setProcessChain((Boolean) ReflectionUtil.invoke(page, "isProcessChain"));
 
-            ((OutputStream) ReflectionUtil.invoke(page, "getOutputStream")).flush();
-            ((Writer) ReflectionUtil.invoke(page, "getWriter")).flush();
+            ((Flushable) ReflectionUtil.invoke(page, "getOutputStream")).flush();
+            ((Flushable) ReflectionUtil.invoke(page, "getWriter")).flush();
         } catch (ReflectionException e) {
             throw new NocturneException("Can't run method via reflection.", e);
         } finally {
@@ -313,7 +304,7 @@ public class RequestDispatcher {
         }
     }
 
-    private void setupHeaders(HttpServletResponse response) {
+    private static void setupHeaders(HttpServletResponse response) {
         response.setHeader("Cache-Control", "private,no-cache,no-store,max-age=0,must-revalidate");
         response.setHeader("Expires", "-1");
         response.setHeader("Pragma", "no-cache");

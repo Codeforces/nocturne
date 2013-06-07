@@ -5,6 +5,7 @@ package org.nocturne.module;
 
 import freemarker.cache.TemplateLoader;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.nocturne.exception.ModuleInitializationException;
 import org.nocturne.main.ApplicationContext;
 import org.nocturne.util.FileUtil;
@@ -16,6 +17,7 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.regex.Pattern;
 
 /**
  * Stores information about the module.
@@ -23,6 +25,8 @@ import java.util.jar.JarFile;
  * @author Mike Mirzayanov.
  */
 public class Module {
+    private static final Pattern MODULE_URL_MATCH_PATTERN = Pattern.compile("module-.*\\.jar");
+
     /**
      * Module name.
      */
@@ -63,7 +67,7 @@ public class Module {
      */
     private String startupClassName;
 
-    private ApplicationContext getApplicationContext() {
+    private static ApplicationContext getApplicationContext() {
         return ApplicationContext.getInstance();
     }
 
@@ -168,13 +172,7 @@ public class Module {
         } catch (IOException e) {
             throw new ModuleInitializationException("Can't perform IO operation [module=" + file.getName() + "].", e);
         } finally {
-            try {
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-            } catch (IOException e) {
-                // No operation.
-            }
+            IOUtils.closeQuietly(inputStream);
         }
     }
 
@@ -185,7 +183,7 @@ public class Module {
                     "/module/properties/startup-class",
                     String.class
             );
-        } catch (Exception e) {
+        } catch (Exception ignored) {
             // Optional parameter.
         }
     }
@@ -244,7 +242,7 @@ public class Module {
             }
         } catch (Exception e) {
             throw new ModuleInitializationException("Can't find or parse /module/properties/priority. " +
-                    "It expected to be an integer.");
+                    "It expected to be an integer.", e);
         }
     }
 
@@ -353,7 +351,7 @@ public class Module {
         }
     }
 
-    private File cutDir(File dir, File file) {
+    private static File cutDir(File dir, File file) {
         return new File(file.getPath().substring(dir.getPath().length()));
     }
 
@@ -365,7 +363,7 @@ public class Module {
      */
     public static boolean isModuleUrl(URL url) {
         File file = new File(url.getFile());
-        return file.getName().matches("module-.*\\.jar");
+        return MODULE_URL_MATCH_PATTERN.matcher(file.getName()).matches();
     }
 
     /**

@@ -102,7 +102,7 @@ public class DebugResourceFilter implements Filter {
                 setupContentType(path, response);
 
                 int size = 0;
-                byte buffer[] = new byte[65536];
+                byte[] buffer = new byte[65536];
 
                 while (true) {
                     int readCount = inputStream.read(buffer);

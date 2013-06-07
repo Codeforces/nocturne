@@ -8,6 +8,7 @@ import org.nocturne.exception.ConfigurationException;
 import org.nocturne.pool.PagePool;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -23,12 +24,11 @@ public class PageLoader {
     private static final Logger logger = Logger.getLogger(PageLoader.class);
 
     private RequestRouter requestRouter;
-    private final ConcurrentMap<String, PagePool> pagePoolMap
-            = new ConcurrentHashMap<String, PagePool>();
+    private final ConcurrentMap<String, PagePool> pagePoolMap = new ConcurrentHashMap<String, PagePool>();
 
     private static final Lock lock = new ReentrantLock();
 
-    private volatile boolean initialized = false;
+    private volatile boolean initialized;
 
     void initialize() {
         if (!initialized) {
@@ -38,7 +38,11 @@ public class PageLoader {
                     try {
                         requestRouter = (RequestRouter) getClass().getClassLoader().loadClass(
                                 ApplicationContext.getInstance().getRequestRouter()
-                        ).newInstance();
+                        ).getConstructor().newInstance();
+                    } catch (NoSuchMethodException e) {
+                        throw new ConfigurationException(
+                                "Application page class name resolver does not have default constructor.", e
+                        );
                     } catch (Exception e) {
                         throw new ConfigurationException("Can't load application page class name resolver.", e);
                     }
@@ -51,7 +55,7 @@ public class PageLoader {
         }
     }
 
-    public Page loadPage(String path, Map<String, String> parameterMap) {
+    public Page loadPage(String path, Map<String, List<String>> parameterMap) {
         initialize();
 
         RequestRouter.Resolution resolution = requestRouter.route(path, parameterMap);
@@ -65,9 +69,9 @@ public class PageLoader {
             ApplicationContext.getInstance().setRequestAction(resolution.getAction());
             ApplicationContext.getInstance().setRequestPageClassName(resolution.getPageClassName());
 
-            Map<String, String> overrideParameters = resolution.getOverrideParameters();
+            Map<String, List<String>> overrideParameters = resolution.getOverrideParameters();
             if (overrideParameters != null) {
-                for (Map.Entry<String, String> entry : overrideParameters.entrySet()) {
+                for (Map.Entry<String, List<String>> entry : overrideParameters.entrySet()) {
                     ApplicationContext.getInstance().addRequestOverrideParameter(entry.getKey(), entry.getValue());
                 }
             }
@@ -78,7 +82,7 @@ public class PageLoader {
     }
 
     @SuppressWarnings({"UnusedDeclaration"})
-    public void unloadPage(String path, Map<String, String> parameterMap, Page page) {
+    public void unloadPage(String path, Map<String, List<String>> parameterMap, Page page) {
         String className = ApplicationContext.getInstance().getRequestPageClassName();
         PagePool pool = getPoolByClassName(className);
         pool.release(page);
@@ -89,20 +93,19 @@ public class PageLoader {
 
         if (pool == null) {
             pagePoolMap.putIfAbsent(className, new PagePool(this, className));
+            pool = pagePoolMap.get(className);
         }
 
-        return pagePoolMap.get(className);
+        return pool;
     }
 
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({"unchecked", "MethodMayBeStatic"})
     public Page loadPage(String pageClassName) {
         try {
-            Class<Page> pageClass = (Class<Page>)
-                    PageLoader.class.getClassLoader().loadClass(pageClassName);
+            Class<Page> pageClass = (Class<Page>) PageLoader.class.getClassLoader().loadClass(pageClassName);
             return ApplicationContext.getInstance().getInjector().getInstance(pageClass);
         } catch (Exception e) {
-            throw new ConfigurationException("Can't load page " +
-                    pageClassName + '.', e);
+            throw new ConfigurationException("Can't load page " + pageClassName + '.', e);
         }
     }
 

@@ -11,6 +11,7 @@ import net.sf.cglib.reflect.FastMethod;
 import org.apache.log4j.Logger;
 import org.nocturne.cache.CacheHandler;
 import org.nocturne.caption.CaptionDirective;
+import org.nocturne.collection.SingleEntryList;
 import org.nocturne.exception.*;
 import org.nocturne.link.LinkDirective;
 import org.nocturne.link.Links;
@@ -38,11 +39,12 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author Mike Mirzayanov
  */
+@SuppressWarnings("DollarSignInName")
 public abstract class Component {
     /**
      * Has been initialized?
      */
-    private boolean initialized;
+    private volatile boolean initialized;
 
     /**
      * Default is null, which means no caching.
@@ -128,8 +130,7 @@ public abstract class Component {
     /**
      * Stores cached instances for #getInstance(clazz, index) method.
      */
-    private final Map<Class<?>, List<Object>> cacheForGetInstance
-            = new HashMap<Class<?>, List<Object>>();
+    private final Map<Class<?>, List<Object>> cacheForGetInstance = new HashMap<Class<?>, List<Object>>();
 
     /**
      * Stores current indices of instances for #getInstance(clazz).
@@ -150,12 +151,12 @@ public abstract class Component {
     /**
      * Map, containing parameters, which will be checked before request.getParameter().
      */
-    private Map<String, String> overrideParameters;
+    private Map<String, List<String>> overrideParameters;
 
     /**
      * Stores params from request.
      */
-    private Map<String, String> requestParams = new HashMap<String, String>();
+    private Map<String, List<String>> requestParams = new HashMap<String, List<String>>();
 
     /**
      * Object to clean fields between requests.
@@ -206,7 +207,7 @@ public abstract class Component {
             FastMethod validateMethod = actionMap.getValidateMethod(actionParameter);
             Boolean validationResult = true;
             if (validateMethod != null) {
-                validationResult = (Boolean) validateMethod.invoke(this, parametersInjector.setupParameters(getRequest(), validateMethod));
+                validationResult = (Boolean) validateMethod.invoke(this, parametersInjector.setupParameters(request, validateMethod));
             }
 
             if (validationResult) {
@@ -214,7 +215,7 @@ public abstract class Component {
                 // TODO: Can't be applied now because of Codeforces frames.
                 // ensureHttpMethod(actionMethod);
                 if (actionMethod != null) {
-                    actionMethod.getMethod().invoke(this, parametersInjector.setupParameters(getRequest(), actionMethod.getMethod()));
+                    actionMethod.getMethod().invoke(this, parametersInjector.setupParameters(request, actionMethod.getMethod()));
                 } else {
                     throw new NocturneException("Can't find action method for component "
                             + getClass().getName() + " and action parameter = " + actionParameter + '.');
@@ -222,7 +223,7 @@ public abstract class Component {
             } else {
                 FastMethod invalidMethod = actionMap.getInvalidMethod(actionParameter);
                 if (invalidMethod != null) {
-                    invalidMethod.invoke(this, parametersInjector.setupParameters(getRequest(), invalidMethod));
+                    invalidMethod.invoke(this, parametersInjector.setupParameters(request, invalidMethod));
                 }
             }
         } catch (InvocationTargetException e) {
@@ -240,11 +241,11 @@ public abstract class Component {
     }
 
     private void ensureHttpMethod(ActionMap.ActionMethod actionMethod) {
-        HttpMethod requestMethod = HttpMethod.valueOf(getRequest().getMethod().toUpperCase());
+        HttpMethod requestMethod = HttpMethod.valueOf(request.getMethod().toUpperCase());
 
         if (actionMethod.getAction() == null && requestMethod != HttpMethod.GET) {
             abortWithError(HttpServletResponse.SC_BAD_REQUEST, "HTTP requestMethod GET is not supported by "
-                    + getClass().getSimpleName() + "#" + actionMethod.getMethod().getName());
+                    + getClass().getSimpleName() + '#' + actionMethod.getMethod().getName());
         }
 
         if (actionMethod.getAction() != null) {
@@ -256,7 +257,7 @@ public abstract class Component {
 
             abortWithError(HttpServletResponse.SC_BAD_REQUEST, "HTTP requestMethod " + requestMethod
                     + " is not supported by "
-                    + getClass().getSimpleName() + "#" + actionMethod.getMethod().getName());
+                    + getClass().getSimpleName() + '#' + actionMethod.getMethod().getName());
         }
     }
 
@@ -489,7 +490,11 @@ public abstract class Component {
     }
 
     void addOverrideParameter(String name, String value) {
-        overrideParameters.put(name, value);
+        overrideParameters.put(name, new SingleEntryList<String>(value));
+    }
+
+    void addOverrideParameter(String name, Collection<String> values) {
+        overrideParameters.put(name, new ArrayList<String>(values));
     }
 
     /**
@@ -682,13 +687,13 @@ public abstract class Component {
 
     /**
      * @param key Parameter name.
-     * @return Gets parameter as string.
+     * @return Returns parameter as string.
      */
     public String getString(String key) {
         if (overrideParameters.containsKey(key)) {
-            return overrideParameters.get(key);
+            return RequestUtil.getFirst(overrideParameters, key);
         } else {
-            return requestParams.get(key);
+            return RequestUtil.getFirst(requestParams, key);
         }
     }
 
@@ -696,13 +701,49 @@ public abstract class Component {
      * @param key Parameter name.
      * @return Returns parameter as boolean. Returns {@code false}
      *         on invalid boolean value. Returns {@code true} if
-     *         key is "true" or "on" (case ignored).
+     *         key is "true", "on", "yes", "y", "1" or "checked" (case insensitive).
      */
     public boolean getBoolean(String key) {
         String value = getString(key);
         return "true".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value)
                 || "yes".equalsIgnoreCase(value) || "1".equalsIgnoreCase(value)
                 || "y".equalsIgnoreCase(value) || "checked".equalsIgnoreCase(value);
+    }
+
+    /**
+     * @param key Parameter name.
+     * @return Returns parameter as character. Returns {@code 0}
+     *         on invalid character value.
+     */
+    public char getChar(String key) {
+        String value = getString(key);
+        return value == null || value.isEmpty() ? 0 : value.charAt(0);
+    }
+
+    /**
+     * @param key Parameter name.
+     * @return Returns parameter as byte. Returns {@code 0}
+     *         on invalid byte value.
+     */
+    public byte getByte(String key) {
+        try {
+            return Byte.parseByte(getString(key));
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
+    }
+
+    /**
+     * @param key Parameter name.
+     * @return Returns parameter as short integer. Returns {@code 0}
+     *         on invalid short integer value.
+     */
+    public short getShort(String key) {
+        try {
+            return Short.parseShort(getString(key));
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
     }
 
     /**
@@ -734,19 +775,6 @@ public abstract class Component {
     /**
      * @param key Parameter name.
      * @return Returns parameter as double. Returns {@code 0.0}
-     *         on invalid double value.
-     */
-    public double getDouble(String key) {
-        try {
-            return Double.parseDouble(getString(key));
-        } catch (NumberFormatException ignored) {
-            return 0.0;
-        }
-    }
-
-    /**
-     * @param key Parameter name.
-     * @return Returns parameter as double. Returns {@code 0.0}
      *         on invalid float value.
      */
     public double getFloat(String key) {
@@ -759,6 +787,100 @@ public abstract class Component {
 
     /**
      * @param key Parameter name.
+     * @return Returns parameter as double. Returns {@code 0.0}
+     *         on invalid double value.
+     */
+    public double getDouble(String key) {
+        try {
+            return Double.parseDouble(getString(key));
+        } catch (NumberFormatException ignored) {
+            return 0.0;
+        }
+    }
+
+    /**
+     * @param key Parameter name.
+     * @return Returns parameter as string array.
+     */
+    public String[] getStrings(String key) {
+        Map<String, List<String>> params = overrideParameters.containsKey(key) ? overrideParameters : requestParams;
+        return (String[]) ParametersInjector.getArrayAssignValue(null, params.get(key), String[].class);
+    }
+
+    /**
+     * @param key Parameter name.
+     * @return Returns parameter as boolean array.
+     */
+    public boolean[] getBooleans(String key) {
+        Map<String, List<String>> params = overrideParameters.containsKey(key) ? overrideParameters : requestParams;
+        return (boolean[]) ParametersInjector.getArrayAssignValue(null, params.get(key), boolean[].class);
+    }
+
+    /**
+     * @param key Parameter name.
+     * @return Returns parameter as character array.
+     */
+    public char[] getChars(String key) {
+        Map<String, List<String>> params = overrideParameters.containsKey(key) ? overrideParameters : requestParams;
+        return (char[]) ParametersInjector.getArrayAssignValue(null, params.get(key), char[].class);
+    }
+
+    /**
+     * @param key Parameter name.
+     * @return Returns parameter as byte array.
+     */
+    public byte[] getBytes(String key) {
+        Map<String, List<String>> params = overrideParameters.containsKey(key) ? overrideParameters : requestParams;
+        return (byte[]) ParametersInjector.getArrayAssignValue(null, params.get(key), byte[].class);
+    }
+
+    /**
+     * @param key Parameter name.
+     * @return Returns parameter as short integer array.
+     */
+    public short[] getShorts(String key) {
+        Map<String, List<String>> params = overrideParameters.containsKey(key) ? overrideParameters : requestParams;
+        return (short[]) ParametersInjector.getArrayAssignValue(null, params.get(key), short[].class);
+    }
+
+    /**
+     * @param key Parameter name.
+     * @return Returns parameter as integer array.
+     */
+    public int[] getIntegers(String key) {
+        Map<String, List<String>> params = overrideParameters.containsKey(key) ? overrideParameters : requestParams;
+        return (int[]) ParametersInjector.getArrayAssignValue(null, params.get(key), int[].class);
+    }
+
+    /**
+     * @param key Parameter name.
+     * @return Returns parameter as long integer array.
+     */
+    public long[] getLongs(String key) {
+        Map<String, List<String>> params = overrideParameters.containsKey(key) ? overrideParameters : requestParams;
+        return (long[]) ParametersInjector.getArrayAssignValue(null, params.get(key), long[].class);
+    }
+
+    /**
+     * @param key Parameter name.
+     * @return Returns parameter as float number array.
+     */
+    public float[] getFloats(String key) {
+        Map<String, List<String>> params = overrideParameters.containsKey(key) ? overrideParameters : requestParams;
+        return (float[]) ParametersInjector.getArrayAssignValue(null, params.get(key), float[].class);
+    }
+
+    /**
+     * @param key Parameter name.
+     * @return Returns parameter as double number array.
+     */
+    public double[] getDoubles(String key) {
+        Map<String, List<String>> params = overrideParameters.containsKey(key) ? overrideParameters : requestParams;
+        return (double[]) ParametersInjector.getArrayAssignValue(null, params.get(key), double[].class);
+    }
+
+    /**
+     * @param key Parameter name.
      * @return Returns {@code true} if there is such parameter and
      *         it differs from {@code null}.
      */
@@ -766,8 +888,8 @@ public abstract class Component {
         return getString(key) != null;
     }
 
-    Map<String, String> getRequestParams() {
-        return new HashMap<String, String>(requestParams);
+    Map<String, List<String>> getRequestParams() {
+        return new HashMap<String, List<String>>(requestParams);
     }
 
     void setRequest(HttpServletRequest request) {
@@ -775,20 +897,16 @@ public abstract class Component {
         setupRequestParams();
     }
 
-    private void setupRequestParams() {
-        if (this instanceof Page) {
-            setupRequestParamsForPage();
-        } else {
-            if (this instanceof Frame) {
-                requestParams = ApplicationContext.getInstance().getCurrentPage().getRequestParams();
-            } else {
-                throw new NocturneException("Expected page or frame class.");
-            }
-        }
+    protected void setupRequestParams() {
+        throw new NocturneException("Expected Page or Frame class.");
     }
 
-    private void setupRequestParamsForPage() {
+    protected final void setupRequestParamsForPage() {
         requestParams = RequestUtil.getRequestParams(request);
+    }
+
+    protected final void setupRequestParamsForFrame() {
+        requestParams = ApplicationContext.getInstance().getCurrentPage().getRequestParams();
     }
 
     void setResponse(HttpServletResponse response) {
@@ -898,7 +1016,7 @@ public abstract class Component {
         writer = null;
         validators = new LinkedHashMap<String, List<Validator>>();
         frameMap = new HashMap<String, String>();
-        overrideParameters = Collections.synchronizedMap(new HashMap<String, String>());
+        overrideParameters = Collections.synchronizedMap(new HashMap<String, List<String>>());
 
         parametersInjector.inject(request);
 
@@ -1133,7 +1251,7 @@ public abstract class Component {
                 try {
                     writer.write(gson.toJson(errors, mapType));
                     writer.flush();
-                } catch (IOException e) {
+                } catch (IOException ignored) {
                     // No operations.
                 }
             }
@@ -1175,7 +1293,7 @@ public abstract class Component {
         try {
             writer.write(gson.toJson(params, mapType));
             writer.flush();
-        } catch (IOException e) {
+        } catch (IOException ignored) {
             // No operations.
         }
     }
@@ -1208,8 +1326,8 @@ public abstract class Component {
      * But it doesn't create new instance for component if it already
      * was created. I.e. there is special map Map<Class<?>, List<Object>> to cache
      * instances. If inside single request there will be several calls
-     * concretComponent.getInstance(ConcretClass.class), each of them returns
-     * own instance. But the first call of concretComponent.getInstance(ConcretClass.class)
+     * concreteComponent.getInstance(ConcreteClass.class), each of them returns
+     * own instance. But the first call of concreteComponent.getInstance(ConcreteClass.class)
      * in the next request will return the same as the first call in the current request
      * and so on.
      *

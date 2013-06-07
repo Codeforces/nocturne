@@ -10,7 +10,7 @@ package org.nocturne.main;
  */
 public interface Listener<T> {
     /**
-     * This method will be invoked in case of incovation
+     * This method will be invoked in case of invocation
      * Events.fire(event) and if the listener was
      * subscribed to event.getClass() or its superclass.
      *
