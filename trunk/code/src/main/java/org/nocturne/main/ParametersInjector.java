@@ -10,8 +10,10 @@ import org.nocturne.exception.NocturneException;
 import org.nocturne.util.RequestUtil;
 import org.nocturne.util.StringUtil;
 
+import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -75,21 +77,21 @@ public class ParametersInjector {
 
         List<InjectField> injectFields = new ArrayList<InjectField>(parameterTypes.length);
 
-        for (int i = 0; i < parameterTypes.length; i++) {
+        for (int i = 0; i < parameterTypes.length; ++i) {
             Class<?> parameterType = parameterTypes[i];
             Parameter parameter = null;
-            for (int j = 0; j < parameterAnnotations[i].length; j++) {
+            for (int j = 0; j < parameterAnnotations[i].length; ++j) {
                 if (parameterAnnotations[i][j] instanceof Parameter) {
                     parameter = (Parameter) parameterAnnotations[i][j];
                 }
             }
             if (parameter == null) {
                 throw new ConfigurationException("Each parameter of the method " + method.getDeclaringClass().getName()
-                        + "#" + method.getName() + " should be annotated with @Parameter.");
+                        + '#' + method.getName() + " should be annotated with @Parameter.");
             }
             if (StringUtil.isEmptyOrNull(parameter.name())) {
                 throw new ConfigurationException("Each @Parameter in the method " + method.getDeclaringClass().getName()
-                        + "#" + method.getName() + " should have name.");
+                        + '#' + method.getName() + " should have name.");
             }
             InjectField injectField = new InjectField(null, parameter);
             injectField.nonFieldType = parameterType;
@@ -107,194 +109,254 @@ public class ParametersInjector {
     }
 
     private void setupFields(HttpServletRequest request, Collection<InjectField> fields) {
-        Map<String, String> overrideParameters =
+        Map<String, List<String>> overrideParameters =
                 ApplicationContext.getInstance().getRequestOverrideParameters();
-        Map<String, String> requestParameters =
-                RequestUtil.getRequestParams(request);
+        Map<String, List<String>> requestParameters = RequestUtil.getRequestParams(request);
 
         for (InjectField field : fields) {
             String key = field.parameter.name().isEmpty()
                     ? field.field.getName() : field.parameter.name();
 
-            String value;
+            List<String> values;
             if (overrideParameters != null && overrideParameters.containsKey(key)) {
-                value = overrideParameters.get(key);
+                values = overrideParameters.get(key);
             } else {
-                value = requestParameters.get(key);
+                values = requestParameters.get(key);
             }
 
-            setupField(field, value);
+            setupField(field, values);
         }
 
         if (component instanceof Component) {
             Component comp = (Component) component;
             if (overrideParameters != null) {
-                for (Map.Entry<String, String> entry : overrideParameters.entrySet()) {
+                for (Map.Entry<String, List<String>> entry : overrideParameters.entrySet()) {
                     comp.addOverrideParameter(entry.getKey(), entry.getValue());
                 }
             }
         }
     }
 
-    private void setupField(InjectField field, String value) {
-        if (value == null) {
-            setupFieldFromNull(field);
+    private void setupField(InjectField field, @Nullable List<String> values) {
+        Class<?> fieldType = getFieldType(field);
+
+        if (fieldType.isArray()) {
+            setFieldValue(field, getArrayAssignValue(field, values, fieldType));
         } else {
-            value = field.parameter.stripMode().strip(value);
-            setupFieldFromPreparedAndNotNullValue(field, value);
+            String value = RequestUtil.getFirst(values);
+
+            if (value == null) {
+                setFieldValue(field, getNullAssignValue(fieldType));
+            } else {
+                value = field.parameter.stripMode().strip(value);
+                setFieldValue(field, getAssignValue(field, value, fieldType));
+            }
         }
     }
 
-    @SuppressWarnings({"ConstantConditions"})
-    private void setupFieldFromPreparedAndNotNullValue(InjectField field, String value) {
-        Class<?> clazz = getFieldType(field);
+    public static Object getArrayAssignValue(@Nullable InjectField field, List<String> values, Class<?> fieldType) {
+        Class<?> componentType = fieldType.getComponentType();
 
-        Object assign = null;
-        boolean processed = false;
-
-        if (clazz.equals(String.class)) {
-            processed = true;
-            assign = value;
+        if (componentType.isArray()) {
+            throw getIllegalFieldTypeException(field, fieldType);
         }
 
-        if (clazz.equals(Boolean.class) || clazz.equals(boolean.class)) {
-            processed = true;
+        int valueCount = values == null || values.isEmpty() ? 0 : values.size();
+        Object fieldValue = Array.newInstance(componentType, valueCount);
+
+        for (int valueIndex = 0; valueIndex < valueCount; ++valueIndex) {
+            String value = values.get(valueIndex);
+
+            if (value == null) {
+                Array.set(fieldValue, valueIndex, getNullAssignValue(componentType));
+            } else {
+                if (field != null) {
+                    value = field.parameter.stripMode().strip(value);
+                }
+                Array.set(fieldValue, valueIndex, getAssignValue(field, value, componentType));
+            }
+        }
+
+        return fieldValue;
+    }
+
+    private static Object getNullAssignValue(Class<?> fieldType) {
+        if (String.class.equals(fieldType) || Boolean.class.equals(fieldType)
+                || Character.class.equals(fieldType) || Byte.class.equals(fieldType) || Short.class.equals(fieldType)
+                || Integer.class.equals(fieldType) || Long.class.equals(fieldType)
+                || Float.class.equals(fieldType) || Double.class.equals(fieldType)
+                || fieldType.isEnum()) {
+            return null;
+        }
+
+        if (fieldType.equals(boolean.class)) {
+            return Boolean.FALSE;
+        }
+
+        if (fieldType.equals(char.class)) {
+            return 0;
+        }
+
+        if (fieldType.equals(byte.class)) {
+            return 0;
+        }
+
+        if (fieldType.equals(short.class)) {
+            return 0;
+        }
+
+        if (fieldType.equals(int.class)) {
+            return 0;
+        }
+
+        if (fieldType.equals(long.class)) {
+            return 0L;
+        }
+
+        if (fieldType.equals(float.class)) {
+            return 0.0F;
+        }
+
+        if (fieldType.equals(double.class)) {
+            return 0.0D;
+        }
+
+        return null;
+    }
+
+    @SuppressWarnings({"OverlyComplexMethod", "OverlyLongMethod"})
+    private static Object getAssignValue(@Nullable InjectField field, String value, Class<?> targetType) {
+        if (targetType.equals(String.class)) {
+            return value;
+        }
+
+        if (targetType.equals(Boolean.class) || targetType.equals(boolean.class)) {
             if ("true".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value)
                     || "yes".equalsIgnoreCase(value) || "1".equalsIgnoreCase(value)
                     || "y".equalsIgnoreCase(value) || "checked".equalsIgnoreCase(value)) {
-                assign = true;
+                return Boolean.TRUE;
             } else {
                 try {
-                    assign = Boolean.valueOf(value);
-                } catch (Exception ignored) {
-                    assign = false;
+                    return Boolean.valueOf(value);
+                } catch (RuntimeException ignored) {
+                    return Boolean.FALSE;
                 }
             }
         }
 
-        if (clazz.equals(Integer.class) || clazz.equals(int.class)) {
-            processed = true;
+        if (targetType.equals(Character.class) || targetType.equals(char.class)) {
+            try {
+                if (value.isEmpty()) {
+                    return (char) 0;
+                } else {
+                    return value.charAt(0);
+                }
+            } catch (RuntimeException ignored) {
+                return (char) 0;
+            }
+        }
+
+        if (targetType.equals(Byte.class) || targetType.equals(byte.class)) {
             try {
                 if (INTEGRAL_VALUE_PATTERN.matcher(value).matches()) {
-                    assign = Integer.valueOf(value);
+                    return Byte.valueOf(value);
                 } else {
-                    assign = 0;
+                    return (byte) 0;
                 }
-            } catch (Exception ignored) {
-                assign = 0;
+            } catch (RuntimeException ignored) {
+                return (byte) 0;
             }
         }
 
-        if (clazz.equals(Long.class) || clazz.equals(long.class)) {
-            processed = true;
+        if (targetType.equals(Short.class) || targetType.equals(short.class)) {
             try {
                 if (INTEGRAL_VALUE_PATTERN.matcher(value).matches()) {
-                    assign = Long.valueOf(value);
+                    return Short.valueOf(value);
                 } else {
-                    assign = 0L;
+                    return (short) 0;
                 }
-            } catch (Exception ignored) {
-                assign = 0L;
+            } catch (RuntimeException ignored) {
+                return (short) 0;
             }
         }
 
-        if (clazz.equals(Double.class) || clazz.equals(double.class)) {
-            processed = true;
+        if (targetType.equals(Integer.class) || targetType.equals(int.class)) {
+            try {
+                if (INTEGRAL_VALUE_PATTERN.matcher(value).matches()) {
+                    return Integer.valueOf(value);
+                } else {
+                    return 0;
+                }
+            } catch (RuntimeException ignored) {
+                return 0;
+            }
+        }
+
+        if (targetType.equals(Long.class) || targetType.equals(long.class)) {
+            try {
+                if (INTEGRAL_VALUE_PATTERN.matcher(value).matches()) {
+                    return Long.valueOf(value);
+                } else {
+                    return 0L;
+                }
+            } catch (RuntimeException ignored) {
+                return 0L;
+            }
+        }
+
+        if (targetType.equals(Float.class) || targetType.equals(float.class)) {
             try {
                 if (REAL_VALUE_PATTERN.matcher(value).matches()) {
-                    assign = Double.valueOf(value);
+                    return Float.valueOf(value);
                 } else {
-                    assign = 0.0;
+                    return 0.0F;
                 }
-            } catch (Exception ignored) {
-                assign = 0.0;
+            } catch (RuntimeException ignored) {
+                return 0.0F;
             }
         }
 
-        if (clazz.equals(Float.class) || clazz.equals(float.class)) {
-            processed = true;
+        if (targetType.equals(Double.class) || targetType.equals(double.class)) {
             try {
                 if (REAL_VALUE_PATTERN.matcher(value).matches()) {
-                    assign = Float.valueOf(value);
+                    return Double.valueOf(value);
                 } else {
-                    assign = 0.0F;
+                    return 0.0D;
                 }
-            } catch (Exception ignored) {
-                assign = 0.0F;
+            } catch (RuntimeException ignored) {
+                return 0.0D;
             }
         }
 
-        if (clazz.isEnum()) {
-            processed = true;
-            Object[] consts = clazz.getEnumConstants();
-            for (Object constName : consts) {
+        if (targetType.isEnum()) {
+            for (Object constName : targetType.getEnumConstants()) {
                 if (constName.toString().equalsIgnoreCase(value)) {
-                    assign = constName;
+                    return constName;
                 }
             }
+            return null;
         }
 
-        if (processed) {
-            setFieldValue(field, assign);
-        } else {
-            throw new ConfigurationException("Field " + field.field.getName() + " of "
-                    + field.field.getDeclaringClass().getName() + " has unexpected type " + clazz.getName() + '.');
-        }
+        throw getIllegalFieldTypeException(field, targetType);
     }
 
-    private void setupFieldFromNull(InjectField field) {
-        Class<?> clazz = getFieldType(field);
-
-        Object assign = null;
-
-        if (clazz.equals(String.class) || clazz.isEnum()) {
-            assign = null;
-        }
-
-        if (clazz.equals(Boolean.class) || clazz.equals(Integer.class)
-                || clazz.equals(Long.class) || clazz.equals(Double.class)
-                || clazz.equals(Float.class)) {
-            assign = null;
-        }
-
-        if (clazz.equals(boolean.class)) {
-            assign = Boolean.FALSE;
-        }
-
-        if (clazz.equals(int.class)) {
-            assign = 0;
-        }
-
-        if (clazz.equals(long.class)) {
-            assign = 0L;
-        }
-
-        if (clazz.equals(double.class)) {
-            assign = 0.0D;
-        }
-
-        if (clazz.equals(float.class)) {
-            assign = 0.0F;
-        }
-
-        setFieldValue(field, assign);
-    }
-
-    private Class<?> getFieldType(InjectField field) {
-        return field.field != null ? field.field.getType() : field.nonFieldType;
+    private static Class<?> getFieldType(InjectField field) {
+        return field.field == null ? field.nonFieldType : field.field.getType();
     }
 
     private void setFieldValue(InjectField field, Object assign) {
-        if (field.field != null) {
+        if (field.field == null) {
+            field.nonFieldValue = assign;
+        } else {
             field.field.setAccessible(true);
             try {
                 field.field.set(component, assign);
             } catch (IllegalAccessException e) {
-                throw new IllegalArgumentException("Don't have access to set field " + field.field.getName() + " of "
-                        + field.field.getDeclaringClass().getName() + '.', e);
+                throw new IllegalArgumentException(String.format(
+                        "Don't have access to set field %s of %s.",
+                        field.field.getName(), field.field.getDeclaringClass().getName()
+                ), e);
             }
-        } else {
-            field.nonFieldValue = assign;
         }
     }
 
@@ -316,12 +378,24 @@ public class ParametersInjector {
         }
     }
 
-    private static class InjectField {
-        private final Field field;
-        private final Parameter parameter;
+    private static ConfigurationException getIllegalFieldTypeException(InjectField field, Class<?> fieldType) {
+        if (field == null) {
+            return new ConfigurationException(String.format("Field has unexpected type %s.", fieldType.getName()));
+        } else {
+            return new ConfigurationException(String.format(
+                    "Field %s of %s has unexpected type %s.",
+                    field.field.getName(), field.field.getDeclaringClass().getName(), fieldType.getName()
+            ));
+        }
+    }
 
-        private Object nonFieldValue;
-        private Class<?> nonFieldType;
+    @SuppressWarnings("PackageVisibleField")
+    private static class InjectField {
+        final Field field;
+        final Parameter parameter;
+
+        Object nonFieldValue;
+        Class<?> nonFieldType;
 
         private InjectField(Field field, Parameter parameter) {
             this.field = field;

@@ -6,6 +6,7 @@ package org.nocturne.main;
 import com.google.inject.Injector;
 import org.nocturne.caption.Captions;
 import org.nocturne.caption.CaptionsImpl;
+import org.nocturne.collection.SingleEntryList;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.exception.NocturneException;
 import org.nocturne.exception.ReflectionException;
@@ -412,7 +413,11 @@ public class ApplicationContext {
         requestsPerThread.get().addOverrideParameter(name, value);
     }
 
-    Map<String, String> getRequestOverrideParameters() {
+    void addRequestOverrideParameter(String name, List<String> values) {
+        requestsPerThread.get().addOverrideParameter(name, values);
+    }
+
+    Map<String, List<String>> getRequestOverrideParameters() {
         return requestsPerThread.get().getOverrideParameters();
     }
 
@@ -794,7 +799,7 @@ public class ApplicationContext {
         /**
          * Parameters which override request params.
          */
-        private Map<String, String> overrideParameters;
+        private Map<String, List<String>> overrideParameters;
 
         private RequestContext(HttpServletRequest request, HttpServletResponse response) {
             this.request = request;
@@ -828,16 +833,16 @@ public class ApplicationContext {
         }
 
         private void setupLocale() {
-            Map<String, String> requestMap = RequestUtil.getRequestParams(request);
+            Map<String, List<String>> requestMap = RequestUtil.getRequestParams(request);
 
-            String lang = requestMap.get("lang");
+            String lang = RequestUtil.getFirst(requestMap, "lang");
 
             if (lang == null || lang.length() != 2) {
-                lang = requestMap.get("language");
+                lang = RequestUtil.getFirst(requestMap, "language");
             }
 
             if (lang == null || lang.length() != 2) {
-                lang = requestMap.get("locale");
+                lang = RequestUtil.getFirst(requestMap, "locale");
             }
 
             if (lang == null) {
@@ -859,22 +864,30 @@ public class ApplicationContext {
         }
 
         private static Locale localeByLanguage(String language) {
-            if (ApplicationContext.getInstance().getAllowedLanguages().contains(language)) {
+            if (getInstance().getAllowedLanguages().contains(language)) {
                 return new Locale(language);
             } else {
-                return ApplicationContext.getInstance().getDefaultLocale();
+                return getInstance().getDefaultLocale();
             }
         }
 
         private void addOverrideParameter(String name, String value) {
             if (overrideParameters == null) {
-                overrideParameters = new HashMap<String, String>();
+                overrideParameters = new HashMap<String, List<String>>();
             }
 
-            overrideParameters.put(name, value);
+            overrideParameters.put(name, new SingleEntryList<String>(value));
         }
 
-        private Map<String, String> getOverrideParameters() {
+        private void addOverrideParameter(String name, Collection<String> values) {
+            if (overrideParameters == null) {
+                overrideParameters = new HashMap<String, List<String>>();
+            }
+
+            overrideParameters.put(name, new ArrayList<String>(values));
+        }
+
+        private Map<String, List<String>> getOverrideParameters() {
             return overrideParameters;
         }
     }

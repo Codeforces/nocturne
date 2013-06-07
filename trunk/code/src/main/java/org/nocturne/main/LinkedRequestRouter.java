@@ -5,8 +5,10 @@ package org.nocturne.main;
 
 import org.nocturne.link.LinkMatchResult;
 import org.nocturne.link.Links;
+import org.nocturne.util.RequestUtil;
 import org.nocturne.util.StringUtil;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -14,8 +16,8 @@ import java.util.Map;
  */
 public class LinkedRequestRouter implements RequestRouter {
     @Override
-    public Resolution route(String path, Map<String, String> parameterMap) {
-        String action = parameterMap.get("action");
+    public Resolution route(String path, Map<String, List<String>> parameterMap) {
+        String action = RequestUtil.getFirst(parameterMap, "action");
         LinkMatchResult linkMatchResult = Links.match(path);
 
         if (linkMatchResult != null) {
@@ -25,7 +27,7 @@ public class LinkedRequestRouter implements RequestRouter {
             if (attrs != null) {
                 for (Map.Entry<String, String> entry : attrs.entrySet()) {
                     ApplicationContext.getInstance().getRequest().setAttribute(
-                            ApplicationContext.getInstance().getAdditionalParamsRequestAttributePrefix() + entry.getKey(), entry.getValue()
+                            ApplicationContext.getAdditionalParamsRequestAttributePrefix() + entry.getKey(), entry.getValue()
                     );
                     if ("action".equals(entry.getKey())) {
                         action = entry.getValue();

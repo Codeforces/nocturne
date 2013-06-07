@@ -6,6 +6,7 @@ package org.nocturne.main;
 import org.nocturne.exception.ConfigurationException;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
@@ -14,9 +15,7 @@ import java.util.regex.Pattern;
  * @author Mike Mirzayanov
  */
 public class ReloadingContext {
-    private static final ReloadingContext INSTANCE =
-            new ReloadingContext();
-
+    private static final ReloadingContext INSTANCE = new ReloadingContext();
     private static final AtomicBoolean initialized = new AtomicBoolean(false);
 
     private boolean debug;
@@ -42,15 +41,15 @@ public class ReloadingContext {
     }
 
     public List<File> getReloadingClassPaths() {
-        return reloadingClassPaths;
+        return Collections.unmodifiableList(reloadingClassPaths);
     }
 
     public List<String> getClassReloadingPackages() {
-        return classReloadingPackages;
+        return Collections.unmodifiableList(classReloadingPackages);
     }
 
     public List<String> getClassReloadingExceptions() {
-        return classReloadingExceptions;
+        return Collections.unmodifiableList(classReloadingExceptions);
     }
 
     void setDebug(boolean debug) {
@@ -79,9 +78,9 @@ public class ReloadingContext {
 
     void addReloadingClassPath(File dir) {
         if (!dir.isDirectory()) {
-            throw new ConfigurationException("Path " + dir.getName() + " exected to be a directory.");
+            throw new ConfigurationException("Path " + dir.getName() + " expected to be a directory.");
         }
-        if (reloadingClassPaths.indexOf(dir) < 0) {
+        if (!reloadingClassPaths.contains(dir)) {
             reloadingClassPaths.add(dir);
         }
     }

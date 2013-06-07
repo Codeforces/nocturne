@@ -3,12 +3,14 @@
  */
 package org.nocturne.main;
 
-import java.util.HashMap;
-import java.util.Map;
+import org.nocturne.collection.SingleEntryList;
+
+import java.util.*;
 
 /**
  * @author Mike Mirzayanov
  */
+@SuppressWarnings("InnerClassOfInterface")
 public interface RequestRouter {
     /**
      * Override this method to return Resolution instance.
@@ -24,10 +26,10 @@ public interface RequestRouter {
      * @param parameterMap Contains parameters (from regquest.getParametersMap()).
      * @return Resolution, containing page class and action name. Also it can add own parameters.
      */
-    Resolution route(String path, Map<String, String> parameterMap);
+    Resolution route(String path, Map<String, List<String>> parameterMap);
 
     /**
-     * Incapsultes response from ReuestRouter: the controller class,
+     * Incapsulates response from RequestRouter: the controller class,
      * action and override parameters.
      */
     class Resolution {
@@ -44,7 +46,7 @@ public interface RequestRouter {
         /**
          * Parameters which will be also injected for @Parameter annotation.
          */
-        private final Map<String, String> overrideParameters = new HashMap<String, String>();
+        private final Map<String, List<String>> overrideParameters = new HashMap<String, List<String>>();
 
         /**
          * @param pageClassName Controller class name.
@@ -60,7 +62,15 @@ public interface RequestRouter {
          * @param value Parameter value.
          */
         public void addOverrideParameter(String key, String value) {
-            overrideParameters.put(key, value);
+            overrideParameters.put(key, new SingleEntryList<String>(value));
+        }
+
+        /**
+         * @param key    Parameter name.
+         * @param values Parameter values.
+         */
+        public void addOverrideParameter(String key, List<String> values) {
+            overrideParameters.put(key, new ArrayList<String>(values));
         }
 
         /**
@@ -80,8 +90,8 @@ public interface RequestRouter {
         /**
          * @return Parameters which will be also injected for @Parameter annotation.
          */
-        public Map<String, String> getOverrideParameters() {
-            return overrideParameters;
+        public Map<String, List<String>> getOverrideParameters() {
+            return Collections.unmodifiableMap(overrideParameters);
         }
     }
 }

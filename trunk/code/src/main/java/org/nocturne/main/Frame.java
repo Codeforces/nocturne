@@ -44,7 +44,7 @@ public abstract class Frame extends Component {
 
                 try {
                     initializeAction();
-                } catch (InterruptException e) {
+                } catch (InterruptException ignored) {
                     interrupted = true;
                 }
 
@@ -52,7 +52,7 @@ public abstract class Frame extends Component {
                     Events.fireBeforeAction(this);
                     try {
                         internalRunAction(getActionName());
-                    } catch (InterruptException e) {
+                    } catch (InterruptException ignored) {
                         // No operations.
                     }
                     Events.fireAfterAction(this);
@@ -60,7 +60,7 @@ public abstract class Frame extends Component {
 
                 try {
                     finalizeAction();
-                } catch (InterruptException e) {
+                } catch (InterruptException ignored) {
                     // No operations.
                 }
 
@@ -89,5 +89,10 @@ public abstract class Frame extends Component {
         } finally {
             finalizeAfterAction();
         }
+    }
+
+    @Override
+    protected void setupRequestParams() {
+        setupRequestParamsForFrame();
     }
 }
