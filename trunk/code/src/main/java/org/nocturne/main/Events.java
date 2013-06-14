@@ -54,8 +54,8 @@ public class Events {
      * @param event Throwing event. All listeners registered for class event.getClass()
      *              or its superclass will be notified.
      */
-    public static <T> void fire(T event) {
-        COMMON_SCOPE.fire(event);
+    public static <T> T fire(T event) {
+        return COMMON_SCOPE.fire(event);
     }
 
     /**
@@ -105,12 +105,13 @@ public class Events {
         }
 
         @SuppressWarnings({"unchecked"})
-        public <T> void fire(T event) {
+        public <T> T fire(T event) {
             Class<? super T> clazz = (Class<? super T>) event.getClass();
             while (clazz != null) {
                 fireExactMatchedListeners(event, clazz);
                 clazz = clazz.getSuperclass();
             }
+            return event;
         }
 
         @SuppressWarnings({"unchecked"})
