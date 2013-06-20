@@ -3,7 +3,10 @@
  */
 package org.nocturne.link;
 
+import freemarker.template.TemplateModelException;
+import freemarker.template.TemplateSequenceModel;
 import org.nocturne.annotation.Name;
+import org.nocturne.collection.SingleEntryList;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.exception.NocturneException;
 import org.nocturne.main.ApplicationContext;
@@ -173,13 +176,7 @@ public class Links {
      */
     @SuppressWarnings({"OverlyComplexMethod", "OverlyLongMethod"})
     public static String getLinkByMap(Class<? extends Page> clazz, @Nullable String linkName, Map<String, ?> params) {
-        Map<String, String> nonEmptyParams = new HashMap<String, String>();
-        for (Map.Entry<String, ?> entry : params.entrySet()) {
-            Object value = entry.getValue();
-            if (!isMissingValue(value)) {
-                nonEmptyParams.put(entry.getKey(), entry.getValue().toString());
-            }
-        }
+        Map<String, List<String>> nonEmptyParams = getNonEmptyParams(params);
 
         int bestMatchedCount = -1;
         List<LinkSection> bestMatchedLinkSections = null;
@@ -195,7 +192,8 @@ public class Links {
             for (LinkSection section : sections) {
                 if (section.isParameter()) {
                     ++matchedCount;
-                    String value = nonEmptyParams.get(section.getParameterName());
+                    List<String> values = nonEmptyParams.get(section.getParameterName());
+                    String value = values == null ? null : values.get(0);
                     if (value == null || (!section.getAllowedParameterValues().isEmpty() && !section.getAllowedParameterValues().contains(value))) {
                         matched = false;
                         break;
@@ -226,7 +224,7 @@ public class Links {
 
             if (section.isParameter()) {
                 usedKeys.add(section.getParameterName());
-                item = nonEmptyParams.get(section.getParameterName());
+                item = nonEmptyParams.get(section.getParameterName()).get(0);
             } else {
                 item = section.getValue();
             }
@@ -236,15 +234,28 @@ public class Links {
 
         if (nonEmptyParams.size() > usedKeys.size()) {
             boolean first = true;
-            for (Map.Entry<String, String> entry : nonEmptyParams.entrySet()) {
-                if (!usedKeys.contains(entry.getKey())) {
+            for (Map.Entry<String, List<String>> entry : nonEmptyParams.entrySet()) {
+                List<String> values = entry.getValue();
+                int valueCount = values.size();
+                int startIndex = valueCount;
+
+                if (usedKeys.contains(entry.getKey())) {
+                    if (valueCount > 1) {
+                        startIndex = 1;
+                    }
+                } else {
+                    startIndex = 0;
+                }
+
+                for (int i = startIndex; i < valueCount; ++i) {
                     if (first) {
                         result.append('?');
                         first = false;
                     } else {
                         result.append('&');
                     }
-                    result.append(entry.getKey()).append('=').append(entry.getValue());
+
+                    result.append(entry.getKey()).append('=').append(values.get(i));
                 }
             }
         }
@@ -261,6 +272,46 @@ public class Links {
         }
 
         return linkResult;
+    }
+
+    private static Map<String, List<String>> getNonEmptyParams(Map<String, ?> params) {
+        Map<String, List<String>> nonEmptyParams = new HashMap<String, List<String>>();
+
+        for (Map.Entry<String, ?> entry : params.entrySet()) {
+            Object value = entry.getValue();
+            if (!isMissingValue(value)) {
+                if (value instanceof TemplateSequenceModel) {
+                    nonEmptyParams.put(entry.getKey(), toList((TemplateSequenceModel) value));
+                } else {
+                    nonEmptyParams.put(entry.getKey(), new SingleEntryList<String>(value.toString()));
+                }
+            }
+        }
+
+        return nonEmptyParams;
+    }
+
+    private static List<String> toList(TemplateSequenceModel sequence) {
+        int count = getSize(sequence);
+        List<String> list = new ArrayList<String>(count);
+
+        for (int i = 0; i < count; ++i) {
+            try {
+                list.add(sequence.get(i).toString());
+            } catch (TemplateModelException e) {
+                throw new NocturneException("Can't get item of Freemarker sequence.", e);
+            }
+        }
+
+        return list;
+    }
+
+    private static int getSize(TemplateSequenceModel sequence) {
+        try {
+            return sequence.size();
+        } catch (TemplateModelException e) {
+            throw new NocturneException("Can't get size of Freemarker sequence.", e);
+        }
     }
 
     /**
@@ -307,7 +358,15 @@ public class Links {
     }
 
     private static boolean isMissingValue(Object value) {
-        return value == null || value.toString().isEmpty();
+        if (value == null) {
+            return true;
+        }
+
+        if (value instanceof TemplateSequenceModel) {
+            return getSize((TemplateSequenceModel) value) <= 0;
+        } else {
+            return value.toString().isEmpty();
+        }
     }
 
     /**
