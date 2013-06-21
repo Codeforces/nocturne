@@ -7,6 +7,7 @@ import org.nocturne.main.ApplicationContextHelper;
 import org.nocturne.main.Page;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -76,6 +77,16 @@ public class LinksTest extends TestCase {
 
         assertEquals(CONTEXT_PATH + "/LongLinkedPage/a/1/b/2/c/3", Links.getLink("LongLinkedPage", "a", 1, "b", 2, "c", 3L));
         assertEquals(CONTEXT_PATH + "/LongLinkedPage/a/1/b/2/c/3?cc=cc2", Links.getLink("LongLinkedPage", "b", 2, "a", 1, "cc", "cc2", "c", 3L));
+        assertEquals(
+                CONTEXT_PATH + "/LongLinkedPage/a/aa/b/bb/c/cc?a=aaa&a=4a&c=ccc&c=4c&c=5c&d=-3&d=-2&d=-1",
+                Links.getLink(
+                        "LongLinkedPage",
+                        "a", new String[]{"aa", "aaa", "4a"},
+                        "b", "bb",
+                        "c", Arrays.<CharSequence>asList("cc", "ccc", "4c", "5c"),
+                        "d", new byte[]{-3, -2, -1}
+                )
+        );
         assertEqualsLinkMatchResult(Links.match("/LongLinkedPage/a/1/b/2/c/3"), LongLinkedPage.class, "LongLinkedPage/a/{a}/b/{b}/c/{c}", "a", "1", "b", "2", "c", "3");
     }
 
