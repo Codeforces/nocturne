@@ -3,8 +3,10 @@
  */
 package org.nocturne.link;
 
+import freemarker.template.TemplateModel;
 import freemarker.template.TemplateModelException;
 import freemarker.template.TemplateSequenceModel;
+import org.apache.commons.lang.mutable.MutableBoolean;
 import org.nocturne.annotation.Name;
 import org.nocturne.collection.SingleEntryList;
 import org.nocturne.exception.ConfigurationException;
@@ -15,11 +17,9 @@ import org.nocturne.util.StringUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.lang.reflect.Array;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -176,7 +176,8 @@ public class Links {
      */
     @SuppressWarnings({"OverlyComplexMethod", "OverlyLongMethod"})
     public static String getLinkByMap(Class<? extends Page> clazz, @Nullable String linkName, Map<String, ?> params) {
-        Map<String, List<String>> nonEmptyParams = getNonEmptyParams(params);
+        MutableBoolean multiValueParams = new MutableBoolean();
+        Map<String, List<String>> nonEmptyParams = getNonEmptyParams(params, multiValueParams);
 
         int bestMatchedCount = -1;
         List<LinkSection> bestMatchedLinkSections = null;
@@ -194,7 +195,9 @@ public class Links {
                     ++matchedCount;
                     List<String> values = nonEmptyParams.get(section.getParameterName());
                     String value = values == null ? null : values.get(0);
-                    if (value == null || (!section.getAllowedParameterValues().isEmpty() && !section.getAllowedParameterValues().contains(value))) {
+                    Set<String> allowedParameterValues = section.getAllowedParameterValues();
+                    if (value == null
+                            || (!allowedParameterValues.isEmpty() && !allowedParameterValues.contains(value))) {
                         matched = false;
                         break;
                     }
@@ -232,7 +235,7 @@ public class Links {
             result.append('/').append(item);
         }
 
-        if (nonEmptyParams.size() > usedKeys.size()) {
+        if (nonEmptyParams.size() > usedKeys.size() || multiValueParams.isTrue()) {
             boolean first = true;
             for (Map.Entry<String, List<String>> entry : nonEmptyParams.entrySet()) {
                 List<String> values = entry.getValue();
@@ -274,16 +277,22 @@ public class Links {
         return linkResult;
     }
 
-    private static Map<String, List<String>> getNonEmptyParams(Map<String, ?> params) {
-        Map<String, List<String>> nonEmptyParams = new HashMap<String, List<String>>();
+    private static Map<String, List<String>> getNonEmptyParams(Map<String, ?> params, MutableBoolean multiValueParams) {
+        multiValueParams.setValue(false);
+        Map<String, List<String>> nonEmptyParams = new LinkedHashMap<String, List<String>>();
 
         for (Map.Entry<String, ?> entry : params.entrySet()) {
             Object value = entry.getValue();
             if (!isMissingValue(value)) {
-                if (value instanceof TemplateSequenceModel) {
-                    nonEmptyParams.put(entry.getKey(), toList((TemplateSequenceModel) value));
-                } else {
-                    nonEmptyParams.put(entry.getKey(), new SingleEntryList<String>(value.toString()));
+                List<String> list = toStringList(value);
+                int count = list.size();
+
+                if (count > 0) {
+                    nonEmptyParams.put(entry.getKey(), list);
+
+                    if (count > 1) {
+                        multiValueParams.setValue(true);
+                    }
                 }
             }
         }
@@ -291,22 +300,62 @@ public class Links {
         return nonEmptyParams;
     }
 
-    private static List<String> toList(TemplateSequenceModel sequence) {
+    @Nonnull
+    private static List<String> toStringList(@Nonnull Object value) {
+        if (value instanceof TemplateSequenceModel) {
+            return toStringList((TemplateSequenceModel) value);
+        } else if (value instanceof Collection) {
+            return toStringList((Collection) value);
+        } else if (value.getClass().isArray()) {
+            int count = Array.getLength(value);
+            List<String> list = new ArrayList<String>(count);
+
+            for (int i = 0; i < count; ++i) {
+                Object item = Array.get(value, i);
+                if (item != null) {
+                    list.add(item.toString());
+                }
+            }
+
+            return list;
+        } else {
+            return new SingleEntryList<String>(value.toString());
+        }
+    }
+
+    private static List<String> toStringList(@Nonnull TemplateSequenceModel sequence) {
         int count = getSize(sequence);
         List<String> list = new ArrayList<String>(count);
 
         for (int i = 0; i < count; ++i) {
+            TemplateModel item;
             try {
-                list.add(sequence.get(i).toString());
+                item = sequence.get(i);
             } catch (TemplateModelException e) {
                 throw new NocturneException("Can't get item of Freemarker sequence.", e);
+            }
+
+            if (item != null) {
+                list.add(item.toString());
             }
         }
 
         return list;
     }
 
-    private static int getSize(TemplateSequenceModel sequence) {
+    private static List<String> toStringList(@Nonnull Collection collection) {
+        List<String> list = new ArrayList<String>(collection.size());
+
+        for (Object item : collection) {
+            if (item != null) {
+                list.add(item.toString());
+            }
+        }
+
+        return list;
+    }
+
+    private static int getSize(@Nonnull TemplateSequenceModel sequence) {
         try {
             return sequence.size();
         } catch (TemplateModelException e) {
@@ -364,6 +413,10 @@ public class Links {
 
         if (value instanceof TemplateSequenceModel) {
             return getSize((TemplateSequenceModel) value) <= 0;
+        } else if (value instanceof Collection) {
+            return ((Collection) value).isEmpty();
+        } else if (value.getClass().isArray()) {
+            return Array.getLength(value) <= 0;
         } else {
             return value.toString().isEmpty();
         }
@@ -384,7 +437,7 @@ public class Links {
             throw new IllegalArgumentException("Params should contain even number of elements.");
         }
 
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new LinkedHashMap<String, Object>();
 
         for (int paramIndex = 0; paramIndex < paramCount; paramIndex += 2) {
             map.put(params[paramIndex].toString(), params[paramIndex + 1]);

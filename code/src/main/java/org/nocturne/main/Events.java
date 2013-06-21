@@ -88,8 +88,7 @@ public class Events {
         /**
          * Stores listeners for each .
          */
-        private final Map<Class<?>, Set<Listener>> listenersByEvent =
-                new LinkedHashMap<Class<?>, Set<Listener>>();
+        private final Map<Class<?>, Set<Listener>> listenersByEvent = new LinkedHashMap<Class<?>, Set<Listener>>();
 
         public <T> void listen(Class<T> eventClass, Listener<T> listener) {
             if (!listenersByEvent.containsKey(eventClass)) {
@@ -99,8 +98,9 @@ public class Events {
             listenersByEvent.get(eventClass).add(listener);
 
             if (listenersByEvent.get(eventClass).size() > MAX_LISTENER_COUNT) {
-                throw new IncorrectLogicException("Too many listeners for " + eventClass.getName() + " event type. " +
-                        "Are you sure you code is correct?");
+                throw new IncorrectLogicException(String.format(
+                        "Too many listeners for %s event type. Are you sure your code is correct?", eventClass.getName()
+                ));
             }
         }
 
@@ -124,6 +124,5 @@ public class Events {
                 }
             }
         }
-
     }
 }
