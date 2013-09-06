@@ -162,18 +162,17 @@ public abstract class Page extends Component {
 
                     try {
                         getTemplate().setOutputEncoding("UTF-8");
-                        if (cacheHandler == null) {
-                            getTemplate().process(params, getWriter());
-                        } else {
-                            StringWriter stringWriter = new StringWriter(4096);
-                            getTemplate().process(params, stringWriter);
-                            stringWriter.close();
 
-                            result = stringWriter.getBuffer().toString();
+                        StringWriter stringWriter = new StringWriter(65536);
+                        getTemplate().process(params, stringWriter);
+                        stringWriter.close();
+                        result = stringWriter.getBuffer().toString();
+
+                        if (cacheHandler != null) {
                             cacheHandler.postprocess(this, result);
-
-                            result = handleRequestPostprocessor(result);
                         }
+
+                        result = handleRequestPostprocessor(result);
                     } catch (TemplateException e) {
                         throw new FreemarkerException("Can't parse template for page " + getClass().getName() + '.', e);
                     } catch (IOException e) {
