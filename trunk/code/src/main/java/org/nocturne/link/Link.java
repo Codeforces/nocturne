@@ -3,10 +3,10 @@
  */
 package org.nocturne.link;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.google.common.base.Strings;
+
+import javax.annotation.Nonnull;
+import java.lang.annotation.*;
 
 /**
  * Use it to specify link pattern for page.
@@ -42,5 +42,37 @@ public @interface Link {
      * Marker interface for type of link.
      */
     interface Type {
+    }
+
+    public class Builder {
+        public static Link newLink(@Nonnull final String value, @Nonnull final String name, @Nonnull final String action,
+                                   @Nonnull final Class<? extends Type>[] types) {
+            return new Link() {
+                @Override
+                public String value() {
+                    return value;
+                }
+
+                @Override
+                public String name() {
+                    return Strings.nullToEmpty(name);
+                }
+
+                @Override
+                public String action() {
+                    return Strings.nullToEmpty(action);
+                }
+
+                @Override
+                public Class<? extends Type>[] types() {
+                    return types;
+                }
+
+                @Override
+                public Class<? extends Annotation> annotationType() {
+                    return Link.class;
+                }
+            };
+        }
     }
 }
