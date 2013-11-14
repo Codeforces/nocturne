@@ -19,7 +19,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Array;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -114,19 +117,15 @@ public class Links {
     }
 
     /**
-     * @param clazz Page class to be added into Links.
-     *              After it you can get it's link via getLink, or using @link directive
-     *              from template. Link may contain template sections, like "profile/{handle}".
+     * @param clazz   Page class to be added into Links.
+     *                After it you can get it's link via getLink, or using @link directive
+     *                from template. Link may contain template sections, like "profile/{handle}".
+     * @param linkSet List of links to be added for class {@code clazz}.
      */
-    public static void add(Class<? extends Page> clazz) {
+    public static void add(Class<? extends Page> clazz, List<Link> linkSet) {
         addLinkLock.lock();
 
         try {
-            List<Link> linkSet = getLinksViaReflection(clazz);
-            if (linkSet.isEmpty()) {
-                throw new ConfigurationException("Can't find link for page " + clazz.getName() + '.');
-            }
-
             String name = getLinkName(clazz);
             if (classesByName.containsKey(name) && !clazz.equals(classesByName.get(name))) {
                 throw new ConfigurationException("Can't add page which is not unique by it's name: "
@@ -164,6 +163,20 @@ public class Links {
         } finally {
             addLinkLock.unlock();
         }
+    }
+
+    /**
+     * @param clazz Page class to be added into Links.
+     *              After it you can get it's link via getLink, or using @link directive
+     *              from template. Link may contain template sections, like "profile/{handle}".
+     */
+    public static void add(Class<? extends Page> clazz) {
+        List<Link> linkSet = getLinksViaReflection(clazz);
+        if (linkSet.isEmpty()) {
+            throw new ConfigurationException("Can't find link for page " + clazz.getName() + '.');
+        }
+
+        add(clazz, linkSet);
     }
 
     /**
