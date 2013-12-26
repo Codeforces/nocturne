@@ -13,7 +13,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Main nocturne filter to dispatch requests.
@@ -29,8 +31,6 @@ import java.util.List;
 public class DispatchFilter implements Filter {
     private static final ReloadingContext reloadingContext = ReloadingContext.getInstance();
 
-    private static long lastDebugModeAccess;
-    private static long lastDebugModeAccessReloadingClassPathHashCode;
     static ClassLoader lastReloadingClassLoader;
     private static Object debugModeRequestDispatcher;
 
@@ -125,9 +125,8 @@ public class DispatchFilter implements Filter {
     private static synchronized void updateReloadingClassLoader() {
         if (lastReloadingClassLoader == null) {
             lastReloadingClassLoader = new ReloadingClassLoader();
-            lastDebugModeAccessReloadingClassPathHashCode = hashCode(reloadingContext.getReloadingClassPaths());
-            lastDebugModeAccess = System.currentTimeMillis();
         } else {
+            /*
             if (System.currentTimeMillis() - lastDebugModeAccess > 1000) {
                 //long start = System.currentTimeMillis();
                 long hashCode = hashCode(reloadingContext.getReloadingClassPaths());
@@ -136,13 +135,37 @@ public class DispatchFilter implements Filter {
                 if (hashCode == lastDebugModeAccessReloadingClassPathHashCode) {
                     //System.out.println("DEBUG: Hashes matched");
                 } else {
-                    //System.out.println("DEBUG: ReloadingClassLoader created because of hash mismatch.");
+                    System.out.println("DEBUG: ReloadingClassLoader created because of hash mismatch.");
                     lastReloadingClassLoader = new ReloadingClassLoader();
                     lastDebugModeAccessReloadingClassPathHashCode = hashCode;
                 }
                 lastDebugModeAccess = System.currentTimeMillis();
+            }*/
+
+            if ("true".equals(System.getProperty("bond.can-not-redefine"))) {
+                if (!System.getProperties().containsKey("nocturne.unused-reloading-class-loaders")) {
+                    System.getProperties().put("nocturne.unused-reloading-class-loaders", new HashSet<ClassLoader>());
+                }
+
+                //noinspection unchecked
+                Set<ClassLoader> unusedReloadingClassLoaders
+                        = (Set<ClassLoader>) System.getProperties().get("nocturne.unused-reloading-class-loaders");
+                if (lastReloadingClassLoader instanceof ReloadingClassLoader) {
+                    ReloadingClassLoader reloadingClassLoader = (ReloadingClassLoader) lastReloadingClassLoader;
+                    unusedReloadingClassLoaders.add(reloadingClassLoader.getDelegationClassLoader());
+                }
+
+                ReloadingClassLoader reloadingClassLoader = new ReloadingClassLoader();
+                lastReloadingClassLoader = reloadingClassLoader;
+
+                System.out.println("NOCTURNE: ReloadingClassLoader created because of bond.can-not-redefine=true"
+                        + " [reloadingClassLoader=" + reloadingClassLoader
+                        + ", delegationClassLoader=" + reloadingClassLoader.getDelegationClassLoader()
+                        + "]");
             }
         }
+
+        System.setProperty("bond.can-not-redefine", "false");
     }
 
     private static long hashCode(List<File> paths) {
