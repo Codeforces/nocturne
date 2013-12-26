@@ -52,6 +52,13 @@ class ReloadingClassLoader extends ClassLoader {
     }
 
     /**
+     * @return Delegation classLoader which actually loads classes to be hot-swapped.
+     */
+    DelegationClassLoader getDelegationClassLoader() {
+        return delegationClassLoader;
+    }
+
+    /**
      * Loads class.
      *
      * @param name    Class name.
