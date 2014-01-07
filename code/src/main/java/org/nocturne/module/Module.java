@@ -15,6 +15,7 @@ import javax.servlet.ServletContext;
 import java.io.*;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
@@ -264,6 +265,12 @@ public class Module {
                 "/module/debug/directories/classes",
                 String.class
         );
+
+        if ("true".equals(System.getProperty("dreamcatcher.loaded"))) {
+            //noinspection unchecked
+            ((Set<String>)System.getProperties().get("dreamcatcher.listen-directories"))
+                    .add(classesDir);
+        }
 
         debugContext.setWebappDir(webappDir);
         debugContext.setTemplateDir(templatesDir);
