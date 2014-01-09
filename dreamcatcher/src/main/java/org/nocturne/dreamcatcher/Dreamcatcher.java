@@ -16,7 +16,8 @@ public class Dreamcatcher implements DirectoryListener.Handler {
     private static final List<Dreamcatcher> dreamcatchers = Collections.synchronizedList(new ArrayList<Dreamcatcher>());
     private static final String NOCTURNE_UNUSED_RELOADING_CLASS_LOADERS = "nocturne.unused-reloading-class-loaders";
     private static final String DREAMCATCHER_LISTEN_DIRECTORIES = "dreamcatcher.listen-directories";
-    public static final String CLASS_EXT = ".class";
+    private static final String CLASS_EXT = ".class";
+    private static final String RELOADING_CLASS_LOADER_NAME_PREFIX = "org.nocturne.main.ReloadingClassLoader.DelegationClassLoader";
 
     private final Set<String> listenDirectories = new HashSet<>();
     private final Set<File> listenDirectoryFiles = new HashSet<>();
@@ -198,7 +199,17 @@ public class Dreamcatcher implements DirectoryListener.Handler {
 
         Class[] loadedClasses = inst.getAllLoadedClasses();
         for (Class<?> loadedClass : loadedClasses) {
+            if (loadedClass.getClassLoader() == null) {
+                continue;
+            }
+
             if (unusedReloadingClassLoaders.contains(loadedClass.getClassLoader())) {
+                continue;
+            }
+
+            //System.out.println(loadedClass.getClassLoader().getClass().toString() + " " + loadedClass.getClassLoader().getClass().getName() + " " + loadedClass.getClassLoader().getClass().getSimpleName() + " " + loadedClass.getClassLoader().getClass().getCanonicalName());
+
+            if (!loadedClass.getClassLoader().getClass().getCanonicalName().startsWith(RELOADING_CLASS_LOADER_NAME_PREFIX)) {
                 continue;
             }
 
