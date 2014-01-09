@@ -5,6 +5,7 @@ import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -44,7 +45,7 @@ public class Dreamcatcher implements DirectoryListener.Handler {
                     }
 
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(TimeUnit.SECONDS.toMillis(1));
                     } catch (InterruptedException e) {
                         break;
                     }
@@ -211,7 +212,7 @@ public class Dreamcatcher implements DirectoryListener.Handler {
                 } catch (Exception e) {
                     System.out.println("Can't redefine " + loadedClass);
                     e.printStackTrace();
-                    System.setProperty("bond.can-not-redefine", "true");
+                    System.setProperty("dreamcatcher.can-not-redefine-class", "true");
                 }
             }
         }

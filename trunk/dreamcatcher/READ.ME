@@ -1,0 +1,21 @@
+Dreamcatcher is optional tool for Nocturne to monitor class-files changes and hot-swap reloaded classes using JVM hot-swap feature.
+
+Usage
+
+Add to command line option like:
+    -javaagent:P:\nocturne\dreamcatcher\target\dreamcatcher-1.0-SNAPSHOT-jar-with-dependencies.jar
+
+It will split all the arguments by ";" to setup directories to listen, so you may use:
+    -javaagent:P:\nocturne\dreamcatcher\target\dreamcatcher-1.0-SNAPSHOT-jar-with-dependencies.jar=\
+    P:\polygon\trunk\code\web\target\classes;P:\polygon\trunk\code\model\target\classes
+
+Another way to setup listen directories is to use system property "dreamcatcher.listen-directories" like:
+    if ("true".equals(System.getProperty("dreamcatcher.loaded"))) {
+        ((Set<String>)System.getProperties().get("dreamcatcher.listen-directories"))
+                .add(classesDir);
+    }
+
+Nocturne (for multi-module applications) will add all the directories from module.xml:module->debug->directories->classes
+
+
+
