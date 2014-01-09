@@ -33,6 +33,8 @@ public class DispatchFilter implements Filter {
 
     static ClassLoader lastReloadingClassLoader;
     private static Object debugModeRequestDispatcher;
+    private static long lastDebugModeAccess;
+    private static long lastDebugModeAccessReloadingClassPathHashCode;
 
     private static final RequestDispatcher productionModeRequestDispatcher = new RequestDispatcher();
     private static FilterConfig filterConfig;
@@ -123,26 +125,37 @@ public class DispatchFilter implements Filter {
     }
 
     private static synchronized void updateReloadingClassLoader() {
+        if ("true".equals(System.getProperty("dreamcatcher.loaded"))) {
+            updateDreamcatcherReloadingClassLoader();
+        } else {
+            updateNoDreamcatcherReloadingClassLoader();
+        }
+    }
+
+    private static void updateNoDreamcatcherReloadingClassLoader() {
         if (lastReloadingClassLoader == null) {
             lastReloadingClassLoader = new ReloadingClassLoader();
+            lastDebugModeAccessReloadingClassPathHashCode = hashCode(reloadingContext.getReloadingClassPaths());
+            lastDebugModeAccess = System.currentTimeMillis();
         } else {
-            /*
             if (System.currentTimeMillis() - lastDebugModeAccess > 1000) {
-                //long start = System.currentTimeMillis();
                 long hashCode = hashCode(reloadingContext.getReloadingClassPaths());
-                //System.out.println("DEBUG: hashCode invoked in " + (System.currentTimeMillis() - start) + " ms.");
 
-                if (hashCode == lastDebugModeAccessReloadingClassPathHashCode) {
-                    //System.out.println("DEBUG: Hashes matched");
-                } else {
-                    System.out.println("DEBUG: ReloadingClassLoader created because of hash mismatch.");
+                if (hashCode != lastDebugModeAccessReloadingClassPathHashCode) {
                     lastReloadingClassLoader = new ReloadingClassLoader();
                     lastDebugModeAccessReloadingClassPathHashCode = hashCode;
                 }
-                lastDebugModeAccess = System.currentTimeMillis();
-            }*/
 
-            if ("true".equals(System.getProperty("bond.can-not-redefine"))) {
+                lastDebugModeAccess = System.currentTimeMillis();
+            }
+        }
+    }
+
+    private static void updateDreamcatcherReloadingClassLoader() {
+        if (lastReloadingClassLoader == null) {
+            lastReloadingClassLoader = new ReloadingClassLoader();
+        } else {
+            if ("true".equals(System.getProperty("dreamcatcher.can-not-redefine-class"))) {
                 if (!System.getProperties().containsKey("nocturne.unused-reloading-class-loaders")) {
                     System.getProperties().put("nocturne.unused-reloading-class-loaders", new HashSet<ClassLoader>());
                 }
@@ -158,14 +171,14 @@ public class DispatchFilter implements Filter {
                 ReloadingClassLoader reloadingClassLoader = new ReloadingClassLoader();
                 lastReloadingClassLoader = reloadingClassLoader;
 
-                System.out.println("NOCTURNE: ReloadingClassLoader created because of bond.can-not-redefine=true"
+                System.out.println("NOCTURNE: ReloadingClassLoader created because of dreamcatcher.can-not-redefine-class=true"
                         + " [reloadingClassLoader=" + reloadingClassLoader
                         + ", delegationClassLoader=" + reloadingClassLoader.getDelegationClassLoader()
                         + "]");
             }
         }
 
-        System.setProperty("bond.can-not-redefine", "false");
+        System.setProperty("dreamcatcher.can-not-redefine-class", "false");
     }
 
     private static long hashCode(List<File> paths) {
@@ -188,8 +201,10 @@ public class DispatchFilter implements Filter {
             }
         } else {
             File[] files = file.listFiles();
-            for (File nested : files) {
-                result += hashCode(nested, depth + 1);
+            if (files != null) {
+                for (File nested : files) {
+                    result += hashCode(nested, depth + 1);
+                }
             }
         }
         return result;
