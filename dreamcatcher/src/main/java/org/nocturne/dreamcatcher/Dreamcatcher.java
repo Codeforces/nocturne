@@ -220,6 +220,9 @@ public class Dreamcatcher implements DirectoryListener.Handler {
                     //noinspection RedundantArrayCreation
                     inst.redefineClasses(new ClassDefinition[]{definition});
                     System.out.println("Redefined " + loadedClass.getName() + " with " + classFile);
+                } catch (IOException e) {
+                    System.out.println(e.getClass() + " " + e.getMessage() + " " + name + " " + loadedClass);
+                    // No operations.
                 } catch (Exception e) {
                     System.out.println("Can't redefine " + loadedClass);
                     e.printStackTrace();
