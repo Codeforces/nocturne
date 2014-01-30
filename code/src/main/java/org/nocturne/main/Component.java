@@ -52,12 +52,6 @@ public abstract class Component {
     private CacheHandler cacheHandler;
 
     /**
-     * Gson instance - needed in the debug mode to store JSON-ized objects in session
-     * instead of real objects, because their classes between reloads can change.
-     */
-    private final Gson gson = new Gson();
-
-    /**
      * Log4j logger.
      */
     private Logger logger;
@@ -360,7 +354,7 @@ public abstract class Component {
         getCurrentPage().putRequestCache(key, value);
 
         if (ApplicationContext.getInstance().isDebug()) {
-            String json = gson.toJson(value);
+            String json = new Gson().toJson(value);
             request.getSession().setAttribute(key, json);
         } else {
             request.getSession().setAttribute(key, value);
@@ -420,7 +414,7 @@ public abstract class Component {
                 }
 
                 if (json != null) {
-                    result = gson.fromJson(json, clazz);
+                    result = new Gson().fromJson(json, clazz);
                 } else {
                     result = null;
                 }
@@ -470,7 +464,7 @@ public abstract class Component {
                 }
 
                 if (json != null) {
-                    result = gson.<T>fromJson(json, type);
+                    result = new Gson().<T>fromJson(json, type);
                 } else {
                     result = null;
                 }
@@ -484,7 +478,7 @@ public abstract class Component {
 
             getCurrentPage().putRequestCache(key, result);
             return result;
-        } catch (IllegalStateException e) {
+        } catch (IllegalStateException ignored) {
             throw new SessionInvalidatedException();
         }
     }
@@ -1243,17 +1237,15 @@ public abstract class Component {
         });
 
         if (!errors.isEmpty()) {
-            synchronized (gson) {
-                Type mapType = new TypeToken<Map<String, String>>() {
-                }.getType();
-                response.setContentType("application/json");
-                Writer writer = getWriter();
-                try {
-                    writer.write(gson.toJson(errors, mapType));
-                    writer.flush();
-                } catch (IOException ignored) {
-                    // No operations.
-                }
+            Type mapType = new TypeToken<Map<String, String>>() {
+            }.getType();
+            response.setContentType("application/json");
+            Writer writer = getWriter();
+            try {
+                writer.write(new Gson().toJson(errors, mapType));
+                writer.flush();
+            } catch (IOException ignored) {
+                // No operations.
             }
         }
 
@@ -1291,7 +1283,7 @@ public abstract class Component {
         response.setContentType("application/json");
         Writer writer = getWriter();
         try {
-            writer.write(gson.toJson(params, mapType));
+            writer.write(new Gson().toJson(params, mapType));
             writer.flush();
         } catch (IOException ignored) {
             // No operations.
