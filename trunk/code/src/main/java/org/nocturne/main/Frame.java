@@ -29,7 +29,7 @@ public abstract class Frame extends Component {
         return ApplicationContext.getInstance().getCurrentPage();
     }
 
-    String parseTemplate() {
+    public String parseTemplate() {
         prepareForAction();
 
         CacheHandler cacheHandler = getCacheHandler();
