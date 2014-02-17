@@ -9,8 +9,9 @@ Parameters description
 
 || *Parameter name* || *Default* || *Values / example* || *Meaning* || *Type in Java* ||
 || nocturne.debug || Default value is "false" || "true" or "false" || Use it in the development mode to switch on nocturne main feature: class reloading ||  {{{boolean}}} ||
-|| nocturne.templates-path || Required || WEB-INF/templates || Directory where to find templates in the deployed application, all the freemarker templates for view layer should be in it. Deprecated: use nocturne.template-paths || {{{String}}} ||
+|| nocturne.templates-path || Required || WEB-INF/templates || Directory where to find templates in the deployed application, all the freemarker templates for view layer should be in it. Deprecated since Nocturne version 1.2.6: use nocturne.template-paths || {{{String}}} ||
 || nocturne.template-paths || Required || /opt/templates;WEB-INF/templates || Directory list where to find templates in the deployed application, all the freemarker templates for view layer should be in it || {{{List<String>}}} ||
+|| nocturne.sticky-template-paths || Default value is "true" || "true" or "false"  || Indicates if template loader should stick to last successful template path or always check template paths in the configured order || {{{boolean}}} ||
 || nocturne.reloading-class-paths || Default value is empty string (no directories for class reloading) || Values depends on development home directory and IDE you are using || In the debug mode the application will load classes from specified directories on each request || {{{List<File>}}} ||
 || nocturne.page-request-listeners || Default value is empty string (no request listeners) || Classes separated with ";" || Listener classes for requests dispatching by nocturne || {{{List<String>}}} ||
 || nocturne.guice-module-class-name || Required || Class name (implements com.google.inject.Module) || Nocturne uses google-guice as default IoC container || {{{String}}} ||
