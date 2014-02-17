@@ -6,6 +6,8 @@ package org.nocturne.main;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.exception.ModuleInitializationException;
 import org.nocturne.exception.NocturneException;
@@ -32,6 +34,8 @@ import java.util.regex.PatternSyntaxException;
  * @author Mike Mirzayanov
  */
 class ApplicationContextLoader {
+    private static final Logger logger = Logger.getLogger(ApplicationContextLoader.class);
+
     public static final String CONFIGURATION_FILE = "/nocturne.properties";
     private static final Properties properties = new Properties();
     private static final Pattern ITEMS_SPLIT_PATTERN = Pattern.compile("\\s*;\\s*");
@@ -39,7 +43,7 @@ class ApplicationContextLoader {
 
     private static void run() {
         setupDebug();
-        setupTemplatesPath();
+        setupTemplatePaths();
 
         if (ApplicationContext.getInstance().isDebug()) {
             setupReloadingClassPaths();
@@ -173,7 +177,7 @@ class ApplicationContextLoader {
     private static void setupRequestRouter() {
         if (properties.containsKey("nocturne.request-router")) {
             String resolver = properties.getProperty("nocturne.request-router");
-            if (resolver == null || resolver.length() == 0) {
+            if (resolver == null || resolver.isEmpty()) {
                 throw new ConfigurationException("Parameter nocturne.request-router can't be empty.");
             }
             ApplicationContext.getInstance().setRequestRouter(resolver);
@@ -185,7 +189,7 @@ class ApplicationContextLoader {
     private static void setupDebugWebResourcesDir() {
         if (properties.containsKey("nocturne.debug-web-resources-dir")) {
             String dir = properties.getProperty("nocturne.debug-web-resources-dir");
-            if (dir != null && dir.trim().length() > 0) {
+            if (dir != null && !dir.trim().isEmpty()) {
                 ApplicationContext.getInstance().setDebugWebResourcesDir(dir.trim());
             }
         }
@@ -270,15 +274,35 @@ class ApplicationContextLoader {
         ApplicationContext.getInstance().setReloadingClassPaths(reloadingClassPaths);
     }
 
-    private static void setupTemplatesPath() {
-        if (properties.containsKey("nocturne.templates-path")) {
-            String templatesPath = properties.getProperty("nocturne.templates-path");
-            if (templatesPath == null || templatesPath.length() == 0) {
+    private static void setupTemplatePaths() {
+        if (properties.containsKey("nocturne.template-paths")) {
+            String[] templatePaths = ITEMS_SPLIT_PATTERN.split(StringUtils.trimToEmpty(
+                    properties.getProperty("nocturne.template-paths")
+            ));
+
+            for (String templatePath : templatePaths) {
+                if (templatePath.isEmpty()) {
+                    throw new ConfigurationException("Item of parameter nocturne.template-paths can't be empty.");
+                }
+            }
+            ApplicationContext.getInstance().setTemplatePaths(templatePaths);
+        } else if (properties.containsKey("nocturne.templates-path")) {
+            logger.warn("Property nocturne.templates-path is deprecated. Use semicolon separated nocturne.template-paths.");
+
+            String templatesPath = StringUtils.trimToEmpty(properties.getProperty("nocturne.templates-path"));
+            if (templatesPath.isEmpty()) {
                 throw new ConfigurationException("Parameter nocturne.templates-path can't be empty.");
             }
-            ApplicationContext.getInstance().setTemplatesPath(templatesPath);
+            ApplicationContext.getInstance().setTemplatePaths(new String[]{templatesPath});
         } else {
-            throw new ConfigurationException("Missed parameter nocturne.templates-path.");
+            throw new ConfigurationException("Missing parameter nocturne.template-paths.");
+        }
+
+        if (properties.containsKey("nocturne.sticky-template-paths")) {
+            String stickyTemplatePaths = StringUtils.trimToEmpty(properties.getProperty("nocturne.sticky-template-paths"));
+            if (!stickyTemplatePaths.isEmpty()) {
+                ApplicationContext.getInstance().setStickyTemplatePaths(Boolean.parseBoolean(stickyTemplatePaths));
+            }
         }
     }
 

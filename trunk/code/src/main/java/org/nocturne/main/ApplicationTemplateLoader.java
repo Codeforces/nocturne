@@ -3,7 +3,6 @@
  */
 package org.nocturne.main;
 
-import freemarker.cache.FileTemplateLoader;
 import freemarker.cache.TemplateLoader;
 import org.apache.log4j.Logger;
 import org.nocturne.exception.NocturneException;
@@ -46,7 +45,7 @@ public class ApplicationTemplateLoader implements TemplateLoader {
     /**
      * Usual file template loader, uses nocturne.templates-path.
      */
-    private final FileTemplateLoader fileTemplateLoader;
+    private final TemplateLoader templateLoader;
 
     /**
      * New ApplicationTemplateLoader.
@@ -54,14 +53,20 @@ public class ApplicationTemplateLoader implements TemplateLoader {
     public ApplicationTemplateLoader() {
         modules = applicationContext.getModules();
 
-        String templateDir = applicationContext.getTemplatesPath();
+        String[] templatePaths = applicationContext.getTemplatePaths();
+        int templateDirCount = templatePaths.length;
+        File[] templateDirs = new File[templateDirCount];
 
-        if (!new File(templateDir).isAbsolute()) {
-            templateDir = applicationContext.getServletContext().getRealPath(templateDir);
+        for (int dirIndex = 0; dirIndex < templateDirCount; ++dirIndex) {
+            String templatePath = templatePaths[dirIndex];
+            if (!new File(templatePath).isAbsolute()) {
+                templatePath = applicationContext.getServletContext().getRealPath(templatePath);
+            }
+            templateDirs[dirIndex] = new File(templatePath);
         }
 
         try {
-            fileTemplateLoader = new PreprocessFreemarkerFileTemplateLoader(new File(templateDir));
+            templateLoader = new PreprocessFreemarkerFileTemplateLoader(templateDirs);
         } catch (IOException e) {
             throw new NocturneException("Can't create FileTemplateLoader for delegation.", e);
         }
@@ -78,7 +83,7 @@ public class ApplicationTemplateLoader implements TemplateLoader {
                 }
             }
         }
-        return fileTemplateLoader.findTemplateSource(s);
+        return templateLoader.findTemplateSource(s);
     }
 
     @Override
@@ -86,7 +91,7 @@ public class ApplicationTemplateLoader implements TemplateLoader {
         if (applicationContext.isDebug() && loadersByTemplate.containsKey(o)) {
             return loadersByTemplate.get(o).getLastModified(o);
         }
-        return fileTemplateLoader.getLastModified(o);
+        return templateLoader.getLastModified(o);
     }
 
     @Override
@@ -95,7 +100,7 @@ public class ApplicationTemplateLoader implements TemplateLoader {
             return loadersByTemplate.get(o).getReader(o, s);
         }
 
-        return fileTemplateLoader.getReader(o, s);
+        return templateLoader.getReader(o, s);
     }
 
     @Override
@@ -107,6 +112,6 @@ public class ApplicationTemplateLoader implements TemplateLoader {
                 loadersByTemplate.remove(o);
             }
         }
-        fileTemplateLoader.closeTemplateSource(o);
+        templateLoader.closeTemplateSource(o);
     }
 }

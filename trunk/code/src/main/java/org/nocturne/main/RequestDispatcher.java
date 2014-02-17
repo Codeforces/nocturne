@@ -250,8 +250,7 @@ public class RequestDispatcher {
      */
     public void init(FilterConfig config) throws ServletException {
         try {
-            templateEngineConfigurationPool
-                    = new TemplateEngineConfigurationPool(config);
+            templateEngineConfigurationPool = new TemplateEngineConfigurationPool(config);
 
             filterConfig = config;
             applicationContext.setServletContext(config.getServletContext());
