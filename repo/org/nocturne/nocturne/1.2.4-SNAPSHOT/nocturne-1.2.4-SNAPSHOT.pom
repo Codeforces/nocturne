@@ -3,15 +3,13 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.nocturne</groupId>
     <artifactId>nocturne</artifactId>
-    <version>1.2.6-SNAPSHOT</version>
+    <version>1.2.4-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <url>http://code.google.com/p/nocturne/</url>
     <inceptionYear>2009-2014</inceptionYear>
     <name>Nocturne web framework</name>
-    <description>
-        Nocturne is a lightweight Java MVC framework with hot-swap any code feature out of the box
-    </description>
+    <description>Nocturne is a lightweight Java MVC framework with hot-swap any code feature out of the box</description>
 
     <developers>
         <developer>
@@ -144,7 +142,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+                <version>2.5.1</version>
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>

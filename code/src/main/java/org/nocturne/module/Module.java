@@ -247,6 +247,7 @@ public class Module {
         }
     }
 
+    @SuppressWarnings({"unchecked", "AccessOfSystemProperties", "OverlyStrongTypeCast", "UseOfPropertiesAsHashtable"})
     private void initializeForDebug(byte[] moduleXmlBytes) {
         String webappDir = FileUtil.extractFromXml(
                 new ByteArrayInputStream(moduleXmlBytes),
@@ -266,10 +267,8 @@ public class Module {
                 String.class
         );
 
-        if ("true".equals(System.getProperty("dreamcatcher.loaded"))) {
-            //noinspection unchecked
-            ((Set<String>)System.getProperties().get("dreamcatcher.listen-directories"))
-                    .add(classesDir);
+        if ("true".equalsIgnoreCase(System.getProperty("dreamcatcher.loaded"))) {
+            ((Set<String>)System.getProperties().get("dreamcatcher.listen-directories")).add(classesDir);
         }
 
         debugContext.setWebappDir(webappDir);
@@ -279,26 +278,23 @@ public class Module {
 
     private void initializeForProduction(byte[] moduleXmlBytes) throws IOException {
         String webappDir = FileUtil.extractFromXml(
-                new ByteArrayInputStream(moduleXmlBytes),
-                "/module/directories/webapp",
-                String.class
+                new ByteArrayInputStream(moduleXmlBytes), "/module/directories/webapp", String.class
         );
 
         String templatesDir = FileUtil.extractFromXml(
-                new ByteArrayInputStream(moduleXmlBytes),
-                "/module/directories/templates",
-                String.class
+                new ByteArrayInputStream(moduleXmlBytes), "/module/directories/templates", String.class
         );
 
         String webInfDir = FileUtil.extractFromXml(
-                new ByteArrayInputStream(moduleXmlBytes),
-                "/module/directories/WEB-INF",
-                String.class
+                new ByteArrayInputStream(moduleXmlBytes), "/module/directories/WEB-INF", String.class
         );
 
-        copyFiles(getApplicationContext().getServletContext(), new File(webappDir), new File("."));
-        copyFiles(getApplicationContext().getServletContext(), new File(templatesDir), new File(getApplicationContext().getTemplatesPath()));
-        copyFiles(getApplicationContext().getServletContext(), new File(webInfDir), new File("WEB-INF"));
+        ServletContext servletContext = getApplicationContext().getServletContext();
+        String[] templatePaths = getApplicationContext().getTemplatePaths();
+
+        copyFiles(servletContext, new File(webappDir), new File("."));
+        copyFiles(servletContext, new File(templatesDir), new File(templatePaths[templatePaths.length - 1]));
+        copyFiles(servletContext, new File(webInfDir), new File("WEB-INF"));
     }
 
     private void copyFiles(ServletContext servletContext, File sourceDir,

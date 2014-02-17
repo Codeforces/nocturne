@@ -4,6 +4,9 @@
 package org.nocturne.module;
 
 import freemarker.cache.FileTemplateLoader;
+import freemarker.cache.MultiTemplateLoader;
+import freemarker.cache.TemplateLoader;
+import org.nocturne.exception.ConfigurationException;
 import org.nocturne.main.ApplicationContext;
 
 import java.io.File;
@@ -19,17 +22,41 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author Mike Mirzayanov
  */
-public class PreprocessFreemarkerFileTemplateLoader extends FileTemplateLoader {
+public class PreprocessFreemarkerFileTemplateLoader extends MultiTemplateLoader {
     private static final ConcurrentMap<String, InmemoryTemplateSource> templateSourceByName = new ConcurrentHashMap<String, InmemoryTemplateSource>();
+    private final int templateDirCount;
 
-    public PreprocessFreemarkerFileTemplateLoader(File baseDir) throws IOException {
-        super(baseDir);
+    public PreprocessFreemarkerFileTemplateLoader(File... templateDirs) throws IOException {
+        super(getTemplateLoaders(templateDirs));
+        this.templateDirCount = templateDirs.length;
+    }
+
+    private static TemplateLoader[] getTemplateLoaders(File[] templateDirs) throws IOException {
+        int templateDirCount = templateDirs.length;
+        if (templateDirCount <= 0) {
+            throw new ConfigurationException("Please specify at least one template directory.");
+        }
+
+        TemplateLoader[] templateLoaders = new TemplateLoader[templateDirCount];
+
+        for (int dirIndex = 0; dirIndex < templateDirCount; ++dirIndex) {
+            templateLoaders[dirIndex] = new FileTemplateLoader(templateDirs[dirIndex]);
+        }
+
+        return templateLoaders;
     }
 
     @Override
     public Object findTemplateSource(String name) throws IOException {
         InmemoryTemplateSource templateSource = templateSourceByName.get(name);
-        return templateSource == null ? super.findTemplateSource(name) : templateSource;
+        if (templateSource == null) {
+            if (templateDirCount > 1 && !ApplicationContext.getInstance().isStickyTemplatePaths()) {
+                resetState();
+            }
+            return super.findTemplateSource(name);
+        } else {
+            return templateSource;
+        }
     }
 
     @SuppressWarnings("RefusedBequest")
@@ -94,7 +121,7 @@ public class PreprocessFreemarkerFileTemplateLoader extends FileTemplateLoader {
      * as a template source even if ftl-file exists. Current time will be used in cache routine
      * as last modification time of template content.
      *
-     * @param name Template name (for example, "IndexPage.ftl")
+     * @param name    Template name (for example, "IndexPage.ftl")
      * @param content Template source
      */
     public static void addTemplateSource(String name, String content) {
@@ -106,8 +133,8 @@ public class PreprocessFreemarkerFileTemplateLoader extends FileTemplateLoader {
      * as a template source even if ftl-file exists. Parameter {@code modificationTime} will be used in cache routine
      * as last modification time of template content.
      *
-     * @param name Template name (for example, "IndexPage.ftl")
-     * @param content Template source
+     * @param name             Template name (for example, "IndexPage.ftl")
+     * @param content          Template source
      * @param modificationTime Last modification time of template content
      */
     public static void addTemplateSource(String name, String content, long modificationTime) {

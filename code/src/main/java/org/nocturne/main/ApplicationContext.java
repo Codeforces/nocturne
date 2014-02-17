@@ -96,10 +96,17 @@ public class ApplicationContext {
     private Set<String> classReloadingExceptions;
 
     /**
-     * Where to find templates. Contains relative path from
+     * Where to find templates. Contains relative paths from
      * deployed application root. For example: WEB-INF/templates.
      */
-    private String templatesPath;
+    private String[] templatePaths;
+
+    /**
+     * Indicates if template loader should stick to last successful template path
+     * or always check template paths in the configured order.
+     * Default value is {@code true}.
+     */
+    private boolean stickyTemplatePaths = true;
 
     /**
      * Servlet context.
@@ -441,8 +448,8 @@ public class ApplicationContext {
         this.requestRouter = requestRouter;
     }
 
-    void setTemplatesPath(String templatesPath) {
-        this.templatesPath = templatesPath;
+    void setTemplatePaths(String[] templatePaths) {
+        this.templatePaths = templatePaths;
     }
 
     void setDefaultLocale(String defaultLanguage) {
@@ -505,11 +512,25 @@ public class ApplicationContext {
     }
 
     /**
-     * @return Where to find templates. Contains relative path from deployed application root. For example: WEB-INF/templates.
-     *         Set nocturne.templates-path.
+     * @return Where to find templates. Contains relative paths from deployed application root. For example: WEB-INF/templates.
+     *         Set nocturne.template-paths - semicolon separated list of paths.
+     *         Set nocturne.templates-path (deprecated) - single path.
      */
-    public String getTemplatesPath() {
-        return templatesPath;
+    public String[] getTemplatePaths() {
+        return templatePaths;
+    }
+
+    /**
+     * @return Flag that indicates if template loader should stick to last successful template path
+     *         or always check template paths in the configured order.
+     *         Default value is {@code true}.
+     */
+    public boolean isStickyTemplatePaths() {
+        return stickyTemplatePaths;
+    }
+
+    public void setStickyTemplatePaths(boolean stickyTemplatePaths) {
+        this.stickyTemplatePaths = stickyTemplatePaths;
     }
 
     void setAllowedLanguages(List<String> allowedLanguages) {

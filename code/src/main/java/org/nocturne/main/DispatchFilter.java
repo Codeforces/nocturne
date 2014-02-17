@@ -28,6 +28,7 @@ import java.util.Set;
  *
  * @author Mike Mirzayanov
  */
+@SuppressWarnings({"AccessOfSystemProperties", "UseOfPropertiesAsHashtable", "unchecked"})
 public class DispatchFilter implements Filter {
     private static final ReloadingContext reloadingContext = ReloadingContext.getInstance();
 
