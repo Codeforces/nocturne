@@ -9,6 +9,7 @@ Parameters description
 
 || *Parameter name* || *Default* || *Values / example* || *Meaning* || *Type in Java* ||
 || nocturne.debug || Default value is "false" || "true" or "false" || Use it in the development mode to switch on nocturne main feature: class reloading ||  {{{boolean}}} ||
+|| nocturne.templates-update-delay || Default value is 60 || 0 || Delay between checks of template files to be changed (in seconds) || {{{int}}} ||
 || nocturne.templates-path || Required || WEB-INF/templates || Directory where to find templates in the deployed application, all the freemarker templates for view layer should be in it. Deprecated since Nocturne version 1.2.6: use nocturne.template-paths || {{{String}}} ||
 || nocturne.template-paths || Required || /opt/templates;WEB-INF/templates || Directory list where to find templates in the deployed application, all the freemarker templates for view layer should be in it || {{{List<String>}}} ||
 || nocturne.sticky-template-paths || Default value is "true" || "true" or "false"  || Indicates if template loader should stick to last successful template path or always check template paths in the configured order || {{{boolean}}} ||
