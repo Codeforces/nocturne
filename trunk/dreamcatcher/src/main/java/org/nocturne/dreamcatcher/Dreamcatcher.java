@@ -223,7 +223,7 @@ public class Dreamcatcher implements DirectoryListener.Handler {
                 } catch (IOException e) {
                     System.out.println(e.getClass() + " " + e.getMessage() + " " + name + " " + loadedClass);
                     // No operations.
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     System.out.println("Can't redefine " + loadedClass);
                     e.printStackTrace();
                     System.setProperty("dreamcatcher.can-not-redefine-class", "true");
