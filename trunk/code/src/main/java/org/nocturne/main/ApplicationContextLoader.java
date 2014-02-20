@@ -43,7 +43,7 @@ class ApplicationContextLoader {
 
     private static void run() {
         setupDebug();
-        setupTemplatePaths();
+        setupTemplates();
 
         if (ApplicationContext.getInstance().isDebug()) {
             setupReloadingClassPaths();
@@ -274,7 +274,19 @@ class ApplicationContextLoader {
         ApplicationContext.getInstance().setReloadingClassPaths(reloadingClassPaths);
     }
 
-    private static void setupTemplatePaths() {
+    private static void setupTemplates() {
+        if (properties.containsKey("nocturne.templates-update-delay")) {
+            try {
+                int templatesUpdateDelay = Integer.parseInt(properties.getProperty("nocturne.templates-update-delay"));
+                if (templatesUpdateDelay < 0 || templatesUpdateDelay > 86400) {
+                    throw new ConfigurationException("Parameter nocturne.templates-update-delay should be non-negative integer not greater than 86400.");
+                }
+                ApplicationContext.getInstance().setTemplatesUpdateDelay(templatesUpdateDelay);
+            } catch (NumberFormatException e) {
+                throw new ConfigurationException("Parameter nocturne.templates-update-delay should be integer.");
+            }
+        }
+
         if (properties.containsKey("nocturne.template-paths")) {
             String[] templatePaths = ITEMS_SPLIT_PATTERN.split(StringUtils.trimToEmpty(
                     properties.getProperty("nocturne.template-paths")

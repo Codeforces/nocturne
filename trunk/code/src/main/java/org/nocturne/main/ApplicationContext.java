@@ -165,6 +165,11 @@ public class ApplicationContext {
     private ResetStrategy resetStrategy;
 
     /**
+     * Delay between checks of template files to be changed (in seconds).
+     */
+    private int templatesUpdateDelay = 60;
+
+    /**
      * List of annotation classes to override default strategy, should be used on classes or fields.
      */
     private Set<String> resetAnnotations;
@@ -293,6 +298,13 @@ public class ApplicationContext {
     }
 
     /**
+     * @return Delay between checks of template files to be changed (in seconds).
+     */
+    public int getTemplatesUpdateDelay() {
+        return templatesUpdateDelay;
+    }
+
+    /**
      * @return List of annotation classes to override default strategy, should be used on classes or fields.
      */
     public Set<String> getResetAnnotations() {
@@ -304,6 +316,10 @@ public class ApplicationContext {
      */
     public Set<String> getPersistAnnotations() {
         return Collections.unmodifiableSet(persistAnnotations);
+    }
+
+    void setTemplatesUpdateDelay(int templatesUpdateDelay) {
+        this.templatesUpdateDelay = templatesUpdateDelay;
     }
 
     void setResetStrategy(ResetStrategy resetStrategy) {

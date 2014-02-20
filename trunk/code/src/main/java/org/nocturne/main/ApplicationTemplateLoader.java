@@ -112,6 +112,7 @@ public class ApplicationTemplateLoader implements TemplateLoader {
                 loadersByTemplate.remove(o);
             }
         }
+
         templateLoader.closeTemplateSource(o);
     }
 }

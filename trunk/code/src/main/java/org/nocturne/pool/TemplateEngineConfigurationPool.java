@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class TemplateEngineConfigurationPool extends Pool<Configuration> {
     private static final Logger logger = Logger.getLogger(TemplateEngineConfigurationPool.class);
-    private static final int DEBUG_TEMPLATE_UPDATE_TIME_SECONDS = 60;
 
     private final FilterConfig filterConfig;
 
@@ -42,7 +41,8 @@ public class TemplateEngineConfigurationPool extends Pool<Configuration> {
         templateEngineConfiguration.setDefaultEncoding("UTF-8");
 
         if (!ReloadingContext.getInstance().isDebug()) {
-            templateEngineConfiguration.setTemplateUpdateDelay(DEBUG_TEMPLATE_UPDATE_TIME_SECONDS);
+            logger.warn("Processed templateEngineConfiguration.setTemplateUpdateDelay(" + ReloadingContext.getInstance().getTemplatesUpdateDelay() + ").");
+            templateEngineConfiguration.setTemplateUpdateDelay(ReloadingContext.getInstance().getTemplatesUpdateDelay());
         }
 
         templateEngineConfiguration.setTemplateLoader(new ApplicationTemplateLoader());
