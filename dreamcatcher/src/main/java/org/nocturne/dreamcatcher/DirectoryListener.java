@@ -1,7 +1,5 @@
 package org.nocturne.dreamcatcher;
 
-import org.apache.log4j.Logger;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
@@ -20,8 +18,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Mike Mirzayanov (mirzayanovmr@gmail.com)
  */
 public class DirectoryListener {
-    private static final Logger logger = Logger.getLogger(DirectoryListener.class);
-
     private final List<Handler> handlers = new ArrayList<>();
     private final WatchService watcher;
 
@@ -91,7 +87,8 @@ public class DirectoryListener {
                 try {
                     fileAndTimestamp = delayedFilesQueue.poll(1, TimeUnit.SECONDS);
                 } catch (InterruptedException e) {
-                    logger.warn("DelayedQueueRunnable interrupted.", e);
+                    System.out.println("DelayedQueueRunnable interrupted. " + e);
+                    System.err.println("DelayedQueueRunnable interrupted. " + e);
                     break;
                 }
 
@@ -101,7 +98,8 @@ public class DirectoryListener {
                         try {
                             Thread.sleep(MIN_DELAY_MILLIS - passedTime);
                         } catch (InterruptedException e) {
-                            logger.warn("DelayedQueueRunnable interrupted.", e);
+                            System.out.println("DelayedQueueRunnable interrupted. " + e);
+                            System.err.println("DelayedQueueRunnable interrupted. " + e);
                             break;
                         }
                     }
