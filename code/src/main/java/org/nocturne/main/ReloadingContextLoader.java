@@ -23,12 +23,27 @@ class ReloadingContextLoader {
 
     static void run() {
         setupDebug();
+        setupTemplates();
         setupSkipRegex();
 
         if (ReloadingContext.getInstance().isDebug()) {
             setupReloadingClassPaths();
             setupClassReloadingPackages();
             setupClassReloadingExceptions();
+        }
+    }
+
+    private static void setupTemplates() {
+        if (properties.containsKey("nocturne.templates-update-delay")) {
+            try {
+                int templatesUpdateDelay = Integer.parseInt(properties.getProperty("nocturne.templates-update-delay"));
+                if (templatesUpdateDelay < 0 || templatesUpdateDelay > 86400) {
+                    throw new ConfigurationException("Parameter nocturne.templates-update-delay should be non-negative integer not greater than 86400.");
+                }
+                ReloadingContext.getInstance().setTemplatesUpdateDelay(templatesUpdateDelay);
+            } catch (NumberFormatException e) {
+                throw new ConfigurationException("Parameter nocturne.templates-update-delay should be integer.");
+            }
         }
     }
 

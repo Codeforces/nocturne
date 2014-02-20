@@ -25,6 +25,8 @@ public class ReloadingContext {
     private List<String> classReloadingPackages;
     private List<String> classReloadingExceptions;
 
+    private int templatesUpdateDelay = 60;
+
     private ReloadingContext() {
     }
 
@@ -38,6 +40,10 @@ public class ReloadingContext {
 
     public boolean isDebug() {
         return debug;
+    }
+
+    public int getTemplatesUpdateDelay() {
+        return templatesUpdateDelay;
     }
 
     public List<File> getReloadingClassPaths() {
@@ -62,6 +68,10 @@ public class ReloadingContext {
 
     public Pattern getSkipRegex() {
         return skipRegex;
+    }
+
+    void setTemplatesUpdateDelay(int templatesUpdateDelay) {
+        this.templatesUpdateDelay = templatesUpdateDelay;
     }
 
     void setReloadingClassPaths(List<File> reloadingClassPaths) {

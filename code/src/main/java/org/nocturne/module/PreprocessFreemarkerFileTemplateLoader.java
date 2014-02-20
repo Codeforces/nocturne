@@ -141,6 +141,13 @@ public class PreprocessFreemarkerFileTemplateLoader extends MultiTemplateLoader 
         templateSourceByName.put(name, new InmemoryTemplateSource(name, content, modificationTime));
     }
 
+    @Override
+    public void closeTemplateSource(Object templateSource) throws IOException {
+        if (!(templateSource instanceof InmemoryTemplateSource)) {
+            super.closeTemplateSource(templateSource);
+        }
+    }
+
     @SuppressWarnings("DeserializableClassInSecureContext")
     private static final class InmemoryTemplateSource extends File {
         private final String content;
