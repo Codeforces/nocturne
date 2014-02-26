@@ -142,6 +142,19 @@ public class PreprocessFreemarkerFileTemplateLoader extends MultiTemplateLoader 
     }
 
     @Override
+    public long getLastModified(Object templateSource) {
+        if (templateSource == null) {
+            return 0;
+        }
+
+        if (templateSource instanceof InmemoryTemplateSource) {
+            return ((InmemoryTemplateSource) templateSource).lastModified();
+        }
+
+        return super.getLastModified(templateSource);
+    }
+
+    @Override
     public void closeTemplateSource(Object templateSource) throws IOException {
         if (!(templateSource instanceof InmemoryTemplateSource)) {
             super.closeTemplateSource(templateSource);
