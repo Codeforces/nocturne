@@ -1071,7 +1071,7 @@ public abstract class Component {
         } catch (IOException e) {
             throw new ServletException("Can't redirect to " + target + '.', e);
         }
-        throw new AbortException("Redirected to " + target + '.');
+        throw new AbortException("Redirected to " + target + '.', target);
     }
 
     /**
