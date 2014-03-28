@@ -205,6 +205,9 @@ public abstract class Page extends Component {
 
     @Override
     void prepareForAction() {
+        jsSet.clear();
+        cssSet.clear();
+
         setupCurrentPage();
 
         globalTemplateMap = Collections.synchronizedMap(new HashMap<String, Object>());
