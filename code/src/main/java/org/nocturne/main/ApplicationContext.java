@@ -585,11 +585,21 @@ public class ApplicationContext {
         this.skipRegex = skipRegex;
     }
 
+    public boolean hasRequest() {
+        RequestContext requestContext = requestsPerThread.get();
+        return requestContext != null && requestContext.getRequest() != null;
+    }
+
     /**
      * @return Returns current servlet request instance.
      */
     public HttpServletRequest getRequest() {
         return requestsPerThread.get().getRequest();
+    }
+
+    public boolean hasResponse() {
+        RequestContext requestContext = requestsPerThread.get();
+        return requestContext != null && requestContext.getResponse() != null;
     }
 
     /**
