@@ -6,12 +6,13 @@
             <properties>
                 <development.home>P:/nocturne/samples/webmail</development.home>
                 <nocturne.debug>true</nocturne.debug>
+                <nocturne.template-paths>${development.home}/src/main/webapp/WEB-INF/templates</nocturne.template-paths>
                 <logging.path>${development.home}/webmail.log</logging.path>
 
-                <database.url>jdbc:mysql://localhost/webmail?useUnicode=true&amp;characterSetResults=UTF-8&amp;characterEncoding=UTF-8</database.url>
+                <database.url>jdbc:mysql://127.0.0.1/webmail?useUnicode=true&amp;characterSetResults=UTF-8&amp;characterEncoding=UTF-8</database.url>
                 <database.driver>com.mysql.jdbc.Driver</database.driver>
-                <database.user>webmail</database.user>
-                <database.password>webmail</database.password>
+                <database.user>mysql</database.user>
+                <database.password>mysql</database.password>
             </properties>
         </profile>
     </profiles>

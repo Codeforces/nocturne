@@ -1,2 +1,2 @@
-copy profiles.xml.dev profiles.xml
+copy profiles.dev.xml profiles.xml
 call build.bat
