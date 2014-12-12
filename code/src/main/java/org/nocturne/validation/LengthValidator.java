@@ -3,12 +3,16 @@
  */
 package org.nocturne.validation;
 
+import org.apache.log4j.Logger;
+
 /**
  * Validates that given value length is in specified range.
  *
  * @author Mike Mirzayanov
  */
 public class LengthValidator extends Validator {
+    private static final Logger logger = Logger.getLogger(LengthValidator.class);
+
     /**
      * Minimal length.
      */
@@ -44,6 +48,17 @@ public class LengthValidator extends Validator {
      */
     @Override
     public void run(String value) throws ValidationException {
+        if (minimalLength >= 1 && value == null) {
+            throw new ValidationException(
+                    $("Field should contain at least {0,number,#} characters", minimalLength)
+            );
+        }
+
+        if (minimalLength <= 0 && value == null) {
+            logger.error("Value is `null` but minimalLength<=0.");
+            throw new ValidationException($("Field should not be empty"));
+        }
+
         int length = value.length();
 
         if (length < minimalLength) {

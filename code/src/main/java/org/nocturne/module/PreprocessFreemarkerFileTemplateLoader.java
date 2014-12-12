@@ -6,8 +6,10 @@ package org.nocturne.module;
 import freemarker.cache.FileTemplateLoader;
 import freemarker.cache.MultiTemplateLoader;
 import freemarker.cache.TemplateLoader;
+import org.apache.commons.io.IOUtils;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.main.ApplicationContext;
+import org.nocturne.main.ReloadingContext;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,11 +51,21 @@ public class PreprocessFreemarkerFileTemplateLoader extends MultiTemplateLoader 
     @Override
     public Object findTemplateSource(String name) throws IOException {
         InmemoryTemplateSource templateSource = templateSourceByName.get(name);
+
         if (templateSource == null) {
             if (templateDirCount > 1 && !ApplicationContext.getInstance().isStickyTemplatePaths()) {
                 resetState();
             }
-            return super.findTemplateSource(name);
+
+            Object result = super.findTemplateSource(name);
+            if (result != null && !ReloadingContext.getInstance().isDebug()) {
+                Reader reader = super.getReader(result, "UTF-8");
+                String text = IOUtils.toString(reader);
+                IOUtils.closeQuietly(reader);
+                addTemplateSource(name, text);
+            }
+
+            return result;
         } else {
             return templateSource;
         }
