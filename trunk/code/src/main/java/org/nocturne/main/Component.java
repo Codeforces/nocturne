@@ -32,6 +32,8 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Base class for Page and Frame (controllers). You should not use
@@ -39,8 +41,18 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author Mike Mirzayanov
  */
-@SuppressWarnings("DollarSignInName")
+@SuppressWarnings({"DollarSignInName", "NonStaticInitializer", "NoopMethodInAbstractClass", "ClassReferencesSubclass"})
 public abstract class Component {
+    /**
+     * Lock to synchronise some operations related to this component.
+     */
+    private final Lock componentLock = new ReentrantLock();
+
+    /**
+     * Lazy-initialized JSON converter for this component.
+     */
+    private Gson jsonConverter;
+
     /**
      * Has been initialized?
      */
@@ -109,6 +121,7 @@ public abstract class Component {
     /**
      * Object to inject parameters from request.
      */
+    @SuppressWarnings("ThisEscapedInObjectConstruction")
     private final ParametersInjector parametersInjector = new ParametersInjector(this);
 
     /**
@@ -339,22 +352,22 @@ public abstract class Component {
 
     /**
      * @param key Session variable name.
-     * @return returns true iff session contains attrubute with name "key".
+     * @return returns true iff session contains attribute with name "key".
      */
     public boolean hasSession(String key) {
         try {
             HttpSession session = request.getSession(false);
             return session != null && session.getAttribute(key) != null;
-        } catch (IllegalStateException e) {
+        } catch (IllegalStateException ignored) {
             throw new SessionInvalidatedException();
         }
     }
 
-    private void internalPutSession(String key, Object value) {
+    private void internalPutSession(String key, Serializable value) {
         getCurrentPage().putRequestCache(key, value);
 
         if (ApplicationContext.getInstance().isDebug()) {
-            String json = new Gson().toJson(value);
+            String json = getJsonConverter().toJson(value);
             request.getSession().setAttribute(key, json);
         } else {
             request.getSession().setAttribute(key, value);
@@ -367,10 +380,10 @@ public abstract class Component {
      * @param key   Session attribute name.
      * @param value Session attribute value.
      */
-    public void putSession(String key, Object value) {
+    public void putSession(String key, Serializable value) {
         try {
             internalPutSession(key, value);
-        } catch (IllegalStateException e) {
+        } catch (IllegalStateException ignored) {
             throw new SessionInvalidatedException();
         }
     }
@@ -382,7 +395,7 @@ public abstract class Component {
         try {
             getCurrentPage().removeRequestCache(key);
             request.getSession().removeAttribute(key);
-        } catch (IllegalStateException e) {
+        } catch (IllegalStateException ignored) {
             throw new SessionInvalidatedException();
         }
     }
@@ -394,7 +407,7 @@ public abstract class Component {
      *         store values in the debug mode.
      */
     @SuppressWarnings({"unchecked"})
-    public <T> T getSession(String key, Class<T> clazz) {
+    public <T extends Serializable> T getSession(String key, Class<T> clazz) {
         try {
             Object fromRequestCache = getCurrentPage().getRequestCache(key);
 
@@ -414,7 +427,7 @@ public abstract class Component {
                 }
 
                 if (json != null) {
-                    result = new Gson().fromJson(json, clazz);
+                    result = getJsonConverter().fromJson(json, clazz);
                 } else {
                     result = null;
                 }
@@ -425,7 +438,7 @@ public abstract class Component {
                     } else {
                         result = (T) session.getAttribute(key);
                     }
-                } catch (Exception e) {
+                } catch (Exception ignored) {
                     result = null;
                 }
             }
@@ -433,7 +446,7 @@ public abstract class Component {
             getCurrentPage().putRequestCache(key, result);
 
             return result;
-        } catch (IllegalStateException e) {
+        } catch (IllegalStateException ignored) {
             throw new SessionInvalidatedException();
         }
     }
@@ -445,7 +458,7 @@ public abstract class Component {
      *         store values in the debug mode.
      */
     @SuppressWarnings({"unchecked", "RedundantTypeArguments"})
-    public <T> T getSession(String key, Type type) {
+    public <T extends Serializable> T getSession(String key, Type type) {
         try {
             Object fromRequestCache = getCurrentPage().getRequestCache(key);
 
@@ -464,7 +477,7 @@ public abstract class Component {
                 }
 
                 if (json != null) {
-                    result = new Gson().<T>fromJson(json, type);
+                    result = getJsonConverter().<T>fromJson(json, type);
                 } else {
                     result = null;
                 }
@@ -600,7 +613,7 @@ public abstract class Component {
 //    }
 
     /**
-     * @return Is template processing will be skipped? It may be usefull for AJAX pages.
+     * @return Is template processing will be skipped? It may be useful for AJAX pages.
      */
     boolean isSkipTemplate() {
         return skipTemplate;
@@ -608,7 +621,7 @@ public abstract class Component {
 
     /**
      * Call it if you don't want current component will
-     * parse templates. It may be usefull for AJAX pages.
+     * parse templates. It may be useful for AJAX pages.
      */
     protected void skipTemplate() {
         skipTemplate = true;
@@ -621,6 +634,7 @@ public abstract class Component {
         skipTemplate = false;
     }
 
+    @SuppressWarnings("ReturnOfCollectionOrArrayField")
     Map<String, Object> internalGetTemplateMap() {
         return templateMap;
     }
@@ -1045,11 +1059,14 @@ public abstract class Component {
 
     void initializeIfNeeded() {
         if (!initialized) {
-            synchronized (this) {
+            componentLock.lock();
+            try {
                 if (!initialized) {
                     init();
                     initialized = true;
                 }
+            } finally {
+                componentLock.unlock();
             }
         }
     }
@@ -1147,8 +1164,10 @@ public abstract class Component {
 
     private boolean runValidation(ErrorValidationHandler handler) {
         Map parameterMap = getRequestParams();
-        for (Object key : parameterMap.keySet()) {
-            Object value = parameterMap.get(key);
+        for (Object entryObject : parameterMap.entrySet()) {
+            Map.Entry entry = (Map.Entry) entryObject;
+            Object key = entry.getKey();
+            Object value = entry.getValue();
             if (value == null) {
                 put(key.toString(), null);
             } else {
@@ -1240,10 +1259,10 @@ public abstract class Component {
             Type mapType = new TypeToken<Map<String, String>>() {
             }.getType();
             response.setContentType("application/json");
-            Writer writer = getWriter();
+            Writer localWriter = getWriter();
             try {
-                writer.write(new Gson().toJson(errors, mapType));
-                writer.flush();
+                localWriter.write(getJsonConverter().toJson(errors, mapType));
+                localWriter.flush();
             } catch (IOException ignored) {
                 // No operations.
             }
@@ -1281,10 +1300,10 @@ public abstract class Component {
         }
 
         response.setContentType("application/json");
-        Writer writer = getWriter();
+        Writer localWriter = getWriter();
         try {
-            writer.write(new Gson().toJson(params, mapType));
-            writer.flush();
+            localWriter.write(getJsonConverter().toJson(params, mapType));
+            localWriter.flush();
         } catch (IOException ignored) {
             // No operations.
         }
@@ -1327,24 +1346,30 @@ public abstract class Component {
      * @return Returns new or cached instance.
      */
     @SuppressWarnings({"unchecked"})
-    public synchronized <T> T getInstance(Class<T> clazz) {
-        if (!cacheForGetInstance.containsKey(clazz)) {
-            cacheForGetInstance.put(clazz, new ArrayList<Object>(2));
+    public <T> T getInstance(Class<T> clazz) {
+        componentLock.lock();
+        try {
+            Integer index = instanceIndexForCacheForGetInstance.get(clazz);
+            if (index == null) {
+                index = 0;
+                instanceIndexForCacheForGetInstance.put(clazz, index);
+            }
+
+            List<Object> clazzList = cacheForGetInstance.get(clazz);
+            if (clazzList == null) {
+                clazzList = new ArrayList<Object>(2);
+                cacheForGetInstance.put(clazz, clazzList);
+            }
+
+            if (clazzList.size() <= index) {
+                clazzList.add(ApplicationContext.getInstance().getInjector().getInstance(clazz));
+            }
+            instanceIndexForCacheForGetInstance.put(clazz, index + 1);
+
+            return (T) clazzList.get(index);
+        } finally {
+            componentLock.unlock();
         }
-
-        if (!instanceIndexForCacheForGetInstance.containsKey(clazz)) {
-            instanceIndexForCacheForGetInstance.put(clazz, 0);
-        }
-
-        int index = instanceIndexForCacheForGetInstance.get(clazz);
-
-        List<Object> clazzList = cacheForGetInstance.get(clazz);
-        if (clazzList.size() <= index) {
-            clazzList.add(ApplicationContext.getInstance().getInjector().getInstance(clazz));
-        }
-        instanceIndexForCacheForGetInstance.put(clazz, index + 1);
-
-        return (T) clazzList.get(index);
     }
 
     private String getTemplateFileName() {
@@ -1353,6 +1378,13 @@ public abstract class Component {
             clazz = clazz.getSuperclass();
         }
         return clazz.getSimpleName() + ".ftl";
+    }
+
+    protected final Gson getJsonConverter() {
+        if (jsonConverter == null) {
+            jsonConverter = new Gson();
+        }
+        return jsonConverter;
     }
 
     /* init */ {
