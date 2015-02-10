@@ -7,6 +7,7 @@ import freemarker.template.Configuration;
 import freemarker.template.DefaultObjectWrapper;
 import org.apache.log4j.Logger;
 import org.nocturne.main.ApplicationTemplateLoader;
+import org.nocturne.main.Constants;
 import org.nocturne.main.ReloadingContext;
 
 import javax.servlet.FilterConfig;
@@ -37,7 +38,7 @@ public class TemplateEngineConfigurationPool extends Pool<Configuration> {
 
     @Override
     protected Configuration newInstance() {
-        Configuration templateEngineConfiguration = new Configuration();
+        Configuration templateEngineConfiguration = new Configuration(Constants.FREEMARKER_VERSION);
         templateEngineConfiguration.setDefaultEncoding("UTF-8");
 
         if (!ReloadingContext.getInstance().isDebug()) {
@@ -46,7 +47,7 @@ public class TemplateEngineConfigurationPool extends Pool<Configuration> {
         }
 
         templateEngineConfiguration.setTemplateLoader(new ApplicationTemplateLoader());
-        templateEngineConfiguration.setObjectWrapper(new DefaultObjectWrapper());
+        templateEngineConfiguration.setObjectWrapper(new DefaultObjectWrapper(Constants.FREEMARKER_VERSION));
 
         logger.debug("Created instance of Configuration [count=" + count.incrementAndGet() + "].");
 

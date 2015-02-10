@@ -15,7 +15,7 @@ public interface Configuration {
      * This class should contain pages registration.
      * For example: {@code Links.add(UserPage.class);}
      */
-    public abstract void addPages();
+    void addPages();
 
     /**
      * Should contain configuration of the module IoC.
@@ -23,5 +23,5 @@ public interface Configuration {
      *
      * @param binder Guice binder.
      */
-    public abstract void bind(Binder binder);
+    void bind(Binder binder);
 }

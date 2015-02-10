@@ -36,7 +36,6 @@ import java.util.regex.PatternSyntaxException;
 class ApplicationContextLoader {
     private static final Logger logger = Logger.getLogger(ApplicationContextLoader.class);
 
-    public static final String CONFIGURATION_FILE = "/nocturne.properties";
     private static final Properties properties = new Properties();
     private static final Pattern ITEMS_SPLIT_PATTERN = Pattern.compile("\\s*;\\s*");
     private static final Pattern LANGUAGES_SPLIT_PATTERN = Pattern.compile("[,;\\s]+");
@@ -483,12 +482,12 @@ class ApplicationContextLoader {
     }
 
     static {
-        InputStream inputStream = ApplicationContextLoader.class.getResourceAsStream(CONFIGURATION_FILE);
+        InputStream inputStream = ApplicationContextLoader.class.getResourceAsStream(Constants.CONFIGURATION_FILE);
 
         try {
             properties.load(inputStream);
         } catch (IOException e) {
-            throw new ConfigurationException("Can't load resource file " + CONFIGURATION_FILE + '.', e);
+            throw new ConfigurationException("Can't load resource file " + Constants.CONFIGURATION_FILE + '.', e);
         } finally {
             if (inputStream != null) {
                 try {

@@ -18,7 +18,6 @@ import java.util.regex.PatternSyntaxException;
  * @author Mike Mirzayanov
  */
 class ReloadingContextLoader {
-    public static final String CONFIGURATION_FILE = "/nocturne.properties";
     private static final Properties properties = new Properties();
 
     static void run() {
@@ -129,17 +128,17 @@ class ReloadingContextLoader {
     }
 
     static {
-        InputStream inputStream = ApplicationContextLoader.class.getResourceAsStream(CONFIGURATION_FILE);
+        InputStream inputStream = ApplicationContextLoader.class.getResourceAsStream(Constants.CONFIGURATION_FILE);
 
         try {
             properties.load(inputStream);
         } catch (IOException e) {
-            throw new ConfigurationException("Can't load resource file " + CONFIGURATION_FILE + '.', e);
+            throw new ConfigurationException("Can't load resource file " + Constants.CONFIGURATION_FILE + '.', e);
         } finally {
             if (inputStream != null) {
                 try {
                     inputStream.close();
-                } catch (IOException e) {
+                } catch (IOException ignored) {
                     // No operations.
                 }
             }

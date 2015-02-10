@@ -4,6 +4,7 @@
 package org.nocturne.main;
 
 import com.google.inject.Injector;
+import org.apache.commons.lang.ArrayUtils;
 import org.nocturne.caption.Captions;
 import org.nocturne.caption.CaptionsImpl;
 import org.nocturne.collection.SingleEntryList;
@@ -38,10 +39,12 @@ public class ApplicationContext {
     /**
      * The only singleton instance.
      */
-    private static final ApplicationContext INSTANCE =
-            new ApplicationContext();
+    private static final ApplicationContext INSTANCE = new ApplicationContext();
 
-    private static final Object[] EMPTY_OBJECT_ARRAY = {};
+    /**
+     * Lock to perform synchronized operations.
+     */
+    private final Lock lock = new ReentrantLock();
 
     /**
      * Current page. Stored as ThreadLocal.
@@ -75,7 +78,7 @@ public class ApplicationContext {
     private Set<String> pageRequestListeners;
 
     /**
-     * Request routern class name.
+     * Request router class name.
      */
     private String requestRouter;
 
@@ -499,8 +502,13 @@ public class ApplicationContext {
         this.classReloadingPackages = new LinkedHashSet<String>(classReloadingPackages);
     }
 
-    synchronized void setInjector(Injector injector) {
-        this.injector = injector;
+    void setInjector(Injector injector) {
+        lock.lock();
+        try {
+            this.injector = injector;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -625,7 +633,7 @@ public class ApplicationContext {
      */
     public void addReloadingClassPath(File dir) {
         if (!dir.isDirectory()) {
-            throw new ConfigurationException("Path " + dir.getName() + " exected to be a directory.");
+            throw new ConfigurationException("Path " + dir.getName() + " expected to be a directory.");
         }
         reloadingClassPaths.add(dir);
 
@@ -654,7 +662,7 @@ public class ApplicationContext {
      *         Usually, it is not good idea, because captions are part of view layer.
      */
     public String $(String shortcut) {
-        return $(shortcut, EMPTY_OBJECT_ARRAY);
+        return $(shortcut, ArrayUtils.EMPTY_OBJECT_ARRAY);
     }
 
     /**
@@ -668,14 +676,15 @@ public class ApplicationContext {
         shortcut = shortcut.trim();
 
         if (captions == null) {
-            synchronized (this) {
-                try {
-                    Class<? extends Captions> clazz
-                            = (Class<? extends Captions>) getClass().getClassLoader().loadClass(captionsImplClass);
-                    captions = injector.getInstance(clazz);
-                } catch (ClassNotFoundException e) {
-                    throw new ConfigurationException("Class " + captionsImplClass + " should implement Captions.", e);
-                }
+            lock.lock();
+            try {
+                Class<? extends Captions> clazz
+                        = (Class<? extends Captions>) getClass().getClassLoader().loadClass(captionsImplClass);
+                captions = injector.getInstance(clazz);
+            } catch (ClassNotFoundException e) {
+                throw new ConfigurationException("Class " + captionsImplClass + " should implement Captions.", e);
+            } finally {
+                lock.unlock();
             }
         }
 
@@ -694,13 +703,14 @@ public class ApplicationContext {
         shortcut = shortcut.trim();
 
         if (captions == null) {
-            synchronized (this) {
-                try {
-                    Class<? extends Captions> clazz = (Class<? extends Captions>) getClass().getClassLoader().loadClass(captionsImplClass);
-                    captions = injector.getInstance(clazz);
-                } catch (ClassNotFoundException e) {
-                    throw new ConfigurationException("Class " + captionsImplClass + " should implement Captions.", e);
-                }
+            lock.lock();
+            try {
+                Class<? extends Captions> clazz = (Class<? extends Captions>) getClass().getClassLoader().loadClass(captionsImplClass);
+                captions = injector.getInstance(clazz);
+            } catch (ClassNotFoundException e) {
+                throw new ConfigurationException("Class " + captionsImplClass + " should implement Captions.", e);
+            } finally {
+                lock.unlock();
             }
         }
 
@@ -718,13 +728,14 @@ public class ApplicationContext {
         shortcut = shortcut.trim();
 
         if (captions == null) {
-            synchronized (this) {
-                try {
-                    Class<? extends Captions> clazz = (Class<? extends Captions>) getClass().getClassLoader().loadClass(captionsImplClass);
-                    captions = injector.getInstance(clazz);
-                } catch (ClassNotFoundException e) {
-                    throw new ConfigurationException("Class " + captionsImplClass + " should implement Captions.", e);
-                }
+            lock.lock();
+            try {
+                Class<? extends Captions> clazz = (Class<? extends Captions>) getClass().getClassLoader().loadClass(captionsImplClass);
+                captions = injector.getInstance(clazz);
+            } catch (ClassNotFoundException e) {
+                throw new ConfigurationException("Class " + captionsImplClass + " should implement Captions.", e);
+            } finally {
+                lock.unlock();
             }
         }
 
