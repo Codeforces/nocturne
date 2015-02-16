@@ -24,7 +24,7 @@ public class PageLoader {
     private static final Logger logger = Logger.getLogger(PageLoader.class);
 
     private RequestRouter requestRouter;
-    private final ConcurrentMap<String, PagePool> pagePoolMap = new ConcurrentHashMap<String, PagePool>();
+    private final ConcurrentMap<String, PagePool> pagePoolMap = new ConcurrentHashMap<>();
 
     private static final Lock lock = new ReentrantLock();
 

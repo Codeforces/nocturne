@@ -11,6 +11,7 @@ import org.nocturne.util.ReflectionUtil;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -29,12 +30,12 @@ public abstract class Page extends Component {
     /**
      * Stores additional css resources added by addCss() from the page or internal frames.
      */
-    private final Set<String> cssSet = new HashSet<String>();
+    private final Set<String> cssSet = new HashSet<>();
 
     /**
      * Stores additional js resources added by addJs() from the page or internal frames.
      */
-    private final Set<String> jsSet = new HashSet<String>();
+    private final Set<String> jsSet = new HashSet<>();
 
     /**
      * Default is null, which means no postprocessing.
@@ -110,7 +111,7 @@ public abstract class Page extends Component {
     }
 
     public Map<String, Object> getGlobalTemplateMap() {
-        return new HashMap<String, Object>(globalTemplateMap);
+        return new HashMap<>(globalTemplateMap);
     }
 
     Map<String, Object> internalGetGlobalTemplateMap() {
@@ -144,7 +145,7 @@ public abstract class Page extends Component {
                     Events.fireBeforeAction(this);
                     try {
                         internalRunAction(getActionName());
-                    } catch (InterruptException e) {
+                    } catch (InterruptException ignored) {
                         // No operations.
                     }
                     Events.fireAfterAction(this);
@@ -152,16 +153,16 @@ public abstract class Page extends Component {
 
                 try {
                     finalizeAction();
-                } catch (InterruptException e) {
+                } catch (InterruptException ignored) {
                     // No operations.
                 }
 
                 if (!isSkipTemplate()) {
-                    Map<String, Object> params = new HashMap<String, Object>(internalGetTemplateMap());
+                    Map<String, Object> params = new HashMap<>(internalGetTemplateMap());
                     params.putAll(internalGetGlobalTemplateMap());
 
                     try {
-                        getTemplate().setOutputEncoding("UTF-8");
+                        getTemplate().setOutputEncoding(StandardCharsets.UTF_8.name());
 
                         StringWriter stringWriter = new StringWriter(65536);
                         getTemplate().process(params, stringWriter);
@@ -184,7 +185,7 @@ public abstract class Page extends Component {
             }
 
             if (result != null) {
-                getOutputStream().write(result.getBytes("UTF-8"));
+                getOutputStream().write(result.getBytes(StandardCharsets.UTF_8));
             }
         } catch (AbortException ignored) {
             // No operations.

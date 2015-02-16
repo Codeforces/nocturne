@@ -11,6 +11,7 @@ import org.nocturne.main.Constants;
 import org.nocturne.main.ReloadingContext;
 
 import javax.servlet.FilterConfig;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -39,7 +40,7 @@ public class TemplateEngineConfigurationPool extends Pool<Configuration> {
     @Override
     protected Configuration newInstance() {
         Configuration templateEngineConfiguration = new Configuration(Constants.FREEMARKER_VERSION);
-        templateEngineConfiguration.setDefaultEncoding("UTF-8");
+        templateEngineConfiguration.setDefaultEncoding(StandardCharsets.UTF_8.name());
 
         if (!ReloadingContext.getInstance().isDebug()) {
             logger.warn("Processed templateEngineConfiguration.setTemplateUpdateDelay(" + ReloadingContext.getInstance().getTemplatesUpdateDelay() + ").");

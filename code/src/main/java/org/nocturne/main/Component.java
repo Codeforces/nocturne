@@ -33,6 +33,7 @@ import javax.servlet.http.HttpSession;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -90,7 +91,7 @@ public abstract class Component {
     /**
      * Map to store frame contents after parse().
      */
-    private Map<String, String> frameMap = new HashMap<String, String>();
+    private Map<String, String> frameMap = new HashMap<>();
 
     /**
      * Should workflow skip template processing?
@@ -141,7 +142,7 @@ public abstract class Component {
     /**
      * Stores cached instances for #getInstance(clazz, index) method.
      */
-    private final Map<Class<?>, List<Object>> cacheForGetInstance = new HashMap<Class<?>, List<Object>>();
+    private final Map<Class<?>, List<Object>> cacheForGetInstance = new HashMap<>();
 
     /**
      * Stores current indices of instances for #getInstance(clazz).
@@ -151,7 +152,7 @@ public abstract class Component {
     /**
      * Stores information about action, validation and invalid methods for component.
      */
-    private static final ConcurrentMap<Class<? extends Component>, ActionMap> actionMaps = new ConcurrentHashMap<Class<? extends Component>, ActionMap>();
+    private static final ConcurrentMap<Class<? extends Component>, ActionMap> actionMaps = new ConcurrentHashMap<>();
 
     /**
      * Template file name: simple class name + ".ftl" by default.
@@ -167,7 +168,7 @@ public abstract class Component {
     /**
      * Stores params from request.
      */
-    private Map<String, List<String>> requestParams = new HashMap<String, List<String>>();
+    private Map<String, List<String>> requestParams = new HashMap<>();
 
     /**
      * Object to clean fields between requests.
@@ -301,16 +302,12 @@ public abstract class Component {
 
     /**
      * @return Http servlet response writer. Uses UTF-8 encoding. Invokes
-     *         new PrintWriter(new OutputStreamWriter(getOutputStream(), "UTF-8"), true) but
-     *         exactly once (uses lazy calculations).
+     *         new PrintWriter(new OutputStreamWriter(getOutputStream(), java.nio.charset.StandardCharsets.UTF_8), true)
+     *         but exactly once (uses lazy calculations).
      */
     public PrintWriter getWriter() {
         if (writer == null) {
-            try {
-                writer = new PrintWriter(new OutputStreamWriter(getOutputStream(), "UTF-8"), true);
-            } catch (UnsupportedEncodingException e) {
-                throw new ConfigurationException("Can't set encoding for writer.", e);
-            }
+            writer = new PrintWriter(new OutputStreamWriter(getOutputStream(), StandardCharsets.UTF_8), true);
         }
         return writer;
     }
@@ -501,11 +498,11 @@ public abstract class Component {
     }
 
     void addOverrideParameter(String name, String value) {
-        overrideParameters.put(name, new SingleEntryList<String>(value));
+        overrideParameters.put(name, new SingleEntryList<>(value));
     }
 
     void addOverrideParameter(String name, Collection<String> values) {
-        overrideParameters.put(name, new ArrayList<String>(values));
+        overrideParameters.put(name, new ArrayList<>(values));
     }
 
     /**
@@ -644,7 +641,7 @@ public abstract class Component {
     }
 
     public Map<String, Object> getTemplateMap() {
-        return new HashMap<String, Object>(templateMap);
+        return new HashMap<>(templateMap);
     }
 
     /**
@@ -901,7 +898,7 @@ public abstract class Component {
     }
 
     Map<String, List<String>> getRequestParams() {
-        return new HashMap<String, List<String>>(requestParams);
+        return new HashMap<>(requestParams);
     }
 
     void setRequest(HttpServletRequest request) {
@@ -1026,8 +1023,8 @@ public abstract class Component {
         skipTemplate = false;
         outputStream = null;
         writer = null;
-        validators = new LinkedHashMap<String, List<Validator>>();
-        frameMap = new HashMap<String, String>();
+        validators = new LinkedHashMap<>();
+        frameMap = new HashMap<>();
         overrideParameters = Collections.synchronizedMap(new HashMap<String, List<String>>());
 
         parametersInjector.inject(request);
@@ -1250,7 +1247,7 @@ public abstract class Component {
      * @return boolean {@code true} if validation passed.
      */
     public boolean runValidationAndPrintErrors() {
-        final Map<String, String> errors = new LinkedHashMap<String, String>();
+        final Map<String, String> errors = new LinkedHashMap<>();
 
         boolean result = runValidation(new ErrorValidationHandler() {
             @Override
@@ -1290,9 +1287,9 @@ public abstract class Component {
         Type mapType = new TypeToken<Map<String, String>>() {
         }.getType();
 
-        Set<String> keySet = new HashSet<String>(Arrays.asList(keys));
+        Set<String> keySet = new HashSet<>(Arrays.asList(keys));
 
-        Map<String, String> params = new HashMap<String, String>();
+        Map<String, String> params = new HashMap<>();
         for (Map.Entry<String, Object> entry : templateMap.entrySet()) {
             String key = entry.getKey();
             if (keySet.isEmpty() || keySet.contains(key)) {
@@ -1361,7 +1358,7 @@ public abstract class Component {
 
             List<Object> clazzList = cacheForGetInstance.get(clazz);
             if (clazzList == null) {
-                clazzList = new ArrayList<Object>(2);
+                clazzList = new ArrayList<>(2);
                 cacheForGetInstance.put(clazz, clazzList);
             }
 

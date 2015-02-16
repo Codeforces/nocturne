@@ -75,7 +75,7 @@ public class ParametersInjector {
             throw new NocturneException("Expected the same number of parameters and annotations.");
         }
 
-        List<InjectField> injectFields = new ArrayList<InjectField>(parameterTypes.length);
+        List<InjectField> injectFields = new ArrayList<>(parameterTypes.length);
 
         for (int i = 0; i < parameterTypes.length; ++i) {
             Class<?> parameterType = parameterTypes[i];
@@ -361,7 +361,7 @@ public class ParametersInjector {
     }
 
     private void scanFields() {
-        fields = new HashSet<InjectField>();
+        fields = new HashSet<>();
         Class<?> clazz = component.getClass();
 
         while (clazz != null) {

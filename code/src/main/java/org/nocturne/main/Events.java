@@ -88,7 +88,7 @@ public class Events {
         /**
          * Stores listeners for each .
          */
-        private final Map<Class<?>, Set<Listener>> listenersByEvent = new LinkedHashMap<Class<?>, Set<Listener>>();
+        private final Map<Class<?>, Set<Listener>> listenersByEvent = new LinkedHashMap<>();
 
         public <T> void listen(Class<T> eventClass, Listener<T> listener) {
             if (!listenersByEvent.containsKey(eventClass)) {

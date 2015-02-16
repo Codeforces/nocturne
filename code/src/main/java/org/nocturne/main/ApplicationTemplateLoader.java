@@ -40,7 +40,7 @@ public class ApplicationTemplateLoader implements TemplateLoader {
     /**
      * For debug mode stores loader by loaded object.
      */
-    private final Map<Object, TemplateLoader> loadersByTemplate = new WeakHashMap<Object, TemplateLoader>();
+    private final Map<Object, TemplateLoader> loadersByTemplate = new WeakHashMap<>();
 
     /**
      * Usual file template loader, uses nocturne.templates-path.

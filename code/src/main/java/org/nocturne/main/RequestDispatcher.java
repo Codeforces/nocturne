@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.Flushable;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -124,7 +125,7 @@ public class RequestDispatcher {
 
     private void setupPageRequestListener(Object page) throws ClassNotFoundException {
         if (pageRequestListeners == null || applicationContext.isDebug()) {
-            pageRequestListeners = new CopyOnWriteArrayList<Object>();
+            pageRequestListeners = new CopyOnWriteArrayList<>();
 
             for (String name : applicationContext.getPageRequestListeners()) {
                 ClassLoader loader = page.getClass().getClassLoader();
@@ -309,7 +310,7 @@ public class RequestDispatcher {
         response.setHeader("Cache-Control", "private,no-cache,no-store,max-age=0,must-revalidate");
         response.setHeader("Expires", "-1");
         response.setHeader("Pragma", "no-cache");
-        response.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType("text/html");
     }
 

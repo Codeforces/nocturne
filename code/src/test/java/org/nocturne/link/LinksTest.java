@@ -178,7 +178,7 @@ public class LinksTest extends TestCase {
             throw new IllegalArgumentException("Params should contain even number of elements.");
         }
 
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
 
         boolean isKey = true;
         String key = null;

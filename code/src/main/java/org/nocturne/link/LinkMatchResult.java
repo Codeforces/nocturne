@@ -9,7 +9,7 @@ import java.util.Map;
 
 /**
  * It is the result for method Links.match(String). Contains information about
- * mathed page and matching itself.
+ * matched page and matching itself.
  *
  * @author Mike Mirzayanov
  * @author Andrew Lazarev

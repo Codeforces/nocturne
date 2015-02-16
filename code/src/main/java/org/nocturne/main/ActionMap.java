@@ -25,18 +25,18 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 class ActionMap {
     /* Default action has empty key "". */
-    private final Map<String, ActionMethod> actions = new ConcurrentHashMap<String, ActionMap.ActionMethod>();
+    private final Map<String, ActionMethod> actions = new ConcurrentHashMap<>();
 
     /* Default validator has empty key "". */
-    private final Map<String, FastMethod> validators = new ConcurrentHashMap<String, FastMethod>();
+    private final Map<String, FastMethod> validators = new ConcurrentHashMap<>();
 
     /* Default invalid method has empty key "". */
-    private final Map<String, FastMethod> invalids = new ConcurrentHashMap<String, FastMethod>();
+    private final Map<String, FastMethod> invalids = new ConcurrentHashMap<>();
 
     ActionMap(Class<? extends Component> pageClass) {
         FastClass clazz = FastClass.create(pageClass);
 
-        List<Method> methods = new ArrayList<Method>();
+        List<Method> methods = new ArrayList<>();
         Class<?> auxClass = pageClass;
         while (auxClass != null) {
             methods.addAll(Arrays.asList(auxClass.getDeclaredMethods()));

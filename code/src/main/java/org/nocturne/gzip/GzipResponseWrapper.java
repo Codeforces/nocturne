@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 
 public class GzipResponseWrapper extends HttpServletResponseWrapper {
     protected HttpServletResponse response;
@@ -42,8 +43,9 @@ public class GzipResponseWrapper extends HttpServletResponseWrapper {
             throw new IllegalStateException("getWriter() has already been called!");
         }
 
-        if (stream == null)
+        if (stream == null) {
             stream = createOutputStream();
+        }
 
         return stream;
     }
@@ -58,9 +60,9 @@ public class GzipResponseWrapper extends HttpServletResponseWrapper {
             stream = createOutputStream();
         }
 
-        writer = new PrintWriter(new OutputStreamWriter(stream, "UTF-8"));
+        writer = new PrintWriter(new OutputStreamWriter(stream, StandardCharsets.UTF_8));
 
-        return (writer);
+        return writer;
     }
 
     @Override

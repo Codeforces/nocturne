@@ -30,7 +30,7 @@ class ReloadingClassLoader extends ClassLoader {
      * Creates new instance of ReloadingClassLoader.
      */
     public ReloadingClassLoader() {
-        List<URL> delegationClassLoaderClassPath = new ArrayList<URL>();
+        List<URL> delegationClassLoaderClassPath = new ArrayList<>();
         List<File> classPathItems = ReloadingContext.getInstance().getReloadingClassPaths();
 
         for (File classPathDir : classPathItems) {
@@ -104,7 +104,7 @@ class ReloadingClassLoader extends ClassLoader {
 
         // Check if it is in exceptions.
         if (reload) {
-            List<String> exceptions = new LinkedList<String>(ReloadingContext.getInstance().getClassReloadingExceptions());
+            List<String> exceptions = new LinkedList<>(ReloadingContext.getInstance().getClassReloadingExceptions());
             for (String exception : exceptions) {
                 if (nameWithDot.startsWith(exception + '.') || nameWithDollar.startsWith(exception + '$')) {
                     reload = false;

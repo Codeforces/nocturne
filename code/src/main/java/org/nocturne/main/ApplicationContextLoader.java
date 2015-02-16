@@ -116,7 +116,7 @@ class ApplicationContextLoader {
             String languages = properties.getProperty("nocturne.allowed-languages");
             if (languages != null && !languages.isEmpty()) {
                 String[] tokens = LANGUAGES_SPLIT_PATTERN.split(languages);
-                List<String> list = new ArrayList<String>();
+                List<String> list = new ArrayList<>();
                 for (String token : tokens) {
                     if (!token.isEmpty()) {
                         if (token.length() != 2) {
@@ -195,7 +195,7 @@ class ApplicationContextLoader {
     }
 
     private static void setupClassReloadingExceptions() {
-        List<String> exceptions = new ArrayList<String>();
+        List<String> exceptions = new ArrayList<>();
         exceptions.add(ApplicationContext.class.getName());
 
         if (properties.containsKey("nocturne.class-reloading-exceptions")) {
@@ -208,7 +208,7 @@ class ApplicationContextLoader {
     }
 
     private static void setupClassReloadingPackages() {
-        List<String> packages = new ArrayList<String>();
+        List<String> packages = new ArrayList<>();
         packages.add("org.nocturne");
 
         if (properties.containsKey("nocturne.class-reloading-packages")) {
@@ -243,7 +243,7 @@ class ApplicationContextLoader {
     }
 
     private static void setupPageRequestListeners() {
-        List<String> listeners = new ArrayList<String>();
+        List<String> listeners = new ArrayList<>();
         if (properties.containsKey("nocturne.page-request-listeners")) {
             String pageRequestListenersAsString = properties.getProperty("nocturne.page-request-listeners");
             if (pageRequestListenersAsString != null) {
@@ -254,7 +254,7 @@ class ApplicationContextLoader {
     }
 
     private static void setupReloadingClassPaths() {
-        List<File> reloadingClassPaths = new ArrayList<File>();
+        List<File> reloadingClassPaths = new ArrayList<>();
         if (properties.containsKey("nocturne.reloading-class-paths")) {
             String reloadingClassPathsAsString = properties.getProperty("nocturne.reloading-class-paths");
             if (reloadingClassPathsAsString != null) {
@@ -322,7 +322,7 @@ class ApplicationContextLoader {
     }
 
     private static List<String> listOfNonEmpties(String[] strings) {
-        List<String> result = new ArrayList<String>(strings.length);
+        List<String> result = new ArrayList<>(strings.length);
         for (String s : strings) {
             if (!StringUtil.isEmptyOrNull(s)) {
                 result.add(s);
@@ -337,7 +337,7 @@ class ApplicationContextLoader {
      * @return List of modules ordered by priority (from high priority to low).
      */
     private static List<Module> getModulesFromClasspath() {
-        List<Module> modules = new ArrayList<Module>();
+        List<Module> modules = new ArrayList<>();
         URLClassLoader loader = (URLClassLoader) ApplicationContext.class.getClassLoader();
         URL[] classPath = loader.getURLs();
         for (URL url : classPath) {
@@ -407,7 +407,7 @@ class ApplicationContextLoader {
 
     private static com.google.inject.Module getApplicationModule(String guiceModuleClassName) throws Exception {
         Class<?> moduleClass = ApplicationContext.class.getClassLoader().loadClass(guiceModuleClassName);
-        AtomicReference<Exception> exception = new AtomicReference<Exception>();
+        AtomicReference<Exception> exception = new AtomicReference<>();
 
         try {
             return (com.google.inject.Module) moduleClass.getConstructor().newInstance();

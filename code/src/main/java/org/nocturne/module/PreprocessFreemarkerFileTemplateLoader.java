@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -25,7 +26,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Mike Mirzayanov
  */
 public class PreprocessFreemarkerFileTemplateLoader extends MultiTemplateLoader {
-    private static final ConcurrentMap<String, InmemoryTemplateSource> templateSourceByName = new ConcurrentHashMap<String, InmemoryTemplateSource>();
+    private static final ConcurrentMap<String, InmemoryTemplateSource> templateSourceByName = new ConcurrentHashMap<>();
     private final int templateDirCount;
 
     public PreprocessFreemarkerFileTemplateLoader(File... templateDirs) throws IOException {
@@ -59,7 +60,7 @@ public class PreprocessFreemarkerFileTemplateLoader extends MultiTemplateLoader 
 
             Object result = super.findTemplateSource(name);
             if (result != null && !ReloadingContext.getInstance().isDebug()) {
-                Reader reader = super.getReader(result, "UTF-8");
+                Reader reader = super.getReader(result, StandardCharsets.UTF_8.name());
                 String text = IOUtils.toString(reader);
                 IOUtils.closeQuietly(reader);
                 addTemplateSource(name, text);
