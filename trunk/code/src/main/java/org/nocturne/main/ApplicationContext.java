@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
@@ -49,12 +50,12 @@ public class ApplicationContext {
     /**
      * Current page. Stored as ThreadLocal.
      */
-    private final ThreadLocal<Page> currentPage = new ThreadLocal<Page>();
+    private final ThreadLocal<Page> currentPage = new ThreadLocal<>();
 
     /**
      * Current component. Stored as ThreadLocal.
      */
-    private final ThreadLocal<Component> currentComponent = new ThreadLocal<Component>();
+    private final ThreadLocal<Component> currentComponent = new ThreadLocal<>();
 
     /**
      * Is in debug mode?
@@ -155,7 +156,7 @@ public class ApplicationContext {
     /**
      * Encoding for caption property files, used in case of CaptionsImpl used.
      */
-    private String captionFilesEncoding = "UTF-8";
+    private String captionFilesEncoding = StandardCharsets.UTF_8.name();
 
     /**
      * Allowed languages (use 2-letter codes). Only English by default.
@@ -190,12 +191,12 @@ public class ApplicationContext {
     /**
      * RequestContext for current thread.
      */
-    private final ThreadLocal<RequestContext> requestsPerThread = new ThreadLocal<RequestContext>();
+    private final ThreadLocal<RequestContext> requestsPerThread = new ThreadLocal<>();
 
     /**
      * Reloading class loader for current thread, used in debug mode only.
      */
-    private final ThreadLocal<ClassLoader> reloadingClassLoaderPerThread = new ThreadLocal<ClassLoader>();
+    private final ThreadLocal<ClassLoader> reloadingClassLoaderPerThread = new ThreadLocal<>();
 
     /**
      * Current reloading class loader.
@@ -205,7 +206,7 @@ public class ApplicationContext {
     /**
      * List of loaded modules.
      */
-    private List<Module> modules = new ArrayList<Module>();
+    private List<Module> modules = new ArrayList<>();
 
     /**
      * ApplicationContext is initialized.
@@ -334,11 +335,11 @@ public class ApplicationContext {
     }
 
     void setResetAnnotations(Collection<String> resetAnnotations) {
-        this.resetAnnotations = new LinkedHashSet<String>(resetAnnotations);
+        this.resetAnnotations = new LinkedHashSet<>(resetAnnotations);
     }
 
     void setPersistAnnotations(Collection<String> persistAnnotations) {
-        this.persistAnnotations = new LinkedHashSet<String>(persistAnnotations);
+        this.persistAnnotations = new LinkedHashSet<>(persistAnnotations);
     }
 
     /**
@@ -429,14 +430,14 @@ public class ApplicationContext {
      *         Setup it by nocturne.reloading-class-paths.
      */
     public List<File> getReloadingClassPaths() {
-        return new LinkedList<File>(reloadingClassPaths);
+        return new LinkedList<>(reloadingClassPaths);
     }
 
     /**
      * @return List of listener class names. Setup it by nocturne.page-request-listeners.
      */
     public List<String> getPageRequestListeners() {
-        return new LinkedList<String>(pageRequestListeners);
+        return new LinkedList<>(pageRequestListeners);
     }
 
     void addRequestOverrideParameter(String name, String value) {
@@ -456,11 +457,11 @@ public class ApplicationContext {
     }
 
     void setReloadingClassPaths(List<File> reloadingClassPaths) {
-        this.reloadingClassPaths = new LinkedHashSet<File>(reloadingClassPaths);
+        this.reloadingClassPaths = new LinkedHashSet<>(reloadingClassPaths);
     }
 
     void setPageRequestListeners(List<String> pageRequestListeners) {
-        this.pageRequestListeners = new LinkedHashSet<String>(pageRequestListeners);
+        this.pageRequestListeners = new LinkedHashSet<>(pageRequestListeners);
     }
 
     void setCaptionFilesEncoding(String captionFilesEncoding) {
@@ -484,7 +485,7 @@ public class ApplicationContext {
     }
 
     void setClassReloadingExceptions(List<String> classReloadingExceptions) {
-        this.classReloadingExceptions = new LinkedHashSet<String>(classReloadingExceptions);
+        this.classReloadingExceptions = new LinkedHashSet<>(classReloadingExceptions);
     }
 
     /**
@@ -503,7 +504,7 @@ public class ApplicationContext {
     }
 
     void setClassReloadingPackages(List<String> classReloadingPackages) {
-        this.classReloadingPackages = new LinkedHashSet<String>(classReloadingPackages);
+        this.classReloadingPackages = new LinkedHashSet<>(classReloadingPackages);
     }
 
     void setInjector(Injector injector) {
@@ -527,7 +528,7 @@ public class ApplicationContext {
      *         ReloadingClassLoader. Set nocturne.class-reloading-packages to specify it.
      */
     public List<String> getClassReloadingPackages() {
-        return new LinkedList<String>(classReloadingPackages);
+        return new LinkedList<>(classReloadingPackages);
     }
 
     /**
@@ -536,7 +537,7 @@ public class ApplicationContext {
      *         Set nocturne.class-reloading-exceptions to specify the value.
      */
     public List<String> getClassReloadingExceptions() {
-        return new LinkedList<String>(classReloadingExceptions);
+        return new LinkedList<>(classReloadingExceptions);
     }
 
     /**
@@ -562,7 +563,7 @@ public class ApplicationContext {
     }
 
     void setAllowedLanguages(List<String> allowedLanguages) {
-        this.allowedLanguages = new ArrayList<String>(allowedLanguages);
+        this.allowedLanguages = new ArrayList<>(allowedLanguages);
     }
 
     void setServletContext(ServletContext servletContext) {
@@ -761,7 +762,7 @@ public class ApplicationContext {
     }
 
     void setModules(List<Module> modules) {
-        this.modules = new ArrayList<Module>(modules);
+        this.modules = new ArrayList<>(modules);
     }
 
     /**
@@ -943,18 +944,18 @@ public class ApplicationContext {
 
         private void addOverrideParameter(String name, String value) {
             if (overrideParameters == null) {
-                overrideParameters = new HashMap<String, List<String>>();
+                overrideParameters = new HashMap<>();
             }
 
-            overrideParameters.put(name, new SingleEntryList<String>(value));
+            overrideParameters.put(name, new SingleEntryList<>(value));
         }
 
         private void addOverrideParameter(String name, Collection<String> values) {
             if (overrideParameters == null) {
-                overrideParameters = new HashMap<String, List<String>>();
+                overrideParameters = new HashMap<>();
             }
 
-            overrideParameters.put(name, new ArrayList<String>(values));
+            overrideParameters.put(name, new ArrayList<>(values));
         }
 
         private Map<String, List<String>> getOverrideParameters() {

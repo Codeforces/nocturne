@@ -119,7 +119,7 @@ public class Module {
     }
 
     /**
-     * @return Module priority. Modules with highter priority will be loaded later and can override previously loaded modules setup.
+     * @return Module priority. Modules with higher priority will be loaded later and can override previously loaded modules setup.
      */
     public int getPriority() {
         return priority;
@@ -197,7 +197,7 @@ public class Module {
                     String.class
             );
 
-            configuration = (Configuration) getClass().getClassLoader().loadClass(configurationClassName).newInstance();
+            configuration = (Configuration) getClass().getClassLoader().loadClass(configurationClassName).getConstructor().newInstance();
         } catch (Exception e) {
             throw new ModuleInitializationException("Can't find element /module/properties/configuration-class " +
                     "or it contains illegal value.", e);
@@ -205,17 +205,11 @@ public class Module {
     }
 
     private void setupName(byte[] moduleXmlBytes) {
-        name = FileUtil.extractFromXml(
-                new ByteArrayInputStream(moduleXmlBytes),
-                "/module/name",
-                String.class
-        );
+        name = FileUtil.extractFromXml(new ByteArrayInputStream(moduleXmlBytes), "/module/name", String.class);
     }
 
     private void setupResourceLoader() {
-        resourceLoader = new FileResourceLoader(
-                new File(debugContext.getWebappDir())
-        );
+        resourceLoader = new FileResourceLoader(new File(debugContext.getWebappDir()));
     }
 
     private void setupTemplateLoader() {
@@ -348,8 +342,9 @@ public class Module {
                 );
 
                 entryFile.getParentFile().mkdirs();
-                StreamUtil.copyInputStream(file.getInputStream(entry),
-                        new BufferedOutputStream(new FileOutputStream(entryFile)));
+                StreamUtil.copyInputStream(
+                        file.getInputStream(entry), new BufferedOutputStream(new FileOutputStream(entryFile))
+                );
             }
         }
     }

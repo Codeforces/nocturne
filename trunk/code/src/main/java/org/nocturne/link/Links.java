@@ -41,30 +41,26 @@ public class Links {
 
     private static final int INTERCEPTOR_MAX_PERMIT_COUNT = 8 * Runtime.getRuntime().availableProcessors();
     private static final Semaphore interceptorSemaphore = new Semaphore(INTERCEPTOR_MAX_PERMIT_COUNT);
-    private static final ConcurrentMap<String, Interceptor> interceptorByNameMap =
-            new ConcurrentHashMap<String, Interceptor>();
+    private static final ConcurrentMap<String, Interceptor> interceptorByNameMap = new ConcurrentHashMap<>();
 
     /**
      * Stores maps for each page class. Each map contains single patterns as keys
      * and Link instances as values.
      */
-    private static final ConcurrentMap<Class<? extends Page>, Map<String, Link>> linksByPage =
-            new ConcurrentHashMap<Class<? extends Page>, Map<String, Link>>();
+    private static final ConcurrentMap<Class<? extends Page>, Map<String, Link>> linksByPage = new ConcurrentHashMap<>();
 
     /**
      * Stores page classes by their names.
      */
-    private static final ConcurrentMap<String, Class<? extends Page>> classesByName =
-            new ConcurrentHashMap<String, Class<? extends Page>>();
+    private static final ConcurrentMap<String, Class<? extends Page>> classesByName = new ConcurrentHashMap<>();
 
     /**
      * Stores link sections by links.
      */
-    private static final ConcurrentMap<String, List<LinkSection>> sectionsByLinkText =
-            new ConcurrentHashMap<String, List<LinkSection>>();
+    private static final ConcurrentMap<String, List<LinkSection>> sectionsByLinkText = new ConcurrentHashMap<>();
 
     private static List<Link> getLinksViaReflection(Class<? extends Page> clazz) {
-        List<Link> result = new ArrayList<Link>();
+        List<Link> result = new ArrayList<>();
         Link link = clazz.getAnnotation(Link.class);
         if (link != null) {
             result.add(link);
@@ -233,7 +229,7 @@ public class Links {
         }
 
         StringBuilder result = new StringBuilder(ApplicationContext.getInstance().getContextPath());
-        Set<String> usedKeys = new HashSet<String>();
+        Set<String> usedKeys = new HashSet<>();
 
         for (LinkSection section : bestMatchedLinkSections) {
             String item;
@@ -292,7 +288,7 @@ public class Links {
 
     private static Map<String, List<String>> getNonEmptyParams(Map<String, ?> params, MutableBoolean multiValueParams) {
         multiValueParams.setValue(false);
-        Map<String, List<String>> nonEmptyParams = new LinkedHashMap<String, List<String>>();
+        Map<String, List<String>> nonEmptyParams = new LinkedHashMap<>();
 
         for (Map.Entry<String, ?> entry : params.entrySet()) {
             Object value = entry.getValue();
@@ -321,7 +317,7 @@ public class Links {
             return toStringList((Collection) value);
         } else if (value.getClass().isArray()) {
             int count = Array.getLength(value);
-            List<String> list = new ArrayList<String>(count);
+            List<String> list = new ArrayList<>(count);
 
             for (int i = 0; i < count; ++i) {
                 Object item = Array.get(value, i);
@@ -332,13 +328,13 @@ public class Links {
 
             return list;
         } else {
-            return new SingleEntryList<String>(value.toString());
+            return new SingleEntryList<>(value.toString());
         }
     }
 
     private static List<String> toStringList(@Nonnull TemplateSequenceModel sequence) {
         int count = getSize(sequence);
-        List<String> list = new ArrayList<String>(count);
+        List<String> list = new ArrayList<>(count);
 
         for (int i = 0; i < count; ++i) {
             TemplateModel item;
@@ -357,7 +353,7 @@ public class Links {
     }
 
     private static List<String> toStringList(@Nonnull Collection collection) {
-        List<String> list = new ArrayList<String>(collection.size());
+        List<String> list = new ArrayList<>(collection.size());
 
         for (Object item : collection) {
             if (item != null) {
@@ -450,7 +446,7 @@ public class Links {
             throw new IllegalArgumentException("Params should contain even number of elements.");
         }
 
-        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        Map<String, Object> map = new LinkedHashMap<>();
 
         for (int paramIndex = 0; paramIndex < paramCount; paramIndex += 2) {
             map.put(params[paramIndex].toString(), params[paramIndex + 1]);
@@ -550,7 +546,7 @@ public class Links {
         int linkTokenCount = linkTokens.length;
 
         if (linkTokenCount == sections.size()) {
-            Map<String, String> attrs = new HashMap<String, String>();
+            Map<String, String> attrs = new HashMap<>();
 
             for (int linkTokenIndex = 0; linkTokenIndex < linkTokenCount; ++linkTokenIndex) {
                 LinkSection section = sections.get(linkTokenIndex);
@@ -594,7 +590,7 @@ public class Links {
         }
 
         String[] sections = StringUtil.Patterns.SLASH_PATTERN.split(linkText);
-        List<LinkSection> linkSections = new ArrayList<LinkSection>(sections.length);
+        List<LinkSection> linkSections = new ArrayList<>(sections.length);
         for (String section : sections) {
             linkSections.add(new LinkSection(section));
         }
@@ -626,7 +622,7 @@ public class Links {
                     allowedParameterValues = Collections.emptySet();
                 } else if (parts.length == 2) {
                     parameterName = parts[0];
-                    allowedParameterValues = new ConcurrentSkipListSet<String>(
+                    allowedParameterValues = new ConcurrentSkipListSet<>(
                             Arrays.asList(StringUtil.Patterns.COMMA_PATTERN.split(parts[1]))
                     );
                 } else {

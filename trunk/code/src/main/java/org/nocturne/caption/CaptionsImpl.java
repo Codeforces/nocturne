@@ -32,7 +32,7 @@ public class CaptionsImpl implements Captions {
     /**
      * Stores properties per language.
      */
-    private final Map<String, Properties> propertiesMap = new Hashtable<String, Properties>();
+    private final Map<String, Properties> propertiesMap = new Hashtable<>();
 
     /**
      * Magic value to store empty value.
@@ -99,7 +99,7 @@ public class CaptionsImpl implements Captions {
      */
     private void saveProperties() {
         // Find all possible keys.
-        Set<String> keys = new TreeSet<String>();
+        Set<String> keys = new TreeSet<>();
         for (Map.Entry<String, Properties> entry : propertiesMap.entrySet()) {
             Set<Object> names = entry.getValue().keySet();
             for (Object name : names) {

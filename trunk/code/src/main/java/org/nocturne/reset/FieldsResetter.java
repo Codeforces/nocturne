@@ -20,17 +20,12 @@ import java.util.concurrent.ConcurrentMap;
  * @author Mike Mirzayanov
  */
 public class FieldsResetter {
-    private static final Map<Class<?>, Object> PRIMITIVES_DEFAULT_VALUES
-            = new ConcurrentHashMap<Class<?>, Object>();
-
-    private static final ConcurrentMap<AnnotatedElement, Boolean> RESET_ANNOTATIONS_CACHE
-            = new ConcurrentHashMap<AnnotatedElement, Boolean>();
-
-    private static final ConcurrentMap<AnnotatedElement, Boolean> PERSIST_ANNOTATIONS_CACHE
-            = new ConcurrentHashMap<AnnotatedElement, Boolean>();
+    private static final Map<Class<?>, Object> PRIMITIVES_DEFAULT_VALUES = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<AnnotatedElement, Boolean> RESET_ANNOTATIONS_CACHE = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<AnnotatedElement, Boolean> PERSIST_ANNOTATIONS_CACHE = new ConcurrentHashMap<>();
 
     private final Component component;
-    private final List<Field> fieldsToReset = new ArrayList<Field>();
+    private final List<Field> fieldsToReset = new ArrayList<>();
     private final ResetStrategy componentStrategy;
 
     private static boolean hasResetAnnotation(AnnotatedElement annotatedElement) {

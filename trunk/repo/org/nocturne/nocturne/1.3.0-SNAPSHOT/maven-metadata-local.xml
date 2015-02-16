@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>org.nocturne</groupId>
+  <artifactId>nocturne</artifactId>
+  <version>1.3.0-SNAPSHOT</version>
+  <versioning>
+    <snapshot>
+      <localCopy>true</localCopy>
+    </snapshot>
+    <lastUpdated>20150216133003</lastUpdated>
+  </versioning>
+</metadata>

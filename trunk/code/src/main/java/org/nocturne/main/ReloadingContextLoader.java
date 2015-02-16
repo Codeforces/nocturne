@@ -47,7 +47,7 @@ class ReloadingContextLoader {
     }
 
     private static void setupClassReloadingExceptions() {
-        List<String> exceptions = new ArrayList<String>();
+        List<String> exceptions = new ArrayList<>();
         exceptions.add(ReloadingContext.class.getName());
         if (properties.containsKey("nocturne.class-reloading-exceptions")) {
             String exceptionsAsString = properties.getProperty("nocturne.class-reloading-exceptions");
@@ -77,7 +77,7 @@ class ReloadingContextLoader {
     }
 
     private static void setupClassReloadingPackages() {
-        List<String> packages = new ArrayList<String>();
+        List<String> packages = new ArrayList<>();
         packages.add("org.nocturne");
         if (properties.containsKey("nocturne.class-reloading-packages")) {
             String packagesAsString = properties.getProperty("nocturne.class-reloading-packages");
@@ -94,7 +94,7 @@ class ReloadingContextLoader {
     }
 
     private static void setupReloadingClassPaths() {
-        List<File> reloadingClassPaths = new ArrayList<File>();
+        List<File> reloadingClassPaths = new ArrayList<>();
         if (properties.containsKey("nocturne.reloading-class-paths")) {
             String reloadingClassPathsAsString = properties.getProperty("nocturne.reloading-class-paths");
             if (reloadingClassPathsAsString != null) {

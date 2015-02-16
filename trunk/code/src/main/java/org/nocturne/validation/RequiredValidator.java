@@ -1,5 +1,4 @@
 /* Copyright by Mike Mirzayanov. */
-
 package org.nocturne.validation;
 
 import org.nocturne.util.StringUtil;

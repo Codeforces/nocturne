@@ -55,7 +55,7 @@ public final class SingleEntryList<E> implements List<E>, RandomAccess, Cloneabl
     @Nonnull
     @Override
     public Iterator<E> iterator() {
-        return new SingleEntryListIterator<E>(this);
+        return new SingleEntryListIterator<>(this);
     }
 
     @Nonnull
@@ -250,13 +250,13 @@ public final class SingleEntryList<E> implements List<E>, RandomAccess, Cloneabl
     @Nonnull
     @Override
     public ListIterator<E> listIterator() {
-        return new SingleEntryListIterator<E>(this);
+        return new SingleEntryListIterator<>(this);
     }
 
     @Nonnull
     @Override
     public ListIterator<E> listIterator(int index) {
-        return new SingleEntryListIterator<E>(this, index);
+        return new SingleEntryListIterator<>(this, index);
     }
 
     @Nonnull
@@ -268,7 +268,7 @@ public final class SingleEntryList<E> implements List<E>, RandomAccess, Cloneabl
     @SuppressWarnings({"CloneDoesntCallSuperClone", "CloneCallsConstructors"})
     @Override
     public SingleEntryList clone() {
-        return new SingleEntryList<E>(this);
+        return new SingleEntryList<>(this);
     }
 
     private void writeObject(ObjectOutputStream outputStream) throws IOException {

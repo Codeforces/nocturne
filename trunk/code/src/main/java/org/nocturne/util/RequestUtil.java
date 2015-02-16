@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -28,43 +29,87 @@ public class RequestUtil {
     private static final String GET_REQUEST_PARAMS_CACHED_RESULT = "Codeforces::getRequestParamsCachedResult";
     private static final Pattern QUERY_STRING_SPLIT_PATTERN = Pattern.compile("&");
 
-    @SuppressWarnings({"unchecked", "OverlyLongMethod", "OverlyComplexMethod"})
     public static Map<String, List<String>> getRequestParams(HttpServletRequest request) {
-        Object cachedResult = request.getAttribute(GET_REQUEST_PARAMS_CACHED_RESULT);
-        if (cachedResult instanceof Map) {
-            return (Map<String, List<String>>) cachedResult;
+        Map<String, List<String>> cachedRequestParameters = getCachedRequestParameters(request);
+        if (cachedRequestParameters != null) {
+            return cachedRequestParameters;
         }
 
-        if ("post".equalsIgnoreCase(request.getMethod())) {
-            try {
-                FileItemFactory factory = new DiskFileItemFactory();
-                ServletFileUpload upload = new ServletFileUpload(factory);
-                List<FileItem> items = upload.parseRequest(request);
-                for (FileItem item : items) {
-                    InputStream inputStream = item.getInputStream();
-                    byte[] bytes = StreamUtil.getAsByteArray(inputStream);
-                    if (bytes != null) {
-                        if (item.isFormField()) {
-                            request.setAttribute(item.getFieldName(), new String(bytes, "UTF-8"));
-                        } else {
-                            request.setAttribute(item.getFieldName(), bytes);
-                        }
-                    }
-                    inputStream.close();
+        if ("POST".equalsIgnoreCase(request.getMethod())) {
+            addUploadedItemsToRequestAttributes(request);
+        }
 
-                    if (item.getName() != null && !item.getName().isEmpty()) {
-                        request.setAttribute(item.getFieldName() + "::name", item.getName());
+        Map<String, List<String>> requestParameters = new HashMap<>();
+
+        addRequestParametersFromParameterMap(requestParameters, request);
+        addRequestParametersFromAttributes(requestParameters, request);
+
+        setCachedRequestParameters(request, requestParameters);
+
+        return requestParameters;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, List<String>> getCachedRequestParameters(HttpServletRequest request) {
+        Object cachedRequestParameters = request.getAttribute(GET_REQUEST_PARAMS_CACHED_RESULT);
+        if (cachedRequestParameters instanceof Map) {
+            return (Map<String, List<String>>) cachedRequestParameters;
+        } else {
+            return null;
+        }
+    }
+
+    private static void setCachedRequestParameters(
+            HttpServletRequest request, Map<String, List<String>> requestParameters) {
+        request.setAttribute(GET_REQUEST_PARAMS_CACHED_RESULT, requestParameters);
+    }
+
+    private static void addUploadedItemsToRequestAttributes(HttpServletRequest request) {
+        try {
+            FileItemFactory factory = new DiskFileItemFactory();
+            ServletFileUpload upload = new ServletFileUpload(factory);
+            List<FileItem> items = upload.parseRequest(request);
+
+            for (FileItem item : items) {
+                String name = item.getFieldName();
+                InputStream inputStream = item.getInputStream();
+                byte[] bytes = StreamUtil.getAsByteArray(inputStream);
+                if (bytes != null) {
+                    if (item.isFormField()) {
+                        Object existingValue = request.getAttribute(name);
+                        String value = new String(bytes, StandardCharsets.UTF_8);
+
+                        if (existingValue == null) {
+                            request.setAttribute(name, value);
+                        } else if (existingValue instanceof Collection) {
+                            addStringToRawCollection((Collection) existingValue, value);
+                        } else {
+                            Collection<Object> values = new ArrayList<>(4);
+                            values.add(existingValue);
+                            values.add(value);
+                            request.setAttribute(name, values);
+                        }
+                    } else {
+                        request.setAttribute(name, bytes);
                     }
                 }
-            } catch (Exception ignored) {
-                // No operations.
-            }
-        }
+                inputStream.close();
 
-        Map<String, List<String>> result = new HashMap<String, List<String>>();
-        Map<Object, Object> o = request.getParameterMap();
-        for (Map.Entry<Object, Object> e : o.entrySet()) {
-            String key = e.getKey().toString();
+                if (item.getName() != null && !item.getName().isEmpty()) {
+                    request.setAttribute(name + "::name", item.getName());
+                }
+            }
+        } catch (Exception ignored) {
+            // No operations.
+        }
+    }
+
+    private static void addRequestParametersFromParameterMap(
+            Map<String, List<String>> requestParameters, HttpServletRequest request) {
+        Map<?, ?> parameterMap = request.getParameterMap();
+
+        for (Map.Entry<?, ?> e : parameterMap.entrySet()) {
+            String name = e.getKey().toString();
             Object value = e.getValue();
 
             List<String> parameters;
@@ -79,35 +124,71 @@ public class RequestUtil {
                     parameters.add(values[index].toString());
                 }
             } else {
-                parameters = new SingleEntryList<String>(value.toString());
+                parameters = new SingleEntryList<>(value.toString());
             }
 
-            result.put(key, parameters);
-            if (key.endsWith("[]")) {
-                key = key.substring(0, key.length() - 2);
-                result.put(key, parameters);
+            requestParameters.put(name, parameters);
+
+            if (name.endsWith("[]")) {
+                name = name.substring(0, name.length() - "[]".length());
+                requestParameters.put(name, parameters);
             }
         }
+    }
 
-        try {
-            Enumeration enumeration = request.getAttributeNames();
-            while (enumeration.hasMoreElements()) {
-                String name = enumeration.nextElement().toString();
-                Object value = request.getAttribute(name);
-                if (value != null) {
-                    if (value instanceof byte[]) {
-                        result.put(name, new SingleEntryList<String>(new String((byte[]) value, "UTF-8")));
-                    } else {
-                        result.put(name, new SingleEntryList<String>(request.getAttribute(name).toString()));
+    private static void addRequestParametersFromAttributes(
+            Map<String, List<String>> requestParameters, HttpServletRequest request) {
+        Enumeration enumeration = request.getAttributeNames();
+
+        while (enumeration.hasMoreElements()) {
+            String name = enumeration.nextElement().toString();
+            Object value = request.getAttribute(name);
+
+            if (value != null) {
+                if (value instanceof byte[]) {
+                    requestParameters.put(name, new SingleEntryList<>(new String((byte[]) value, StandardCharsets.UTF_8)));
+                    continue;
+                }
+
+                if (value instanceof List) {
+                    List list = (List) value;
+                    if (isListOfStrings(list)) {
+                        requestParameters.put(name, castToStringList(list));
+                        continue;
                     }
                 }
+
+                if (value instanceof Collection) {
+                    List<?> list = new ArrayList<>((Collection<?>) value);
+                    if (isListOfStrings(list)) {
+                        requestParameters.put(name, castToStringList(list));
+                        continue;
+                    }
+                }
+
+                requestParameters.put(name, new SingleEntryList<>(request.getAttribute(name).toString()));
             }
-        } catch (UnsupportedEncodingException e) {
-            throw new NocturneException("Can't use encoding UTF-8.", e);
+        }
+    }
+
+    private static boolean isListOfStrings(List list) {
+        for (Object o : list) {
+            if (!(o instanceof String)) {
+                return false;
+            }
         }
 
-        request.setAttribute(GET_REQUEST_PARAMS_CACHED_RESULT, result);
-        return result;
+        return true;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> castToStringList(List list) {
+        return (List<String>) list;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void addStringToRawCollection(Collection existingValue, String value) {
+        existingValue.add(value);
     }
 
     /**
@@ -117,7 +198,7 @@ public class RequestUtil {
      * @return Map containing all parameters as strings. Expects UTF-8 encoding.
      */
     public static Map<String, String> parseGetParameters(HttpServletRequest request) {
-        Map<String, String> parameters = new HashMap<String, String>();
+        Map<String, String> parameters = new HashMap<>();
         try {
             String query = request.getQueryString();
             if (query != null && !query.isEmpty()) {
@@ -138,7 +219,7 @@ public class RequestUtil {
                         }
 
                         try {
-                            parameters.put(key, URLDecoder.decode(value, "UTF-8"));
+                            parameters.put(key, URLDecoder.decode(value, StandardCharsets.UTF_8.name()));
                         } catch (IllegalArgumentException ignored) {
                             // No operations.
                         }

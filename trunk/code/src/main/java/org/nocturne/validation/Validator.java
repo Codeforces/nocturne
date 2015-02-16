@@ -33,6 +33,7 @@ public abstract class Validator {
      * @param args     Shortcut arguments.
      * @return The same as {@code ApplicationContext.getInstance().$()}.
      */
+    @SuppressWarnings("OverloadedVarargsMethod")
     public String $(String shortcut, Object... args) {
         return ApplicationContext.getInstance().$(shortcut, args);
     }

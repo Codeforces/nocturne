@@ -46,7 +46,7 @@ public interface RequestRouter {
         /**
          * Parameters which will be also injected for @Parameter annotation.
          */
-        private final Map<String, List<String>> overrideParameters = new HashMap<String, List<String>>();
+        private final Map<String, List<String>> overrideParameters = new HashMap<>();
 
         /**
          * @param pageClassName Controller class name.
@@ -62,7 +62,7 @@ public interface RequestRouter {
          * @param value Parameter value.
          */
         public void addOverrideParameter(String key, String value) {
-            overrideParameters.put(key, new SingleEntryList<String>(value));
+            overrideParameters.put(key, new SingleEntryList<>(value));
         }
 
         /**
@@ -70,7 +70,7 @@ public interface RequestRouter {
          * @param values Parameter values.
          */
         public void addOverrideParameter(String key, List<String> values) {
-            overrideParameters.put(key, new ArrayList<String>(values));
+            overrideParameters.put(key, new ArrayList<>(values));
         }
 
         /**

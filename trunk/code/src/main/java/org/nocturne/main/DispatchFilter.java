@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -62,8 +63,8 @@ public class DispatchFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-        servletRequest.setCharacterEncoding("UTF-8");
-        servletResponse.setCharacterEncoding("UTF-8");
+        servletRequest.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        servletResponse.setCharacterEncoding(StandardCharsets.UTF_8.name());
 
         if (servletRequest instanceof HttpServletRequest && servletResponse instanceof HttpServletResponse) {
             HttpServletRequest request = (HttpServletRequest) servletRequest;
