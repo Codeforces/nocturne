@@ -300,6 +300,8 @@ public class RequestDispatcher {
         } catch (Exception e) {
             logger.error("Exception while processing request.", e);
             throw new ServletException(e);
+        } finally {
+            applicationContext.unsetRequestAndResponse();
         }
     }
 
