@@ -234,6 +234,10 @@ public class ApplicationContext {
         requestsPerThread.set(new RequestContext(request, response));
     }
 
+    public void unsetRequestAndResponse() {
+        requestsPerThread.set(new RequestContext(null, null));
+    }
+
     /**
      * In debug mode it will return reloading class loader, and it
      * will return typical web-application class loader in production mode.
@@ -860,10 +864,18 @@ public class ApplicationContext {
         private Map<String, List<String>> overrideParameters;
 
         private RequestContext(HttpServletRequest request, HttpServletResponse response) {
+            if ((request == null) ^ (response == null)) {
+                throw new IllegalArgumentException("It is not possible case '(request == null) ^ (response == null)'.");
+            }
+
             this.request = request;
             this.response = response;
 
-            setupLocale();
+            if (request == null) {
+                this.locale = null;
+            } else {
+                setupLocale();
+            }
         }
 
         /**
