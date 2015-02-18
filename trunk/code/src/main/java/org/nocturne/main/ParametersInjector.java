@@ -89,7 +89,7 @@ public class ParametersInjector {
                 throw new ConfigurationException("Each parameter of the method " + method.getDeclaringClass().getName()
                         + '#' + method.getName() + " should be annotated with @Parameter.");
             }
-            if (StringUtil.isEmptyOrNull(parameter.name())) {
+            if (StringUtil.isEmpty(parameter.name())) {
                 throw new ConfigurationException("Each @Parameter in the method " + method.getDeclaringClass().getName()
                         + '#' + method.getName() + " should have name.");
             }

@@ -6,6 +6,7 @@ package org.nocturne.link;
 import freemarker.template.TemplateModel;
 import freemarker.template.TemplateModelException;
 import freemarker.template.TemplateSequenceModel;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.mutable.MutableBoolean;
 import org.nocturne.annotation.Name;
 import org.nocturne.collection.SingleEntryList;
@@ -21,7 +22,6 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -204,9 +204,7 @@ public class Links {
                     ++matchedCount;
                     List<String> values = nonEmptyParams.get(section.getParameterName());
                     String value = values == null ? null : values.get(0);
-                    Set<String> allowedParameterValues = section.getAllowedParameterValues();
-                    if (value == null
-                            || (!allowedParameterValues.isEmpty() && !allowedParameterValues.contains(value))) {
+                    if (value == null || !section.isSuitable(value)) {
                         matched = false;
                         break;
                     }
@@ -552,8 +550,7 @@ public class Links {
                 LinkSection section = sections.get(linkTokenIndex);
 
                 if (section.isParameter()) {
-                    if (!section.getAllowedParameterValues().isEmpty()
-                            && !section.getAllowedParameterValues().contains(linkTokens[linkTokenIndex])) {
+                    if (!section.isSuitable(linkTokens[linkTokenIndex])) {
                         return null;
                     }
                     attrs.put(section.getParameterName(), linkTokens[linkTokenIndex]);
@@ -585,8 +582,9 @@ public class Links {
 
     private static List<LinkSection> parseLinkToLinkSections(String linkText) {
         if (linkText == null || linkText.startsWith("/") || linkText.endsWith("/")) {
-            throw new ConfigurationException("Page link has illegal format, use links like" +
-                    " 'home', 'page/{index}', 'page/{index:1,2,3}'.");
+            throw new ConfigurationException("Page link has illegal format, use links like 'home', 'page/{index}', " +
+                    "'page/{index(long,positive):1,2,3}', 'section/{name(string,!blank):!a,b,c}'."
+            );
         }
 
         String[] sections = StringUtil.Patterns.SLASH_PATTERN.split(linkText);
@@ -603,37 +601,105 @@ public class Links {
         private final boolean parameter;
         private final String value;
         private final String parameterName;
+        private final List<ParameterRestriction> parameterRestrictions;
         private final Set<String> allowedParameterValues;
+        private final Set<String> forbiddenParameterValues;
 
         /**
          * @param section Each part of link, i.e. "home" from link "test/home"
          */
+        @SuppressWarnings({"OverlyComplexMethod", "OverlyLongMethod", "OverlyNestedMethod"})
         private LinkSection(String section) {
+            section = StringUtil.trim(section);
             this.section = section;
 
             if (section.startsWith("{") && section.endsWith("}")) {
-                value = null;
                 parameter = true;
+                value = null;
 
                 String[] parts = StringUtil.Patterns.COLON_PATTERN.split(section.substring(1, section.length() - 1));
+                int partCount = parts.length;
 
-                if (parts.length == 1) {
-                    parameterName = parts[0];
-                    allowedParameterValues = Collections.emptySet();
-                } else if (parts.length == 2) {
-                    parameterName = parts[0];
-                    allowedParameterValues = new ConcurrentSkipListSet<>(
-                            Arrays.asList(StringUtil.Patterns.COMMA_PATTERN.split(parts[1]))
-                    );
+                if (partCount >= 1 && partCount <= 2) {
+                    String namePart = StringUtil.trimToNull(parts[0]);
+                    if (namePart == null) {
+                        throw getInvalidSectionException(section);
+                    }
+                    int namePartLength = namePart.length();
+
+                    parameterRestrictions = new ArrayList<>(0);
+
+                    if (namePart.charAt(namePartLength - 1) == ')') {
+                        int openParenthesisIndex = namePart.indexOf('(');
+
+                        if (openParenthesisIndex >= 0) {
+                            parameterName = namePart.substring(0, openParenthesisIndex);
+
+                            String[] restrictionRules = StringUtil.Patterns.COMMA_PATTERN.split(
+                                    namePart.substring(openParenthesisIndex + 1, namePartLength - 1)
+                            );
+
+                            for (String restrictionRule : restrictionRules) {
+                                if (StringUtil.isEmpty(restrictionRule = StringUtil.trim(restrictionRule))) {
+                                    continue;
+                                }
+
+                                parameterRestrictions.add(getParameterRestriction(section, restrictionRule));
+                            }
+                        } else {
+                            parameterName = namePart;
+                        }
+                    } else {
+                        parameterName = namePart;
+                    }
+
+                    if (partCount == 1) {
+                        allowedParameterValues = null;
+                        forbiddenParameterValues = null;
+                    } else {
+                        allowedParameterValues = new HashSet<>();
+                        forbiddenParameterValues = new HashSet<>();
+
+                        for (String valueRule : StringUtil.Patterns.COMMA_PATTERN.split(parts[1])) {
+                            if (StringUtil.isEmpty(valueRule = StringUtil.trim(valueRule))) {
+                                continue;
+                            }
+
+                            if (valueRule.charAt(0) == '!') {
+                                forbiddenParameterValues.add(valueRule.substring(1));
+                            } else {
+                                allowedParameterValues.add(valueRule);
+                            }
+                        }
+
+                        if (!allowedParameterValues.isEmpty()) {
+                            parameterRestrictions.add(new ParameterRestriction() {
+                                @Override
+                                public boolean isSuitable(String value) {
+                                    return allowedParameterValues.contains(value);
+                                }
+                            });
+                        }
+
+                        if (!forbiddenParameterValues.isEmpty()) {
+                            parameterRestrictions.add(new ParameterRestriction() {
+                                @Override
+                                public boolean isSuitable(String value) {
+                                    return !forbiddenParameterValues.contains(value);
+                                }
+                            });
+                        }
+                    }
                 } else {
-                    throw new ConfigurationException("Link section \"" + section + "\" has invalid format, examples of valid formats: " +
-                            "\"test\", \"{userName}\", \"{id:1,2,3}\".");
+                    throw getInvalidSectionException(section);
                 }
             } else {
-                value = section;
                 parameter = false;
-                allowedParameterValues = null;
+                value = section;
                 parameterName = null;
+                parameterRestrictions = null;
+                allowedParameterValues = null;
+                forbiddenParameterValues = null;
             }
         }
 
@@ -642,24 +708,270 @@ public class Links {
         }
 
         public String getValue() {
-            if (parameter) {
-                throw new IllegalStateException("Can't read value of parameter section \"" + section + "\".");
-            }
+            ensureValueSection("value");
             return value;
         }
 
         public String getParameterName() {
-            if (!parameter) {
-                throw new IllegalStateException("Can't read parameterName of non-parameter section \"" + section + "\".");
-            }
+            ensureParameterSection("parameterName");
             return parameterName;
         }
 
-        public Set<String> getAllowedParameterValues() {
-            if (!parameter) {
-                throw new IllegalStateException("Can't read allowedParameterValues of non-parameter section \"" + section + "\".");
+        public List<ParameterRestriction> getParameterRestrictions() {
+            ensureParameterSection("parameterRestrictions");
+            return Collections.unmodifiableList(parameterRestrictions);
+        }
+
+        public boolean isSuitable(String value) {
+            for (ParameterRestriction parameterRestriction : getParameterRestrictions()) {
+                if (!parameterRestriction.isSuitable(value)) {
+                    return false;
+                }
             }
-            return Collections.unmodifiableSet(allowedParameterValues);
+
+            return true;
+        }
+
+        private void ensureValueSection(String fieldName) {
+            if (parameter) {
+                throw new IllegalStateException(String.format(
+                        "Can't read field '%s' of non-value section '%s'.", fieldName, section
+                ));
+            }
+        }
+
+        private void ensureParameterSection(String fieldName) {
+            if (!parameter) {
+                throw new IllegalStateException(String.format(
+                        "Can't read field '%s' of non-parameter section '%s'.", fieldName, section
+                ));
+            }
+        }
+
+        private static ConfigurationException getInvalidSectionException(String section) {
+            return new ConfigurationException("Link section '" + section + "' has invalid format, " +
+                    "examples of valid formats: 'test', '{userName}', '{id(int):1,2,3}', " +
+                    "{title(string,!empty):!title}."
+            );
+        }
+
+        private interface ParameterRestriction {
+            boolean isSuitable(String value);
+        }
+
+        private static final class NegatedParameterRestriction implements ParameterRestriction {
+            @Nonnull
+            private final ParameterRestriction parameterRestriction;
+
+            private NegatedParameterRestriction(@Nonnull ParameterRestriction parameterRestriction) {
+                this.parameterRestriction = parameterRestriction;
+            }
+
+            @Override
+            public boolean isSuitable(String value) {
+                return !parameterRestriction.isSuitable(value);
+            }
+        }
+
+        private static ParameterRestriction getParameterRestriction(String section, String restrictionRule) {
+            if (restrictionRule != null && restrictionRule.startsWith("!")) {
+                return new NegatedParameterRestriction(internalGetParameterRestriction(
+                        section, restrictionRule.substring(1)
+                ));
+            } else {
+                return internalGetParameterRestriction(section, restrictionRule);
+            }
+        }
+
+        @SuppressWarnings({"OverlyComplexMethod", "OverlyLongMethod"})
+        @Nonnull
+        private static ParameterRestriction internalGetParameterRestriction(String section, String restrictionRule) {
+            if ("null".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        return value == null;
+                    }
+                };
+            } else if ("empty".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        return StringUtil.isEmpty(value);
+                    }
+                };
+            } else if ("blank".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        return StringUtil.isBlank(value);
+                    }
+                };
+            } else if ("alpha".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        return StringUtils.isAlpha(value);
+                    }
+                };
+            } else if ("numeric".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        return StringUtils.isNumeric(value);
+                    }
+                };
+            } else if ("alphanumeric".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        return StringUtils.isAlphanumeric(value);
+                    }
+                };
+            } else if ("byte".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        try {
+                            Byte.parseByte(value);
+                            return true;
+                        } catch (RuntimeException ignored) {
+                            return false;
+                        }
+                    }
+                };
+            } else if ("short".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        try {
+                            Short.parseShort(value);
+                            return true;
+                        } catch (RuntimeException ignored) {
+                            return false;
+                        }
+                    }
+                };
+            } else if ("int".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        try {
+                            Integer.parseInt(value);
+                            return true;
+                        } catch (RuntimeException ignored) {
+                            return false;
+                        }
+                    }
+                };
+            } else if ("long".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        try {
+                            Long.parseLong(value);
+                            return true;
+                        } catch (RuntimeException ignored) {
+                            return false;
+                        }
+                    }
+                };
+            } else if ("float".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        try {
+                            Float.parseFloat(value);
+                            return true;
+                        } catch (RuntimeException ignored) {
+                            return false;
+                        }
+                    }
+                };
+            } else if ("double".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        try {
+                            Double.parseDouble(value);
+                            return true;
+                        } catch (RuntimeException ignored) {
+                            return false;
+                        }
+                    }
+                };
+            } else if ("positive".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        try {
+                            return Double.parseDouble(value) > 0.0D;
+                        } catch (RuntimeException ignored) {
+                            return false;
+                        }
+                    }
+                };
+            } else if ("nonpositive".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        try {
+                            return Double.parseDouble(value) <= 0.0D;
+                        } catch (RuntimeException ignored) {
+                            return false;
+                        }
+                    }
+                };
+            } else if ("negative".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        try {
+                            return Double.parseDouble(value) < 0.0D;
+                        } catch (RuntimeException ignored) {
+                            return false;
+                        }
+                    }
+                };
+            } else if ("nonnegative".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        try {
+                            return Double.parseDouble(value) >= 0.0D;
+                        } catch (RuntimeException ignored) {
+                            return false;
+                        }
+                    }
+                };
+            } else if ("zero".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        try {
+                            return Double.parseDouble(value) == 0.0D;
+                        } catch (RuntimeException ignored) {
+                            return false;
+                        }
+                    }
+                };
+            } else if ("nonzero".equalsIgnoreCase(restrictionRule)) {
+                return new ParameterRestriction() {
+                    @Override
+                    public boolean isSuitable(String value) {
+                        try {
+                            return Double.parseDouble(value) != 0.0D;
+                        } catch (RuntimeException ignored) {
+                            return false;
+                        }
+                    }
+                };
+            } else {
+                throw new ConfigurationException(String.format(
+                        "Link section '%s' contains unsupported parameter restriction '%s'.",
+                        section, restrictionRule
+                ));
+            }
         }
     }
 

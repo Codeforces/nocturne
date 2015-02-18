@@ -176,7 +176,7 @@ public class DispatchFilter implements Filter {
                 System.out.println("NOCTURNE: ReloadingClassLoader created because of dreamcatcher.can-not-redefine-class=true"
                         + " [reloadingClassLoader=" + reloadingClassLoader
                         + ", delegationClassLoader=" + reloadingClassLoader.getDelegationClassLoader()
-                        + "]");
+                        + ']');
             }
         }
 

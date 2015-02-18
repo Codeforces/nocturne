@@ -41,7 +41,7 @@ public class EmailValidator extends Validator {
     public void run(String value) throws ValidationException {
         boolean invalid = false;
 
-        if (StringUtil.isEmptyOrNull(value)) {
+        if (StringUtil.isEmpty(value)) {
             invalid = true;
         }
 

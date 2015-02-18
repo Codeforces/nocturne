@@ -67,14 +67,14 @@ class ApplicationContextLoader {
 
     private static void setupResetProperties() {
         String strategy = properties.getProperty("nocturne.reset.strategy");
-        if (StringUtil.isEmptyOrNull(strategy)) {
+        if (StringUtil.isEmpty(strategy)) {
             ApplicationContext.getInstance().setResetStrategy(ResetStrategy.PERSIST);
         } else {
             ApplicationContext.getInstance().setResetStrategy(ResetStrategy.valueOf(strategy));
         }
 
         String resetAnnotations = properties.getProperty("nocturne.reset.reset-annotations");
-        if (StringUtil.isEmptyOrNull(resetAnnotations)) {
+        if (StringUtil.isEmpty(resetAnnotations)) {
             ApplicationContext.getInstance().setResetAnnotations(Arrays.asList(Reset.class.getName()));
         } else {
             String[] annotations = ITEMS_SPLIT_PATTERN.split(resetAnnotations);
@@ -82,7 +82,7 @@ class ApplicationContextLoader {
         }
 
         String persistAnnotations = properties.getProperty("nocturne.reset.persist-annotations");
-        if (StringUtil.isEmptyOrNull(persistAnnotations)) {
+        if (StringUtil.isEmpty(persistAnnotations)) {
             ApplicationContext.getInstance().setPersistAnnotations(Arrays.asList(
                     Persist.class.getName(),
                     Inject.class.getName()
@@ -282,7 +282,7 @@ class ApplicationContextLoader {
                 }
                 ApplicationContext.getInstance().setTemplatesUpdateDelay(templatesUpdateDelay);
             } catch (NumberFormatException e) {
-                throw new ConfigurationException("Parameter nocturne.templates-update-delay should be integer.");
+                throw new ConfigurationException("Parameter nocturne.templates-update-delay should be integer.", e);
             }
         }
 
@@ -324,7 +324,7 @@ class ApplicationContextLoader {
     private static List<String> listOfNonEmpties(String[] strings) {
         List<String> result = new ArrayList<>(strings.length);
         for (String s : strings) {
-            if (!StringUtil.isEmptyOrNull(s)) {
+            if (!StringUtil.isEmpty(s)) {
                 result.add(s);
             }
         }
@@ -378,7 +378,7 @@ class ApplicationContextLoader {
         String guiceModuleClassName = ApplicationContext.getInstance().getGuiceModuleClassName();
         GenericIocModule module = new GenericIocModule();
 
-        if (!StringUtil.isEmptyOrNull(guiceModuleClassName)) {
+        if (!StringUtil.isEmpty(guiceModuleClassName)) {
             try {
                 module.setModule(getApplicationModule(guiceModuleClassName));
             } catch (Exception e) {

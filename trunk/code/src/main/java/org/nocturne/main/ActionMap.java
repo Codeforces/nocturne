@@ -78,7 +78,7 @@ class ActionMap {
         }
     }
 
-    private void ensureProperlyAnnotatedParameters(Method method) {
+    private static void ensureProperlyAnnotatedParameters(Method method) {
         if (method.getParameterTypes().length != method.getParameterAnnotations().length) {
             throw new NocturneException("Expected \"method.getParameterTypes().length != method.getParameterAnnotations().length\".");
         }
@@ -90,16 +90,16 @@ class ActionMap {
             for (Annotation annotation : annotations) {
                 if (annotation instanceof Parameter) {
                     hasParameter = true;
-                    hasNamedParameter = !StringUtil.isEmptyOrNull(((Parameter)annotation).name());
+                    hasNamedParameter = !StringUtil.isEmpty(((Parameter) annotation).name());
                 }
             }
             if (!hasParameter) {
                 throw new ConfigurationException("Each parameter of the method " + method.getDeclaringClass().getName()
-                        + "#" + method.getName() + " should be annotated with @Parameter.");
+                        + '#' + method.getName() + " should be annotated with @Parameter.");
             }
             if (!hasNamedParameter) {
                 throw new ConfigurationException("Each @Parameter in the method " + method.getDeclaringClass().getName()
-                        + "#" + method.getName() + " should have name.");
+                        + '#' + method.getName() + " should have name.");
             }
         }
     }

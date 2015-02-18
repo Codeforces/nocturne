@@ -18,7 +18,18 @@ import java.lang.annotation.*;
 public @interface Link {
     /**
      * @return Use ";" to separate links. Do not use slash as a first character.
-     *         Example: "user/{login};profile".
+     *         <p/>
+     *         Example:
+     *         - "user/{login};profile" - first link contains 'login' parameter, second link contains no parameters;
+     *         - "user/{login(!blank,alphanumeric):!admin}" - link contains 'login' parameter with restrictions
+     *         (should be not blank and should contain only letters and digits, also should not be equal to 'admin');
+     *         - "book/{bookId(long,positive)}" - link contains 'bookId' parameter with restrictions (should be a
+     *         positive long integer);
+     *         - "action/{action:purchase,sell,!action}" - link contains 'action' parameter with restrictions (should
+     *         be either equal to 'purchase' or 'sell' and should not be equal to 'action').
+     *         <p/>
+     *         List of restrictions: null, empty, blank, alpha, numeric, alphanumeric, byte, short, int, long, float,
+     *         double, positive, nonpositive, negative, nonnegative, zero, nonzero.
      */
     String value();
 
@@ -44,9 +55,9 @@ public @interface Link {
     interface Type {
     }
 
-    public class Builder {
-        public static Link newLink(@Nonnull final String value, @Nonnull final String name, @Nonnull final String action,
-                                   @Nonnull final Class<? extends Type>[] types) {
+    class Builder {
+        public static Link newLink(@Nonnull final String value, @Nonnull final String name,
+                                   @Nonnull final String action, @Nonnull final Class<? extends Type>[] types) {
             return new Link() {
                 @Override
                 public String value() {
