@@ -35,7 +35,7 @@ public class LinkedRequestRouter implements RequestRouter {
                 }
             }
 
-            if (StringUtil.isEmptyOrNull(action)) {
+            if (StringUtil.isEmpty(action)) {
                 action = linkMatchResult.getLink().action();
             }
 

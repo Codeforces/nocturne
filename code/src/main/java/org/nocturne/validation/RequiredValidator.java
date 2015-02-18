@@ -33,7 +33,7 @@ public class RequiredValidator extends Validator {
 
     @Override
     public void run(String value) throws ValidationException {
-        if (StringUtil.isEmptyOrNull(value)) {
+        if (StringUtil.isEmpty(value)) {
             throw new ValidationException($(message));
         }
     }
