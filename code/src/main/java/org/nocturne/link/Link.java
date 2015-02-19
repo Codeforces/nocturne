@@ -22,7 +22,7 @@ public @interface Link {
      *         Example:
      *         - "user/{login};profile" - first link contains 'login' parameter, second link contains no parameters;
      *         - "user/{login(!blank,alphanumeric):!admin}" - link contains 'login' parameter with restrictions
-     *         (should be not blank and should contain only letters and digits, also should not be equal to 'admin');
+     *         (should not be blank and should contain only letters and digits, also should not be equal to 'admin');
      *         - "book/{bookId(long,positive)}" - link contains 'bookId' parameter with restrictions (should be a
      *         positive long integer);
      *         - "action/{action:purchase,sell,!action}" - link contains 'action' parameter with restrictions (should
