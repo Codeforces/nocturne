@@ -37,4 +37,9 @@ public class StringCharactersValidator extends Validator {
             }
         }
     }
+
+    @Override
+    public String toString() {
+        return String.format("StringCharactersValidator {alphabet='%s'}", alphabet);
+    }
 }

@@ -37,4 +37,9 @@ public abstract class Validator {
     public String $(String shortcut, Object... args) {
         return ApplicationContext.getInstance().$(shortcut, args);
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + " {}";
+    }
 }

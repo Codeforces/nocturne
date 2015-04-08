@@ -3,6 +3,8 @@
  */
 package org.nocturne.validation;
 
+import java.util.Arrays;
+
 /**
  * Validates that given value equals to one object from the given list.
  * Uses object.toString().equals(value) to check equality.
@@ -44,5 +46,10 @@ public class OptionValidator extends Validator {
         }
 
         throw new ValidationException($("Field contains unexpected value"));
+    }
+
+    @Override
+    public String toString() {
+        return String.format("OptionValidator {options=%s}", Arrays.toString(options));
     }
 }
