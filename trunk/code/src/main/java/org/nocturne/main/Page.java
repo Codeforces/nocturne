@@ -30,12 +30,12 @@ public abstract class Page extends Component {
     /**
      * Stores additional css resources added by addCss() from the page or internal frames.
      */
-    private final Set<String> cssSet = new HashSet<>();
+    private final Set<String> cssSet = new LinkedHashSet<>();
 
     /**
      * Stores additional js resources added by addJs() from the page or internal frames.
      */
-    private final Set<String> jsSet = new HashSet<>();
+    private final Set<String> jsSet = new LinkedHashSet<>();
 
     /**
      * Default is null, which means no postprocessing.

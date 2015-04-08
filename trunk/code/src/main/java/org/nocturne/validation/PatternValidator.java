@@ -36,4 +36,9 @@ public class PatternValidator extends Validator {
             throw new ValidationException($(message));
         }
     }
+
+    @Override
+    public String toString() {
+        return String.format("PatternValidator {pattern='%s'}", pattern);
+    }
 }

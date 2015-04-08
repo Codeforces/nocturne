@@ -31,7 +31,7 @@ public class LengthValidator extends Validator {
     }
 
     /**
-     * @param minimalLength Mimimal length.
+     * @param minimalLength Minimal length.
      * @param maximalLength Maximal length.
      */
     public LengthValidator(int minimalLength, int maximalLength) {
@@ -72,5 +72,12 @@ public class LengthValidator extends Validator {
                     $("Field should contain no more than {0,number,#} characters", maximalLength)
             );
         }
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "LengthValidator {minimalLength=%d, maximalLength=%d}", minimalLength, maximalLength
+        );
     }
 }
