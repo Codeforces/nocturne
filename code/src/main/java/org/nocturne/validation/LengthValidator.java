@@ -55,7 +55,7 @@ public class LengthValidator extends Validator {
         }
 
         if (minimalLength <= 0 && value == null) {
-            logger.error("Value is `null` but minimalLength<=0.");
+            logger.error("Value is `null` but minimalLength <= 0.");
             throw new ValidationException($("Field should not be empty"));
         }
 
