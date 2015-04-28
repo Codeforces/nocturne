@@ -345,7 +345,7 @@ public abstract class Component {
      */
     public Logger getLogger() {
         if (logger == null) {
-            logger = Logger.getLogger(this.getClass());
+            logger = Logger.getLogger(ReflectionUtil.getRealComponentClass(this.getClass()));
         }
 
         return logger;

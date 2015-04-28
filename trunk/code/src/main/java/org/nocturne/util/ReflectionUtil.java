@@ -4,8 +4,11 @@
 package org.nocturne.util;
 
 import org.nocturne.exception.ReflectionException;
+import org.nocturne.main.Component;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Reflection utilities.
@@ -13,6 +16,8 @@ import java.lang.reflect.Method;
  * @author Mike Mirzayanov
  */
 public class ReflectionUtil {
+    private static final ConcurrentMap<Class<?>, Class<?>> realClassByGeneratedClass = new ConcurrentHashMap<>();
+
     /**
      * Invokes method by name for object, finds method among methods
      * of specified class.
@@ -61,5 +66,30 @@ public class ReflectionUtil {
     public static Object invoke(Object object, String methodName, Object... args) throws ReflectionException {
         Class<?> clazz = object.getClass();
         return invoke(clazz, object, methodName, args);
+    }
+
+    /**
+     * @param clazz Component class.
+     * @return Original class can be wrapped by Google Guice because of IoC.
+     *         The method returns original class by possible wrapped.
+     */
+    @SuppressWarnings("ConstantConditions")
+    public static Class<?> getRealComponentClass(Class<? extends Component> clazz) {
+        Class<?> result = realClassByGeneratedClass.get(clazz);
+        if (result != null) {
+            return result;
+        }
+
+        result = clazz;
+        while (isGeneratedClass(result)) {
+            result = result.getSuperclass();
+        }
+
+        realClassByGeneratedClass.putIfAbsent(clazz, result);
+        return realClassByGeneratedClass.get(clazz);
+    }
+
+    private static boolean isGeneratedClass(Class<?> clazz) {
+        return clazz.getName().contains("$$") || clazz.getName().contains("EnhancerByGuice");
     }
 }
