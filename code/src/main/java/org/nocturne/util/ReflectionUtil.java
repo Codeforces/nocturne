@@ -4,11 +4,13 @@
 package org.nocturne.util;
 
 import org.nocturne.exception.ReflectionException;
-import org.nocturne.main.Component;
 
 import java.lang.reflect.Method;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Reflection utilities.
@@ -16,7 +18,8 @@ import java.util.concurrent.ConcurrentMap;
  * @author Mike Mirzayanov
  */
 public class ReflectionUtil {
-    private static final ConcurrentMap<Class<?>, Class<?>> realClassByGeneratedClass = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, Class<?>> originalClassByWrapperClass = new HashMap<>();
+    private static final ReadWriteLock originalClassByWrapperClassMapLock = new ReentrantReadWriteLock();
 
     /**
      * Invokes method by name for object, finds method among methods
@@ -69,27 +72,43 @@ public class ReflectionUtil {
     }
 
     /**
-     * @param clazz Component class.
-     * @return Original class can be wrapped by Google Guice because of IoC.
-     *         The method returns original class by possible wrapped.
+     * Original class can be wrapped by Google Guice because of IoC.
+     * The method returns original class by possible wrapped.
+     *
+     * @param wrapperClass wrapper class or original class.
+     * @return original class.
      */
-    @SuppressWarnings("ConstantConditions")
-    public static Class<?> getRealComponentClass(Class<? extends Component> clazz) {
-        Class<?> result = realClassByGeneratedClass.get(clazz);
-        if (result != null) {
-            return result;
+    public static Class<?> getOriginalClass(Class<?> wrapperClass) {
+        Class<?> originalClass;
+
+        Lock readLock = originalClassByWrapperClassMapLock.readLock();
+        readLock.lock();
+        try {
+            originalClass = originalClassByWrapperClass.get(wrapperClass);
+            if (originalClass != null) {
+                return originalClass;
+            }
+        } finally {
+            readLock.unlock();
         }
 
-        result = clazz;
-        while (isGeneratedClass(result)) {
-            result = result.getSuperclass();
+        originalClass = wrapperClass;
+        while (isWrapperClass(originalClass)) {
+            originalClass = originalClass.getSuperclass();
         }
 
-        realClassByGeneratedClass.putIfAbsent(clazz, result);
-        return realClassByGeneratedClass.get(clazz);
+        Lock writeLock = originalClassByWrapperClassMapLock.writeLock();
+        writeLock.lock();
+        try {
+            originalClassByWrapperClass.put(wrapperClass, originalClass);
+            return originalClass;
+        } finally {
+            writeLock.unlock();
+        }
     }
 
-    private static boolean isGeneratedClass(Class<?> clazz) {
-        return clazz.getName().contains("$$") || clazz.getName().contains("EnhancerByGuice");
+    private static boolean isWrapperClass(Class<?> clazz) {
+        String className = clazz.getName();
+        return className.contains("$$") || className.contains("EnhancerByGuice");
     }
 }
