@@ -3,6 +3,7 @@
  */
 package org.nocturne.main;
 
+import com.google.common.primitives.Ints;
 import com.google.inject.Injector;
 import org.apache.commons.lang.ArrayUtils;
 import org.nocturne.caption.Captions;
@@ -20,12 +21,14 @@ import org.nocturne.util.RequestUtil;
 import org.nocturne.util.StringUtil;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -491,7 +494,7 @@ public class ApplicationContext {
     }
 
     void setTemplatePaths(String[] templatePaths) {
-        this.templatePaths = templatePaths;
+        this.templatePaths = Arrays.copyOf(templatePaths, templatePaths.length);
     }
 
     void setDefaultLocale(String defaultLanguage) {
@@ -564,7 +567,7 @@ public class ApplicationContext {
      *         Set nocturne.templates-path (deprecated) - single path.
      */
     public String[] getTemplatePaths() {
-        return templatePaths;
+        return Arrays.copyOf(templatePaths, templatePaths.length);
     }
 
     /**
@@ -866,6 +869,8 @@ public class ApplicationContext {
      * Stores current request context: request, response and locale.
      */
     private static final class RequestContext {
+        private static final Pattern ACCEPT_LANGUAGE_SPLIT_PATTERN = Pattern.compile("[,;-]");
+        private static final String LANGUAGE_COOKIE_NAME = "nocturne.language";
         /**
          * Http servlet request.
          */
@@ -925,7 +930,7 @@ public class ApplicationContext {
             return locale;
         }
 
-        private boolean isInvalidLanguage(String lang) {
+        private static boolean isInvalidLanguage(String lang) {
             return lang == null || lang.length() != 2;
         }
 
@@ -947,12 +952,17 @@ public class ApplicationContext {
                 if (session != null) {
                     lang = (String) session.getAttribute("nocturne.language");
                 }
+
+                if (isInvalidLanguage(lang)) {
+                    lang = getCookie(LANGUAGE_COOKIE_NAME);
+                }
+
                 if (isInvalidLanguage(lang)) {
                     lang = getLanguageByGeoip();
                     if (isInvalidLanguage(lang)) {
                         String[] languages = getAcceptLanguages();
                         for (String language : languages) {
-                            if (ApplicationContext.getInstance().getAllowedLanguages().contains(language)) {
+                            if (getInstance().getAllowedLanguages().contains(language)) {
                                 lang = language;
                                 break;
                             }
@@ -963,17 +973,56 @@ public class ApplicationContext {
             } else {
                 locale = localeByLanguage(lang);
                 request.getSession().setAttribute("nocturne.language", locale.getLanguage());
+                addCookie(LANGUAGE_COOKIE_NAME, lang, TimeUnit.DAYS.toSeconds(30));
+            }
+        }
+
+        private String getCookie(String cookieName) {
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if (cookieName.equals(cookie.getName())) {
+                        return cookie.getValue();
+                    }
+                }
+            }
+            return null;
+        }
+
+        private void addCookie(String cookieName, String cookieValue, long maxAge) {
+            boolean updated = false;
+            if (request.getCookies() != null) {
+                for (Cookie cookie : request.getCookies()) {
+                    if (cookie.getName().equals(cookieName)) {
+                        cookie.setValue(cookieValue);
+                        if (updated) {
+                            cookie.setMaxAge(0);
+                        } else {
+                            cookie.setMaxAge(Ints.checkedCast(maxAge));
+                        }
+                        cookie.setPath("/");
+                        response.addCookie(cookie);
+                        updated = true;
+                    }
+                }
+            }
+
+            if (!updated) {
+                Cookie cookie = new Cookie(cookieName, cookieValue);
+                cookie.setMaxAge(Ints.checkedCast(maxAge));
+                cookie.setPath("/");
+                response.addCookie(cookie);
             }
         }
 
         private String getLanguageByGeoip() {
             String countryCode = GeoipUtil.getCountryCode(request);
 
-            String lang = ApplicationContext.getInstance().getCountryToLanguage().get(countryCode);
+            String lang = getInstance().getCountryToLanguage().get(countryCode);
             String[] languages = getAcceptLanguages();
 
             if (ArrayUtils.indexOf(languages, lang) >= 0
-                    && ApplicationContext.getInstance().getAllowedLanguages().contains(lang)) {
+                    && getInstance().getAllowedLanguages().contains(lang)) {
                 return lang;
             }
 
@@ -981,12 +1030,12 @@ public class ApplicationContext {
         }
 
         private String[] getAcceptLanguages() {
-            String header = getRequest().getHeader("Accept-Language");
+            String header = request.getHeader("Accept-Language");
 
             if (StringUtil.isEmpty(header)) {
                 return EMPTY_STRING_ARRAY;
             } else {
-                return header.split("[,;-]");
+                return ACCEPT_LANGUAGE_SPLIT_PATTERN.split(header);
             }
         }
 
