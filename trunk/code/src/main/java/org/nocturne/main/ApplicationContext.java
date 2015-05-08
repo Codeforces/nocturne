@@ -11,11 +11,13 @@ import org.nocturne.collection.SingleEntryList;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.exception.NocturneException;
 import org.nocturne.exception.ReflectionException;
+import org.nocturne.geoip.GeoipUtil;
 import org.nocturne.link.Link;
 import org.nocturne.module.Module;
 import org.nocturne.reset.ResetStrategy;
 import org.nocturne.util.ReflectionUtil;
 import org.nocturne.util.RequestUtil;
+import org.nocturne.util.StringUtil;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -41,6 +43,8 @@ public class ApplicationContext {
      * The only singleton instance.
      */
     private static final ApplicationContext INSTANCE = new ApplicationContext();
+
+    private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
     /**
      * Lock to perform synchronized operations.
@@ -162,6 +166,12 @@ public class ApplicationContext {
      * Allowed languages (use 2-letter codes). Only English by default.
      */
     private List<String> allowedLanguages = Arrays.asList("en");
+
+    /**
+     * To use geoip to setup language by 2-letter uppercase country code (ISO 3166 code).
+     * The property should have a form like: RU,BY:ru;EN,GB,US,CA:en.
+     */
+    private Map<String, String> countryToLanguage = new HashMap<>();
 
     /**
      * Default reset strategy for fields of Components: should they be reset after request processing.
@@ -296,6 +306,14 @@ public class ApplicationContext {
      */
     public List<String> getAllowedLanguages() {
         return Collections.unmodifiableList(allowedLanguages);
+    }
+
+    /**
+     * @return Map to setup language by 2-letter uppercase country code (ISO 3166 code).
+     *         The property should have a form like: RU,BY:ru;EN,GB,US,CA:en.
+     */
+    public Map<String, String> getCountryToLanguage() {
+        return Collections.unmodifiableMap(countryToLanguage);
     }
 
     /**
@@ -564,6 +582,10 @@ public class ApplicationContext {
 
     void setAllowedLanguages(List<String> allowedLanguages) {
         this.allowedLanguages = new ArrayList<>(allowedLanguages);
+    }
+
+    void setCountryToLanguage(Map<String, String> countryToLanguage) {
+        this.countryToLanguage = new HashMap<>(countryToLanguage);
     }
 
     void setServletContext(ServletContext servletContext) {
@@ -903,34 +925,68 @@ public class ApplicationContext {
             return locale;
         }
 
+        private boolean isInvalidLanguage(String lang) {
+            return lang == null || lang.length() != 2;
+        }
+
         private void setupLocale() {
             Map<String, List<String>> requestMap = RequestUtil.getRequestParams(request);
 
             String lang = RequestUtil.getFirst(requestMap, "lang");
 
-            if (lang == null || lang.length() != 2) {
+            if (isInvalidLanguage(lang)) {
                 lang = RequestUtil.getFirst(requestMap, "language");
             }
 
-            if (lang == null || lang.length() != 2) {
+            if (isInvalidLanguage(lang)) {
                 lang = RequestUtil.getFirst(requestMap, "locale");
             }
 
-            if (lang == null) {
+            if (isInvalidLanguage(lang)) {
                 HttpSession session = request.getSession(false);
                 if (session != null) {
                     lang = (String) session.getAttribute("nocturne.language");
                 }
-                if (lang == null) {
-                    String requestUrl = request.getRequestURL().toString();
-                    if (requestUrl.contains(".ru/") || requestUrl.endsWith(".ru")) {
-                        lang = "ru";
+                if (isInvalidLanguage(lang)) {
+                    lang = getLanguageByGeoip();
+                    if (isInvalidLanguage(lang)) {
+                        String[] languages = getAcceptLanguages();
+                        for (String language : languages) {
+                            if (ApplicationContext.getInstance().getAllowedLanguages().contains(language)) {
+                                lang = language;
+                                break;
+                            }
+                        }
                     }
                 }
                 locale = localeByLanguage(lang);
             } else {
                 locale = localeByLanguage(lang);
                 request.getSession().setAttribute("nocturne.language", locale.getLanguage());
+            }
+        }
+
+        private String getLanguageByGeoip() {
+            String countryCode = GeoipUtil.getCountryCode(request);
+
+            String lang = ApplicationContext.getInstance().getCountryToLanguage().get(countryCode);
+            String[] languages = getAcceptLanguages();
+
+            if (ArrayUtils.indexOf(languages, lang) >= 0
+                    && ApplicationContext.getInstance().getAllowedLanguages().contains(lang)) {
+                return lang;
+            }
+
+            return null;
+        }
+
+        private String[] getAcceptLanguages() {
+            String header = getRequest().getHeader("Accept-Language");
+
+            if (StringUtil.isEmpty(header)) {
+                return EMPTY_STRING_ARRAY;
+            } else {
+                return header.split("[,;-]");
             }
         }
 
