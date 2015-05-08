@@ -39,6 +39,7 @@ class ApplicationContextLoader {
     private static final Properties properties = new Properties();
     private static final Pattern ITEMS_SPLIT_PATTERN = Pattern.compile("\\s*;\\s*");
     private static final Pattern LANGUAGES_SPLIT_PATTERN = Pattern.compile("[,;\\s]+");
+    private static final Pattern COUNTRIES_TO_LANGUAGE_PATTERN = Pattern.compile("([A-Z]{2},)*[A-Z]{2}:[a-z]{2}");
 
     private static void run() {
         setupDebug();
@@ -60,6 +61,7 @@ class ApplicationContextLoader {
         setupCaptionsImplClass();
         setupCaptionFilesEncoding();
         setupAllowedLanguages();
+        setupCountryToLanguage();
         setupDefaultPageClassName();
         setupContextPath();
         setupResetProperties();
@@ -127,6 +129,30 @@ class ApplicationContextLoader {
                     }
                 }
                 ApplicationContext.getInstance().setAllowedLanguages(list);
+            }
+        }
+    }
+
+    private static void setupCountryToLanguage() {
+        if (properties.containsKey("nocturne.countries-to-language")) {
+            String countriesToLanguage = properties.getProperty("nocturne.countries-to-language");
+            if (countriesToLanguage != null && !countriesToLanguage.isEmpty()) {
+                String[] tokens = ITEMS_SPLIT_PATTERN.split(countriesToLanguage);
+                Map<String, String> result = new HashMap<>();
+                for (String token : tokens) {
+                    if (!token.isEmpty()) {
+                        if (!COUNTRIES_TO_LANGUAGE_PATTERN.matcher(token).matches()) {
+                            throw new ConfigurationException("nocturne.countries-to-language should have a form like " +
+                                    "\"RU,BY:ru;EN,GB,US,CA:en\".");
+                        }
+                        String[] countriesAndLanguage = token.split(":");
+                        String[] countries = countriesAndLanguage[0].split(",");
+                        for (String country : countries) {
+                            result.put(country, countriesAndLanguage[1]);
+                        }
+                    }
+                }
+                ApplicationContext.getInstance().setCountryToLanguage(result);
             }
         }
     }

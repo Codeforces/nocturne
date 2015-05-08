@@ -129,6 +129,11 @@
             <version>1.2.17</version>
         </dependency>
         <dependency>
+        	<groupId>com.maxmind.geoip</groupId>
+        	<artifactId>geoip-api</artifactId>
+        	<version>1.2.14</version>
+        </dependency>
+        <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
             <version>2.5</version>
@@ -164,6 +169,16 @@
                 </configuration>
             </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/files</directory>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
     </build>
 
     <properties>
