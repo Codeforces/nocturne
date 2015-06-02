@@ -11,14 +11,18 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * <p>
  * Set it before page method which should be executed on specified
  * action. Action is a string parameter with name "action".
- * <p/>
+ * </p>
+ * <p>
  * If you have set @Action without value, it means that default action
  * became the annotated method but not action().
- * <p/>
+ * </p>
+ * <p>
  * If there is validation method (see @Validate.class) action method
  * will be invoked only on if validation passed.
+ * </p>
  *
  * @author Mike Mirzayanov
  */

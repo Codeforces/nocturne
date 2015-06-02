@@ -19,13 +19,17 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * <p>
  * Main nocturne filter to dispatch requests.
- * <p/>
+ * </p>
+ * <p>
  * In will create new ReloadingClassLoader on each request
  * (if changes found and more than 500 ms passed since last request) in the debug mode.
  * This class loader will load updated classes of your application.
- * <p/>
+ * </p>
+ * <p>
  * In the production mode it uses usual webapp class loader.
+ * </p>
  *
  * @author Mike Mirzayanov
  */

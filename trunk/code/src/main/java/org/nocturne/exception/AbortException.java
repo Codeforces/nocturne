@@ -6,11 +6,14 @@ package org.nocturne.exception;
 import javax.annotation.Nullable;
 
 /**
+ * <p>
  * Application will throw this exception on abort of execution
  * (usually on redirect).
- * <p/>
+ * </p>
+ * <p>
  * Do not throw this exception directly, but use methods like abort
  * abortWithRedirect().
+ * </p>
  *
  * @author Mike Mirzayanov
  */

@@ -9,11 +9,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * <p>
  * You can specify page name and later easily get links
  * using it.
- * <p/>
+ * </p>
+ * <p>
  * If you don't specify name for page, the
  * page name is equals to page.getClass().getSimpleName().
+ * </p>
  *
  * @author Mike Mirzayanov
  */

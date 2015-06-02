@@ -14,14 +14,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * <p>
  * Simple implementation of Captions interface. Uses properties files to store values.
- * <p/>
+ * </p>
+ * <p>
  * In the development mode it try to locate them in the directory
  * ApplicationContext.getInstance().getDebugCaptionsDir() (see nocturne.debug-captions-dir).
  * It modifies all of them if finds new caption shortcut and saves values nocturne.null except
  * for default language which will have value equals to shortcut.
- * <p/>
+ * </p>
+ * <p>
  * In the production mode it just read them exactly once (on startup) and doesn't save them.
+ * </p>
  *
  * @author Mike Mirzayanov
  */

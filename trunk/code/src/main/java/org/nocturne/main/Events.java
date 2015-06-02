@@ -11,18 +11,22 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * <p>
  * Use it to listen events and fire them. Any object can be event. Listeners
- * are subscribed to class. When executed fire(event) => all listeners for class
+ * are subscribed to class. When executed {@code fire(event)} all listeners for class
  * event.getClass() will be notified. Also all listeners
  * for event.getClass().getSuperclass() (and so on) will be notified.
- * <p/>
+ * </p>
+ * <p>
  * Use pair of methods beforeAction() and afterAction() to listen components.
  * Any component will notify all listeners registered with beforeAction()
  * before process action and will notify all listeners registered with afterAction()
  * after process action.
- * <p/>
+ * </p>
+ * <p>
  * See also <a href="http://code.google.com/p/nocturne/wiki/RequestLifeCycle_RU">http://code.google.com/p/nocturne/wiki/RequestLifeCycle_RU</a>
  * or <a href="http://code.google.com/p/nocturne/wiki/RequestLifeCycle_EN">http://code.google.com/p/nocturne/wiki/RequestLifeCycle_EN</a>
+ * </p>
  *
  * @author Mike Mirzayanov
  */
@@ -42,6 +46,7 @@ public class Events {
     /**
      * Add listener to events of class "eventClass".
      *
+     * @param <T>        Event class.
      * @param eventClass Class to be listen. If event has "eventClass" as its
      *                   superclass listeners will be notified too.
      * @param listener   Listener instance.
@@ -51,14 +56,17 @@ public class Events {
     }
 
     /**
+     * @param <T>   Event class.
      * @param event Throwing event. All listeners registered for class event.getClass()
      *              or its superclass will be notified.
+     * @return Fired event.
      */
     public static <T> T fire(T event) {
         return COMMON_SCOPE.fire(event);
     }
 
     /**
+     * @param <T>            Component class.
      * @param componentClass Component class to be listen.
      * @param listener       Listener which will be notified before any action
      *                       for componentClass will be processed.
@@ -72,6 +80,7 @@ public class Events {
     }
 
     /**
+     * @param <T>            Component class.
      * @param componentClass Component class to be listen.
      * @param listener       Listener which will be notified after any action
      *                       for componentClass will be processed.

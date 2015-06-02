@@ -11,17 +11,21 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
+ * <p>
  * If your component (page or frame) has fields marked with
  * a @Parameter then nocturne will set them automatically before
  * beforeAction phase. Also nocturne takes care about parameters of
  * action/validate/invalid Controller method parameters.
- * <p/>
+ * </p>
+ * <p>
  * Strip mode controls valid values for parameter.
- * <p/>
+ * </p>
+ * <p>
  * Name means name of the parameter
  * as GET or POST parameter or part
  * of overrideParameters in the response of RequestRouter (LinkedRequestRouter places
  * {param} shortcuts in it).
+ * </p>
  *
  * @author Mike Mirzayanov
  */
