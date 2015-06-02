@@ -19,8 +19,9 @@ public interface RequestRouter {
      *     return new Resolution("your.application.pages." + path.substring(1));
      * </pre>
      * }
-     * <p/>
+     * <p>
      * Should be thread-safe.
+     * </p>
      *
      * @param path         Page path, for example "/login";
      * @param parameterMap Contains parameters (from regquest.getParametersMap()).

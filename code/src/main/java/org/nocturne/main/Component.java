@@ -402,6 +402,7 @@ public abstract class Component {
     }
 
     /**
+     * @param <T>   Value class.
      * @param key   Session attribute name.
      * @param clazz Value class.
      * @return Value as instance of class "clazz". Use JSON as internal format to
@@ -453,6 +454,7 @@ public abstract class Component {
     }
 
     /**
+     * @param <T>  Value class.
      * @param key  Session attribute name.
      * @param type Value type.
      * @return Value as instance of type "type". Use JSON as internal format to
@@ -1095,7 +1097,8 @@ public abstract class Component {
     /**
      * Aborts execution and sends error to browser.
      *
-     * @param code (for example 404, preferred to use HttpURLConnection.HTTP_* constants).
+     * @param code    (for example 404, preferred to use HttpURLConnection.HTTP_* constants).
+     * @param message Error message.
      */
     public void abortWithError(int code, String message) {
         try {
@@ -1273,11 +1276,14 @@ public abstract class Component {
     }
 
     /**
+     * <p>
      * Prints all the key-values added by put(String, Object) inside this Component
      * as json into response writer.
-     * <p/>
+     * </p>
+     * <p>
      * For each value (Object) will be called toString() and printed json data
      * will contain keys and values as strings.
+     * </p>
      *
      * @param keys If at least one key is specified then the method takes care only about
      *             templateMap entries (putted key-value pairs), such that key is in keys array.
@@ -1332,17 +1338,21 @@ public abstract class Component {
     }
 
     /**
+     * <p>
      * Returns instance of class. Creates it via IoC injector
      * uses ApplicationContext.getInstance().getInjector().getInstance(clazz).
-     * <p/>
+     * </p>
+     * <p>
      * But it doesn't create new instance for component if it already
-     * was created. I.e. there is special map Map<Class<?>, List<Object>> to cache
+     * was created. I.e. there is special map {@literal Map<Class<?>, List<Object>>} to cache
      * instances. If inside single request there will be several calls
      * concreteComponent.getInstance(ConcreteClass.class), each of them returns
      * own instance. But the first call of concreteComponent.getInstance(ConcreteClass.class)
      * in the next request will return the same as the first call in the current request
      * and so on.
+     * </p>
      *
+     * @param <T>   Instance class.
      * @param clazz Instance class.
      * @return Returns new or cached instance.
      */

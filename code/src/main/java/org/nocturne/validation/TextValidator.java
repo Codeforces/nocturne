@@ -29,7 +29,8 @@ public class TextValidator extends Validator {
      * Creates validator with specific error message.
      * Actually caption shortcut should be passed.
      *
-     * @param message Error message caption shortcut.
+     * @param message       Error message caption shortcut.
+     * @param messageParams Message shortcut parameters.
      */
     public TextValidator(String message, Object... messageParams) {
         this.message = message;

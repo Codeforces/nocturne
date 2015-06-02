@@ -68,7 +68,7 @@ public class LinkMatchResult {
      * @return Attributes which was extracted from matching.
      *         For example, it pattern="user/{login}" and Links.match()
      *         argument is "user/mike"
-     *         then the returned map will be {"login"=>"mike"}.
+     *         then the returned map will be {@literal {"login"=>"mike"}}.
      */
     public Map<String, String> getAttributes() {
         return attributes;

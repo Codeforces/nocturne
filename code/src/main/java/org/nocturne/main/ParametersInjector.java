@@ -19,11 +19,14 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 /**
+ * <p>
  * Each component has an private instance of ParametersInjector.
  * It will process @Parameter annotations.
- * <p/>
+ * </p>
+ * <p>
  * Also this class can be used if you want to
  * inject parameters into some object.
+ * </p>
  *
  * @author Mike Mirzayanov
  */

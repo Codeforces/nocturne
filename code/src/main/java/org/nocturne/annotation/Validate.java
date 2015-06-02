@@ -6,12 +6,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * <p>
  * Set it before page method which should be executed on specified
  * action as validation method. The method should return boolean and
  * the value will define future workflow.
- * <p/>
+ * </p>
+ * <p>
  * Typically validation methods has the line "return runValidation();" as
  * the last line.
+ * </p>
  *
  * @author Mike Mirzayanov
  */

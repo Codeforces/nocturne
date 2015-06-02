@@ -70,6 +70,9 @@ public class RequestUtil {
             ServletFileUpload upload = new ServletFileUpload(factory);
             List<FileItem> items = upload.parseRequest(request);
 
+            Map<String, List<String>> fileNamesByFieldName = new HashMap<>();
+            Map<String, List<byte[]>> fileBytesByFieldName = new HashMap<>();
+
             for (FileItem item : items) {
                 String name = item.getFieldName();
                 InputStream inputStream = item.getInputStream();
@@ -91,13 +94,36 @@ public class RequestUtil {
                         }
                     } else {
                         request.setAttribute(name, bytes);
+
+                        if (!fileBytesByFieldName.containsKey(name)) {
+                            fileBytesByFieldName.put(name, new ArrayList<byte[]>(1));
+                        }
+                        fileBytesByFieldName.get(name).add(bytes);
                     }
                 }
                 inputStream.close();
 
                 if (item.getName() != null && !item.getName().isEmpty()) {
                     request.setAttribute(name + "::name", item.getName());
+
+                    if (!fileNamesByFieldName.containsKey(name)) {
+                        fileNamesByFieldName.put(name, new ArrayList<String>(1));
+                    }
+                    fileNamesByFieldName.get(name).add(item.getName());
                 }
+            }
+
+
+            for (Map.Entry<String, List<String>> e : fileNamesByFieldName.entrySet()) {
+                String fieldName = e.getKey();
+
+                String[] fileNames = new String[e.getValue().size()];
+                e.getValue().toArray(fileNames);
+                request.setAttribute(fieldName + "::name[]", fileNames);
+
+                byte[][] fileBytes = new byte[e.getValue().size()][];
+                fileBytesByFieldName.get(fieldName).toArray(fileBytes);
+                request.setAttribute(fieldName + "[]", fileBytes);
             }
         } catch (Exception ignored) {
             // No operations.

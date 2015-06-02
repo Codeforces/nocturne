@@ -17,8 +17,10 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 public @interface Link {
     /**
-     * @return Use ";" to separate links. Do not use slash as a first character.
-     *         <p/>
+     * @return <p>
+     *         Use ";" to separate links. Do not use slash as a first character.
+     *         </p>
+     *         <p>
      *         Example:
      *         - "user/{login};profile" - first link contains 'login' parameter, second link contains no parameters;
      *         - "user/{login(!blank,alphanumeric):!admin}" - link contains 'login' parameter with restrictions
@@ -27,9 +29,11 @@ public @interface Link {
      *         positive long integer);
      *         - "action/{action:purchase,sell,!action}" - link contains 'action' parameter with restrictions (should
      *         be either equal to 'purchase' or 'sell' and should not be equal to 'action').
-     *         <p/>
+     *         </p>
+     *         <p>
      *         List of restrictions: null, empty, blank, alpha, numeric, alphanumeric, byte, short, int, long, float,
      *         double, positive, nonpositive, negative, nonnegative, zero, nonzero.
+     *         </p>
      */
     String value();
 

@@ -27,12 +27,15 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
+ * <p>
  * Handles link pattern methods.
  * Each page should have @Link annotation to specify its link.
  * It can use parameters (templates), like "profile/{handle}".
- * <p/>
+ * </p>
+ * <p>
  * If you want to redirect to SomePage, use abortWithRedirect(Links.getLink(SomePage.class)) or
  * abortWithRedirect(SomePage.class).
+ * </p>
  *
  * @author Mike Mirzayanov
  */
@@ -466,7 +469,7 @@ public class Links {
      * @param pageClass Page class.
      * @param params    Even length sequence of Objects. Even elements mean keys and odd
      *                  values of parameters map. For example ["handle", "MikeMirzayanov", "topic", 123]
-     *                  means map ["handle" => "MikeMirzayanov", "topic" => 123]. Method skips params with null value.
+     *                  means map {@literal ["handle" => "MikeMirzayanov", "topic" => 123]}. Method skips params with null value.
      * @return link for page. If there many links for page, returns one of them, which matches better
      * @throws NoSuchLinkException if no such link exists
      */
@@ -478,7 +481,7 @@ public class Links {
      * @param name   Page name.
      * @param params Even length sequence of Objects. Even elements mean keys and odd
      *               values of parameters map. For example ["handle", "MikeMirzayanov", "topic", 123]
-     *               means map ["handle" => "MikeMirzayanov", "topic" => 123]. Method skips params with null value.
+     *               means map {@literal ["handle" => "MikeMirzayanov", "topic" => 123]}. Method skips params with null value.
      * @return link for page. If there many links for page, returns one of them, which matches better
      * @throws NoSuchLinkException if no such link exists
      */

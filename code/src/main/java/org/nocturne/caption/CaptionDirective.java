@@ -13,14 +13,15 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * <p>
  * Generates caption value by shortcut and args. It injected to any page or frame.
- * <p/>
+ * </p>
  * Examples:
  * <pre>
- *      <@caption params=["Mike"]>Hello, {0}</@caption>
- *      <@caption>Login</@caption>
- *      <@caption key="Login"/>
- *      <@caption key="Hello, {0}" params=["Mike"]/>
+ *      {@literal <@caption params=["Mike"]>Hello, {0}</@caption>}
+ *      {@literal <@caption>Login</@caption>}
+ *      {@literal <@caption key="Login"/>}
+ *      {@literal <@caption key="Hello, {0}" params=["Mike"]/>}
  * </pre>
  *
  * @author Mike Mirzayanov

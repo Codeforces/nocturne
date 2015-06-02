@@ -6,9 +6,10 @@ package org.nocturne.caption;
 import java.util.Locale;
 
 /**
+ * <p>
  * Interface through which works ApplicationContext.$() method,
- * "{{shortcut}}" and <@caption/> directive in templates.
- * <p/>
+ * "{{shortcut}}" and {@literal <@caption/>} directive in templates.
+ * </p>
  * It is native method in nocturne to write internationalized
  * application. Just write in templates "{{some text}}".
  *
