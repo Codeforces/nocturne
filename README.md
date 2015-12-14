@@ -21,6 +21,6 @@ Use the following maven settings to try current nocturne build:
         <dependency>
             <groupId>org.nocturne</groupId>
             <artifactId>nocturne</artifactId>
-            <version>1.2.0-SNAPSHOT</version>
+            <version>1.3.3-SNAPSHOT</version>
         </dependency>
 ~~~~~
