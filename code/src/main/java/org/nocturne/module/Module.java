@@ -262,7 +262,7 @@ public class Module {
         );
 
         if ("true".equalsIgnoreCase(System.getProperty("dreamcatcher.loaded"))) {
-            ((Set<String>)System.getProperties().get("dreamcatcher.listen-directories")).add(classesDir);
+            ((Set<String>) System.getProperties().get("dreamcatcher.listen-directories")).add(classesDir);
         }
 
         debugContext.setWebappDir(webappDir);
@@ -315,11 +315,13 @@ public class Module {
             if (entry.isDirectory()) {
                 File relativeFile = new File(targetDir, cutDir(sourceDir, new File(entry.getName())).getPath());
 
-                File entryDir = new File(
-                        servletContext.getRealPath(
-                                relativeFile.getPath()
-                        )
-                );
+                String realPath = FileUtil.getRealPath(servletContext, relativeFile.getPath());
+                if (realPath == null) {
+                    throw new ModuleInitializationException("Path '" + relativeFile.getPath()
+                            + "' expected to be a directory in servletContext.");
+                }
+
+                File entryDir = new File(realPath);
 
                 if (!entryDir.isDirectory()) {
                     if (entryDir.isFile()) {
@@ -335,12 +337,14 @@ public class Module {
             } else {
                 File relativeFile = new File(targetDir, cutDir(sourceDir, new File(entry.getName())).getPath());
 
-                File entryFile = new File(
-                        servletContext.getRealPath(
-                                relativeFile.getPath()
-                        )
-                );
+                String realPath = FileUtil.getRealPath(servletContext, relativeFile.getPath());
+                if (realPath == null) {
+                    throw new ModuleInitializationException("Path '" + relativeFile.getPath() + "' expected to be a found in servletContext.");
+                }
 
+                File entryFile = new File(realPath);
+
+                //noinspection ResultOfMethodCallIgnored
                 entryFile.getParentFile().mkdirs();
                 StreamUtil.copyInputStream(
                         file.getInputStream(entry), new BufferedOutputStream(new FileOutputStream(entryFile))

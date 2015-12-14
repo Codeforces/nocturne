@@ -9,6 +9,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 
+import javax.servlet.ServletContext;
 import javax.xml.namespace.QName;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
@@ -478,6 +479,23 @@ public class FileUtil {
             }
         }
 
+        return result;
+    }
+
+    /**
+     * @param servletContext ServletContext.
+     * @param path           String.
+     * @return As servletContext.getRealPath(path) (tomcats 7 and 8 work differently).
+     */
+    public static String getRealPath(ServletContext servletContext, String path) {
+        String result = servletContext.getRealPath(path);
+        if (result == null) {
+            if (path.startsWith("/")) {
+                result = servletContext.getRealPath(path.substring(1));
+            } else {
+                result = servletContext.getRealPath('/' + path);
+            }
+        }
         return result;
     }
 

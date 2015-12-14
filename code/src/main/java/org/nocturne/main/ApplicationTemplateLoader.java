@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 import org.nocturne.exception.NocturneException;
 import org.nocturne.module.Module;
 import org.nocturne.module.PreprocessFreemarkerFileTemplateLoader;
+import org.nocturne.util.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,10 +60,23 @@ public class ApplicationTemplateLoader implements TemplateLoader {
 
         for (int dirIndex = 0; dirIndex < templateDirCount; ++dirIndex) {
             String templatePath = templatePaths[dirIndex];
-            if (!new File(templatePath).isAbsolute()) {
-                templatePath = applicationContext.getServletContext().getRealPath(templatePath);
+            File templatePathFile = new File(templatePath);
+
+            if (!templatePathFile.isAbsolute() || !templatePathFile.exists()) {
+                String realTemplatePath = FileUtil.getRealPath(applicationContext.getServletContext(), templatePath);
+                if (realTemplatePath == null) {
+                    throw new NocturneException("Can't find '" + templatePath + "' in servletContext.");
+                } else {
+                    templatePath = realTemplatePath;
+                }
             }
-            templateDirs[dirIndex] = new File(templatePath);
+
+            templatePathFile = new File(templatePath);
+            if (!templatePathFile.exists()) {
+                throw new NocturneException("Can't find template path '" + templatePath + "' in servletContext.");
+            }
+
+            templateDirs[dirIndex] = templatePathFile;
         }
 
         try {
