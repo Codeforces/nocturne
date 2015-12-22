@@ -13,6 +13,7 @@ import freemarker.template.TemplateModel;
 import freemarker.template.TemplateModelException;
 import net.sf.cglib.reflect.FastMethod;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.Contract;
 import org.nocturne.cache.CacheHandler;
 import org.nocturne.caption.CaptionDirective;
 import org.nocturne.collection.SingleEntryList;
@@ -46,7 +47,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author Mike Mirzayanov
  */
-@SuppressWarnings({"DollarSignInName", "NonStaticInitializer", "NoopMethodInAbstractClass", "ClassReferencesSubclass"})
+@SuppressWarnings({"DollarSignInName", "NonStaticInitializer", "NoopMethodInAbstractClass", "ClassReferencesSubclass", "OverloadedVarargsMethod"})
 public abstract class Component {
     /**
      * Lock to synchronise some operations related to this component.
@@ -1078,8 +1079,9 @@ public abstract class Component {
      * Aborts execution and sends redirect to browser.
      *
      * @param target for redirection. It will be prepended with
-     *               ApplicationContext.getInstance().getContextPath() if doen't contain absolute path.
+     *               ApplicationContext.getInstance().getContextPath() if doesn't contain absolute path.
      */
+    @Contract("_ -> fail")
     public void abortWithRedirect(String target) {
         try {
             // make it absolute
@@ -1100,6 +1102,7 @@ public abstract class Component {
      * @param code    (for example 404, preferred to use HttpURLConnection.HTTP_* constants).
      * @param message Error message.
      */
+    @Contract("_, _ -> fail")
     public void abortWithError(int code, String message) {
         try {
             response.sendError(code, message);
@@ -1114,6 +1117,7 @@ public abstract class Component {
      *
      * @param code (for example 404, preferred to use HttpURLConnection.HTTP_* constants).
      */
+    @Contract("_ -> fail")
     public void abortWithError(int code) {
         try {
             response.sendError(code);
@@ -1126,6 +1130,7 @@ public abstract class Component {
     /**
      * @param pageClass Aborts current flow and redirects to the page pageClass.
      */
+    @Contract("_ -> fail")
     public void abortWithRedirect(Class<? extends Page> pageClass) {
         abortWithRedirect(Links.getLink(pageClass));
     }
@@ -1134,6 +1139,7 @@ public abstract class Component {
      * @param pageClass Aborts current flow and redirects to the page pageClass.
      * @param params    Map as an array (see Link.getLink()).
      */
+    @Contract("_, _ -> fail")
     public void abortWithRedirect(Class<? extends Page> pageClass, Object... params) {
         abortWithRedirect(Links.getLink(pageClass, params));
     }
@@ -1141,6 +1147,7 @@ public abstract class Component {
     /**
      * Redirects to the same page.
      */
+    @Contract("-> fail")
     public void abortWithReload() {
         String url = request.getRequestURL().toString();
         String queryString = request.getQueryString();
