@@ -5,6 +5,7 @@ package org.nocturne.pool;
 
 import freemarker.template.Configuration;
 import freemarker.template.DefaultObjectWrapper;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.nocturne.main.ApplicationTemplateLoader;
 import org.nocturne.main.Constants;
@@ -12,6 +13,7 @@ import org.nocturne.main.ReloadingContext;
 
 import javax.servlet.FilterConfig;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -43,8 +45,15 @@ public class TemplateEngineConfigurationPool extends Pool<Configuration> {
         templateEngineConfiguration.setDefaultEncoding(StandardCharsets.UTF_8.name());
 
         if (!ReloadingContext.getInstance().isDebug()) {
-            logger.warn("Processed templateEngineConfiguration.setTemplateUpdateDelay(" + ReloadingContext.getInstance().getTemplatesUpdateDelay() + ").");
-            templateEngineConfiguration.setTemplateUpdateDelay(ReloadingContext.getInstance().getTemplatesUpdateDelay());
+            int templatesUpdateDelaySeconds = ReloadingContext.getInstance().getTemplatesUpdateDelay();
+
+            templateEngineConfiguration.setTemplateUpdateDelayMilliseconds(
+                    TimeUnit.SECONDS.toMillis(templatesUpdateDelaySeconds)
+            );
+
+            logger.log(templatesUpdateDelaySeconds > 0 ? Level.INFO : Level.WARN, String.format(
+                    "Processed templateEngineConfiguration.setTemplateUpdateDelay(%d sec).", templatesUpdateDelaySeconds
+            ));
         }
 
         templateEngineConfiguration.setTemplateLoader(new ApplicationTemplateLoader());
@@ -55,6 +64,7 @@ public class TemplateEngineConfigurationPool extends Pool<Configuration> {
         if (handler != null) {
             handler.onInstance(templateEngineConfiguration);
         }
+
         return templateEngineConfiguration;
     }
 
