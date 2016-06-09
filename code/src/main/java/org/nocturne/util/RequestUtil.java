@@ -29,6 +29,14 @@ public class RequestUtil {
     private static final String GET_REQUEST_PARAMS_CACHED_RESULT = "Codeforces::getRequestParamsCachedResult";
     private static final Pattern QUERY_STRING_SPLIT_PATTERN = Pattern.compile("&");
 
+    public static String getRequestUriAndQueryString(HttpServletRequest request) {
+        String result = request.getRequestURI();
+        if (StringUtil.isNotEmpty(request.getQueryString())) {
+            result += "?" + request.getQueryString();
+        }
+        return result;
+    }
+
     public static Map<String, List<String>> getRequestParams(HttpServletRequest request) {
         Map<String, List<String>> cachedRequestParameters = getCachedRequestParameters(request);
         if (cachedRequestParameters != null) {

@@ -196,6 +196,11 @@ public abstract class Page extends Component {
         }
     }
 
+    void finalizeAfterAction() {
+        requestCache = null;
+        super.finalizeAfterAction();
+    }
+
     private String handleRequestPostprocessor(String result) {
         ResponsePostprocessor postprocessor = responsePostprocessor;
         if (postprocessor != null) {

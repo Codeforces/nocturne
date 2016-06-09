@@ -18,7 +18,10 @@ import org.nocturne.util.StringUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -268,7 +271,11 @@ public class Links {
                         result.append('&');
                     }
 
-                    result.append(entry.getKey()).append('=').append(values.get(i));
+                    try {
+                        result.append(entry.getKey()).append('=').append(URLEncoder.encode(values.get(i), StandardCharsets.UTF_8.name()));
+                    } catch (UnsupportedEncodingException e) {
+                        // No operations.
+                    }
                 }
             }
         }
