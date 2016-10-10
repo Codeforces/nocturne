@@ -32,7 +32,7 @@ public class RequestUtil {
     public static String getRequestUriAndQueryString(HttpServletRequest request) {
         String result = request.getRequestURI();
         if (StringUtil.isNotEmpty(request.getQueryString())) {
-            result += "?" + request.getQueryString();
+            result += '?' + request.getQueryString();
         }
         return result;
     }
@@ -80,9 +80,11 @@ public class RequestUtil {
 
             Map<String, List<String>> fileNamesByFieldName = new HashMap<>();
             Map<String, List<byte[]>> fileBytesByFieldName = new HashMap<>();
+            List<String> itemNames = new ArrayList<>(items.size());
 
             for (FileItem item : items) {
                 String name = item.getFieldName();
+                itemNames.add(name);
                 InputStream inputStream = item.getInputStream();
                 byte[] bytes = StreamUtil.getAsByteArray(inputStream);
                 if (bytes != null) {
@@ -133,6 +135,8 @@ public class RequestUtil {
                 fileBytesByFieldName.get(fieldName).toArray(fileBytes);
                 request.setAttribute(fieldName + "[]", fileBytes);
             }
+
+            request.setAttribute("nocturne.uploaded-item-names", itemNames);
         } catch (Exception ignored) {
             // No operations.
         }
