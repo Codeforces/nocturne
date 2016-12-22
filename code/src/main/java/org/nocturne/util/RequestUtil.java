@@ -209,6 +209,25 @@ public class RequestUtil {
         }
     }
 
+    /**
+     * @param httpServletRequest Http request.
+     * @return Remote address taking in account X-Real-IP.
+     */
+    @Nonnull
+    public static String getRemoteAddr(@Nonnull HttpServletRequest httpServletRequest) {
+        String ip = httpServletRequest.getHeader("X-Real-IP");
+        if (!StringUtil.isEmpty(ip)) {
+            return ip;
+        }
+
+        ip = httpServletRequest.getRemoteAddr();
+        if (!StringUtil.isEmpty(ip)) {
+            return ip;
+        }
+
+        return "";
+    }
+
     private static boolean isListOfStrings(List list) {
         for (Object o : list) {
             if (!(o instanceof String)) {

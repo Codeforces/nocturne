@@ -943,6 +943,7 @@ public class ApplicationContext {
                 lang = RequestUtil.getFirst(requestMap, "language");
             }
 
+
             if (isInvalidLanguage(lang)) {
                 lang = RequestUtil.getFirst(requestMap, "locale");
             }
@@ -959,16 +960,29 @@ public class ApplicationContext {
 
                 if (isInvalidLanguage(lang)) {
                     lang = getLanguageByGeoip();
+
                     if (isInvalidLanguage(lang)) {
                         String[] languages = getAcceptLanguages();
+
                         for (String language : languages) {
-                            if (getInstance().getAllowedLanguages().contains(language)) {
+                            if (getInstance().getAllowedLanguages().contains(language)
+                                    && !language.equalsIgnoreCase("en")) {
                                 lang = language;
                                 break;
                             }
                         }
+
+                        if (isInvalidLanguage(lang)) {
+                            for (String language : languages) {
+                                if (getInstance().getAllowedLanguages().contains(language)) {
+                                    lang = language;
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
+
                 locale = localeByLanguage(lang);
             } else {
                 locale = localeByLanguage(lang);
@@ -1017,10 +1031,9 @@ public class ApplicationContext {
 
         private String getLanguageByGeoip() {
             String countryCode = GeoipUtil.getCountryCode(request);
-
             String lang = getInstance().getCountryToLanguage().get(countryCode);
-            String[] languages = getAcceptLanguages();
 
+            String[] languages = getAcceptLanguages();
             if (ArrayUtils.indexOf(languages, lang) >= 0
                     && getInstance().getAllowedLanguages().contains(lang)) {
                 return lang;
@@ -1035,7 +1048,11 @@ public class ApplicationContext {
             if (StringUtil.isEmpty(header)) {
                 return EMPTY_STRING_ARRAY;
             } else {
-                return ACCEPT_LANGUAGE_SPLIT_PATTERN.split(header);
+                String[] result = ACCEPT_LANGUAGE_SPLIT_PATTERN.split(header);
+                for (int i = 0; i < result.length; i++) {
+                    result[i] = result[i].toLowerCase();
+                }
+                return result;
             }
         }
 
