@@ -948,9 +948,19 @@ public class ApplicationContext {
                     if (isInvalidLanguage(lang)) {
                         String[] languages = getAcceptLanguages();
                         for (String language : languages) {
-                            if (getInstance().getAllowedLanguages().contains(language)) {
+                            if (getInstance().getAllowedLanguages().contains(language)
+                                    && !"en".equalsIgnoreCase(language)) {
                                 lang = language;
                                 break;
+                            }
+                        }
+
+                        if (isInvalidLanguage(lang)) {
+                            for (String language : languages) {
+                                if (getInstance().getAllowedLanguages().contains(language)) {
+                                    lang = language;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -1005,7 +1015,6 @@ public class ApplicationContext {
         @Nullable
         private String getLanguageByGeoIp() {
             String countryCode = GeoIpUtil.getCountryCode(request);
-
             String lang = getInstance().getCountryToLanguage().get(countryCode);
             String[] languages = getAcceptLanguages();
 
@@ -1022,7 +1031,11 @@ public class ApplicationContext {
             if (StringUtil.isEmpty(header)) {
                 return EMPTY_STRING_ARRAY;
             } else {
-                return ACCEPT_LANGUAGE_SPLIT_PATTERN.split(header);
+                String[] result = ACCEPT_LANGUAGE_SPLIT_PATTERN.split(header);
+                for (int i = 0; i < result.length; ++i) {
+                    result[i] = result[i].toLowerCase();
+                }
+                return result;
             }
         }
 

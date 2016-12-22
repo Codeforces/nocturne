@@ -95,11 +95,13 @@ public abstract class Page extends Component {
     }
 
     Object getRequestCache(String key) {
-        return requestCache.get(key);
+        return requestCache == null ? null : requestCache.get(key);
     }
 
     void removeRequestCache(String key) {
-        requestCache.remove(key);
+        if (requestCache != null) {
+            requestCache.remove(key);
+        }
     }
 
     Set<String> getCssSet() {
