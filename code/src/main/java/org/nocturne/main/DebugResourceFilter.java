@@ -3,12 +3,14 @@
  */
 package org.nocturne.main;
 
-import eu.medsea.util.MimeUtil;
+import eu.medsea.mimeutil.MimeType;
+import eu.medsea.mimeutil.MimeUtil;
+import eu.medsea.mimeutil.detector.ExtensionMimeDetector;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.Contract;
 import org.nocturne.exception.NocturneException;
 import org.nocturne.exception.ReflectionException;
 import org.nocturne.module.Module;
-import org.nocturne.util.FileUtil;
 import org.nocturne.util.ReflectionUtil;
 
 import javax.servlet.*;
@@ -24,10 +26,11 @@ import java.util.List;
  * resources in IDE it will load renewed version.
  */
 public class DebugResourceFilter implements Filter {
-    /**
-     * Logger.
-     */
     private static final Logger logger = Logger.getLogger(DebugResourceFilter.class);
+
+    static {
+        MimeUtil.registerMimeDetector(ExtensionMimeDetector.class.getName());
+    }
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -126,12 +129,14 @@ public class DebugResourceFilter implements Filter {
         }
     }
 
+    @Contract("null, _ -> fail")
     private static void setupContentType(String path, ServletResponse response) {
-        String type = MimeUtil.getFirstMimeType(MimeUtil.getMimeType(FileUtil.getExt(new File(path))));
-
-        if (type != null) {
-            response.setContentType(type);
-            return;
+        if (path != null) {
+            MimeType mimeType = MimeUtil.getMostSpecificMimeType(MimeUtil.getMimeTypes(new File(path).getName()));
+            if (mimeType != null) {
+                response.setContentType(mimeType.toString());
+                return;
+            }
         }
 
         throw new org.nocturne.exception.ServletException("Can't set content type for " + path + '.');

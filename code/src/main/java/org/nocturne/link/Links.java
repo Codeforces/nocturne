@@ -6,8 +6,8 @@ package org.nocturne.link;
 import freemarker.template.TemplateModel;
 import freemarker.template.TemplateModelException;
 import freemarker.template.TemplateSequenceModel;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.mutable.MutableBoolean;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.nocturne.annotation.Name;
 import org.nocturne.collection.SingleEntryList;
 import org.nocturne.exception.ConfigurationException;
@@ -385,8 +385,8 @@ public class Links {
      * @param params parameters for substitution (for example link "profile/{handle}"
      *               may use "handle" key in the map.
      * @return Returns link for page. If there many links for page, returns
-     *         one of them, which matches better. Throws NoSuchLinkException
-     *         if no such link exists.
+     * one of them, which matches better. Throws NoSuchLinkException
+     * if no such link exists.
      */
     public static String getLinkByMap(Class<? extends Page> clazz, Map<String, ?> params) {
         return getLinkByMap(clazz, null, params);
@@ -398,8 +398,8 @@ public class Links {
      * @param params   parameters for substitution (for example link "profile/{handle}"
      *                 may use "handle" key in the map.
      * @return Returns link for page. If there many links for page, returns
-     *         one of them, which matches better. Throws NoSuchLinkException
-     *         if no such link exists.
+     * one of them, which matches better. Throws NoSuchLinkException
+     * if no such link exists.
      */
     public static String getLinkByMap(String name, @Nullable String linkName, Map<String, ?> params) {
         Class<? extends Page> clazz = classesByName.get(name);
@@ -416,8 +416,8 @@ public class Links {
      * @param params parameters for substitution (for example link "profile/{handle}"
      *               may use "handle" key in the map.
      * @return Returns link for page. If there many links for page, returns
-     *         one of them, which matches better. Throws NoSuchLinkException
-     *         if no such link exists.
+     * one of them, which matches better. Throws NoSuchLinkException
+     * if no such link exists.
      */
     public static String getLinkByMap(String name, Map<String, ?> params) {
         return getLinkByMap(name, null, params);

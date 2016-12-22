@@ -1,6 +1,6 @@
 package org.nocturne.collection;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,6 +33,7 @@ public final class SingleEntryList<E> implements List<E>, RandomAccess, Cloneabl
         this.value = value;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public SingleEntryList(Collection<E> collection) {
         addAll(collection);
     }
@@ -191,24 +192,26 @@ public final class SingleEntryList<E> implements List<E>, RandomAccess, Cloneabl
         value = null;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public E get(int index) {
-        if (index < 0 || index >= size()) {
-            throw new IndexOutOfBoundsException("index=" + index + ", size=" + size() + '.');
+        if (hasValue && index == 0) {
+            return value;
         }
 
-        return value;
+        throw new IndexOutOfBoundsException("index=" + index + ", size=" + size() + '.');
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public E set(int index, E element) {
-        if (index < 0 || index >= size()) {
-            throw new IndexOutOfBoundsException("index=" + index + ", size=" + size() + '.');
+        if (hasValue && index == 0) {
+            E previousValue = value;
+            value = element;
+            return previousValue;
         }
 
-        E previousValue = value;
-        value = element;
-        return previousValue;
+        throw new IndexOutOfBoundsException("index=" + index + ", size=" + size() + '.');
     }
 
     @Override
@@ -225,16 +228,17 @@ public final class SingleEntryList<E> implements List<E>, RandomAccess, Cloneabl
         }
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public E remove(int index) {
-        if (index < 0 || index >= size()) {
-            throw new IndexOutOfBoundsException("index=" + index + ", size=" + size() + '.');
+        if (hasValue && index == 0) {
+            E previousValue = value;
+            hasValue = false;
+            value = null;
+            return previousValue;
         }
 
-        E previousValue = value;
-        hasValue = false;
-        value = null;
-        return previousValue;
+        throw new IndexOutOfBoundsException("index=" + index + ", size=" + size() + '.');
     }
 
     @Override

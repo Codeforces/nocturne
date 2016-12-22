@@ -126,7 +126,7 @@ public class FileUtil {
      *
      * @param file File to be deleted.
      */
-    public static void deleteTotalyAsync(final File file) {
+    public static void deleteTotalyAsync(File file) {
         new Thread(new Runnable() {
             @Override
             public void run() {

@@ -30,8 +30,7 @@ public class ReflectionUtil {
      * @param methodName Method name.
      * @param args       Method arguments.
      * @return Object Method return value.
-     * @throws org.nocturne.exception.ReflectionException
-     *          If it can't invoke method.
+     * @throws ReflectionException If it can't invoke method.
      */
     public static Object invoke(Class<?> clazz, Object object, String methodName, Object... args) throws ReflectionException {
         Method[] methods = clazz.getDeclaredMethods();
@@ -63,8 +62,7 @@ public class ReflectionUtil {
      * @param methodName Method name.
      * @param args       Method arguments.
      * @return Object Method return value.
-     * @throws org.nocturne.exception.ReflectionException
-     *          If it can't invoke method.
+     * @throws ReflectionException If it can't invoke method.
      */
     public static Object invoke(Object object, String methodName, Object... args) throws ReflectionException {
         Class<?> clazz = object.getClass();

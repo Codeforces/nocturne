@@ -60,8 +60,8 @@ public @interface Link {
     }
 
     class Builder {
-        public static Link newLink(@Nonnull final String value, @Nonnull final String name,
-                                   @Nonnull final String action, @Nonnull final Class<? extends Type>[] types) {
+        public static Link newLink(@Nonnull String value, @Nonnull String name,
+                                   @Nonnull String action, @Nonnull Class<? extends Type>[] types) {
             return new Link() {
                 @Override
                 public String value() {

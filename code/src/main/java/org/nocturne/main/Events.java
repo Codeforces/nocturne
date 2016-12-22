@@ -101,7 +101,7 @@ public class Events {
 
         public <T> void listen(Class<T> eventClass, Listener<T> listener) {
             if (!listenersByEvent.containsKey(eventClass)) {
-                listenersByEvent.put(eventClass, new LinkedHashSet<Listener>());
+                listenersByEvent.put(eventClass, new LinkedHashSet<>());
             }
 
             listenersByEvent.get(eventClass).add(listener);

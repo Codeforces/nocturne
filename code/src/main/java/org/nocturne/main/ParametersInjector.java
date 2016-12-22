@@ -3,13 +3,16 @@
  */
 package org.nocturne.main;
 
+import com.google.common.base.Preconditions;
 import net.sf.cglib.reflect.FastMethod;
+import org.jetbrains.annotations.Contract;
 import org.nocturne.annotation.Parameter;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.exception.NocturneException;
 import org.nocturne.util.RequestUtil;
 import org.nocturne.util.StringUtil;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.annotation.Annotation;
@@ -33,6 +36,14 @@ import java.util.regex.Pattern;
 public class ParametersInjector {
     private static final Pattern INTEGRAL_VALUE_PATTERN = Pattern.compile("0|(-?[1-9][0-9]*)");
     private static final Pattern REAL_VALUE_PATTERN = Pattern.compile("(0|(-?[1-9][0-9]*))((\\.[0-9]+)?)");
+
+    private static final Character NULL_ASSIGN_CHAR = 0;
+    private static final Byte NULL_ASSIGN_BYTE = 0;
+    private static final Short NULL_ASSIGN_SHORT = 0;
+    private static final Integer NULL_ASSIGN_INT = 0;
+    private static final Long NULL_ASSIGN_LONG = 0L;
+    private static final Float NULL_ASSIGN_FLOAT = 0.0F;
+    private static final Double NULL_ASSIGN_DOUBLE = 0.0D;
 
     /**
      * Injection target object.
@@ -118,7 +129,7 @@ public class ParametersInjector {
 
         for (InjectField field : fields) {
             String key = field.parameter.name().isEmpty()
-                    ? field.field.getName() : field.parameter.name();
+                    ? Preconditions.checkNotNull(field.field).getName() : field.parameter.name();
 
             List<String> values;
             if (overrideParameters != null && overrideParameters.containsKey(key)) {
@@ -157,7 +168,8 @@ public class ParametersInjector {
         }
     }
 
-    public static Object getArrayAssignValue(@Nullable InjectField field, List<String> values, Class<?> fieldType) {
+    public static Object getArrayAssignValue(
+            @Nullable InjectField field, @Nullable List<String> values, Class<?> fieldType) {
         Class<?> componentType = fieldType.getComponentType();
 
         if (componentType.isArray()) {
@@ -183,52 +195,47 @@ public class ParametersInjector {
         return fieldValue;
     }
 
+    @Contract(pure = true)
+    @Nullable
     private static Object getNullAssignValue(Class<?> fieldType) {
-        if (String.class.equals(fieldType) || Boolean.class.equals(fieldType)
-                || Character.class.equals(fieldType) || Byte.class.equals(fieldType) || Short.class.equals(fieldType)
-                || Integer.class.equals(fieldType) || Long.class.equals(fieldType)
-                || Float.class.equals(fieldType) || Double.class.equals(fieldType)
-                || fieldType.isEnum()) {
-            return null;
-        }
-
-        if (fieldType.equals(boolean.class)) {
+        if (fieldType == boolean.class) {
             return Boolean.FALSE;
         }
 
-        if (fieldType.equals(char.class)) {
-            return 0;
+        if (fieldType == char.class) {
+            return NULL_ASSIGN_CHAR;
         }
 
-        if (fieldType.equals(byte.class)) {
-            return 0;
+        if (fieldType == byte.class) {
+            return NULL_ASSIGN_BYTE;
         }
 
-        if (fieldType.equals(short.class)) {
-            return 0;
+        if (fieldType == short.class) {
+            return NULL_ASSIGN_SHORT;
         }
 
-        if (fieldType.equals(int.class)) {
-            return 0;
+        if (fieldType == int.class) {
+            return NULL_ASSIGN_INT;
         }
 
-        if (fieldType.equals(long.class)) {
-            return 0L;
+        if (fieldType == long.class) {
+            return NULL_ASSIGN_LONG;
         }
 
-        if (fieldType.equals(float.class)) {
-            return 0.0F;
+        if (fieldType == float.class) {
+            return NULL_ASSIGN_FLOAT;
         }
 
-        if (fieldType.equals(double.class)) {
-            return 0.0D;
+        if (fieldType == double.class) {
+            return NULL_ASSIGN_DOUBLE;
         }
 
         return null;
     }
 
     @SuppressWarnings({"OverlyComplexMethod", "OverlyLongMethod"})
-    private static Object getAssignValue(@Nullable InjectField field, String value, Class<?> targetType) {
+    @Nullable
+    private static Object getAssignValue(@Nullable InjectField field, String value, @Nonnull Class<?> targetType) {
         if (targetType.equals(String.class)) {
             return value;
         }
@@ -250,12 +257,12 @@ public class ParametersInjector {
         if (targetType.equals(Character.class) || targetType.equals(char.class)) {
             try {
                 if (value.isEmpty()) {
-                    return (char) 0;
+                    return NULL_ASSIGN_CHAR;
                 } else {
                     return value.charAt(0);
                 }
             } catch (RuntimeException ignored) {
-                return (char) 0;
+                return NULL_ASSIGN_CHAR;
             }
         }
 
@@ -264,10 +271,10 @@ public class ParametersInjector {
                 if (INTEGRAL_VALUE_PATTERN.matcher(value).matches()) {
                     return Byte.valueOf(value);
                 } else {
-                    return (byte) 0;
+                    return NULL_ASSIGN_BYTE;
                 }
             } catch (RuntimeException ignored) {
-                return (byte) 0;
+                return NULL_ASSIGN_BYTE;
             }
         }
 
@@ -276,10 +283,10 @@ public class ParametersInjector {
                 if (INTEGRAL_VALUE_PATTERN.matcher(value).matches()) {
                     return Short.valueOf(value);
                 } else {
-                    return (short) 0;
+                    return NULL_ASSIGN_SHORT;
                 }
             } catch (RuntimeException ignored) {
-                return (short) 0;
+                return NULL_ASSIGN_SHORT;
             }
         }
 
@@ -288,10 +295,10 @@ public class ParametersInjector {
                 if (INTEGRAL_VALUE_PATTERN.matcher(value).matches()) {
                     return Integer.valueOf(value);
                 } else {
-                    return 0;
+                    return NULL_ASSIGN_INT;
                 }
             } catch (RuntimeException ignored) {
-                return 0;
+                return NULL_ASSIGN_INT;
             }
         }
 
@@ -300,10 +307,10 @@ public class ParametersInjector {
                 if (INTEGRAL_VALUE_PATTERN.matcher(value).matches()) {
                     return Long.valueOf(value);
                 } else {
-                    return 0L;
+                    return NULL_ASSIGN_LONG;
                 }
             } catch (RuntimeException ignored) {
-                return 0L;
+                return NULL_ASSIGN_LONG;
             }
         }
 
@@ -312,10 +319,10 @@ public class ParametersInjector {
                 if (REAL_VALUE_PATTERN.matcher(value).matches()) {
                     return Float.valueOf(value);
                 } else {
-                    return 0.0F;
+                    return NULL_ASSIGN_FLOAT;
                 }
             } catch (RuntimeException ignored) {
-                return 0.0F;
+                return NULL_ASSIGN_FLOAT;
             }
         }
 
@@ -324,10 +331,10 @@ public class ParametersInjector {
                 if (REAL_VALUE_PATTERN.matcher(value).matches()) {
                     return Double.valueOf(value);
                 } else {
-                    return 0.0D;
+                    return NULL_ASSIGN_DOUBLE;
                 }
             } catch (RuntimeException ignored) {
-                return 0.0D;
+                return NULL_ASSIGN_DOUBLE;
             }
         }
 
@@ -343,11 +350,12 @@ public class ParametersInjector {
         throw getIllegalFieldTypeException(field, targetType);
     }
 
+    @Contract(pure = true)
     private static Class<?> getFieldType(InjectField field) {
         return field.field == null ? field.nonFieldType : field.field.getType();
     }
 
-    private void setFieldValue(InjectField field, Object assign) {
+    private void setFieldValue(InjectField field, @Nullable Object assign) {
         if (field.field == null) {
             field.nonFieldValue = assign;
         } else {
@@ -381,8 +389,10 @@ public class ParametersInjector {
         }
     }
 
-    private static ConfigurationException getIllegalFieldTypeException(InjectField field, Class<?> fieldType) {
-        if (field == null) {
+    @Nonnull
+    private static ConfigurationException getIllegalFieldTypeException(
+            @Nullable InjectField field, @Nonnull Class<?> fieldType) {
+        if (field == null || field.field == null) {
             return new ConfigurationException(String.format("Field has unexpected type %s.", fieldType.getName()));
         } else {
             return new ConfigurationException(String.format(
@@ -394,13 +404,14 @@ public class ParametersInjector {
 
     @SuppressWarnings("PackageVisibleField")
     private static class InjectField {
+        @Nullable
         final Field field;
         final Parameter parameter;
 
         Object nonFieldValue;
         Class<?> nonFieldType;
 
-        private InjectField(Field field, Parameter parameter) {
+        private InjectField(@Nullable Field field, Parameter parameter) {
             this.field = field;
             this.parameter = parameter;
         }

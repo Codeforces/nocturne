@@ -106,7 +106,7 @@ public class RequestUtil {
                         request.setAttribute(name, bytes);
 
                         if (!fileBytesByFieldName.containsKey(name)) {
-                            fileBytesByFieldName.put(name, new ArrayList<byte[]>(1));
+                            fileBytesByFieldName.put(name, new ArrayList<>(1));
                         }
                         fileBytesByFieldName.get(name).add(bytes);
                     }
@@ -117,7 +117,7 @@ public class RequestUtil {
                     request.setAttribute(name + "::name", item.getName());
 
                     if (!fileNamesByFieldName.containsKey(name)) {
-                        fileNamesByFieldName.put(name, new ArrayList<String>(1));
+                        fileNamesByFieldName.put(name, new ArrayList<>(1));
                     }
                     fileNamesByFieldName.get(name).add(item.getName());
                 }
@@ -156,7 +156,7 @@ public class RequestUtil {
                 Object[] values = (Object[]) value;
                 int count = values.length;
 
-                parameters = count <= 1 ? new SingleEntryList<String>() : new ArrayList<String>(count);
+                parameters = count <= 1 ? new SingleEntryList<>() : new ArrayList<>(count);
 
                 for (int index = 0; index < count; ++index) {
                     parameters.add(values[index].toString());

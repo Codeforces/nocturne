@@ -47,7 +47,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author Mike Mirzayanov
  */
-@SuppressWarnings({"DollarSignInName", "NonStaticInitializer", "NoopMethodInAbstractClass", "ClassReferencesSubclass", "OverloadedVarargsMethod"})
+@SuppressWarnings({"DollarSignInName", "NonStaticInitializer", "NoopMethodInAbstractClass", "ClassReferencesSubclass", "OverloadedVarargsMethod", "WeakerAccess"})
 public abstract class Component {
     /**
      * Lock to synchronise some operations related to this component.
@@ -1166,7 +1166,7 @@ public abstract class Component {
      */
     public Component addValidator(String parameter, Validator validator) {
         if (!validators.containsKey(parameter)) {
-            validators.put(parameter, new ArrayList<Validator>());
+            validators.put(parameter, new ArrayList<>());
         }
 
         validators.get(parameter).add(validator);
@@ -1257,14 +1257,9 @@ public abstract class Component {
      * @return boolean {@code true} if validation passed.
      */
     public boolean runValidationAndPrintErrors() {
-        final Map<String, String> errors = new LinkedHashMap<>();
+        Map<String, String> errors = new LinkedHashMap<>();
 
-        boolean result = runValidation(new ErrorValidationHandler() {
-            @Override
-            public void onError(String fieldName, String errorText) {
-                errors.put("error__" + fieldName, errorText);
-            }
-        });
+        boolean result = runValidation((fieldName, errorText) -> errors.put("error__" + fieldName, errorText));
 
         if (!errors.isEmpty()) {
             Type mapType = new TypeToken<Map<String, String>>() {
@@ -1421,6 +1416,7 @@ public abstract class Component {
      * @throws TemplateModelException if {@code {@link BeansWrapper#wrap(Object) BeansWrapper.wrap(object)}}
      *                                throws an exception
      */
+    @SuppressWarnings("MethodMayBeStatic")
     protected final TemplateModel wrapBean(Object object) throws TemplateModelException {
         return new BeansWrapperBuilder(Constants.FREEMARKER_VERSION).build().wrap(object);
     }

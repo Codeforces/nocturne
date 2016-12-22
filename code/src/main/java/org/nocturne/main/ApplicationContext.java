@@ -3,16 +3,18 @@
  */
 package org.nocturne.main;
 
+import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import com.google.inject.Injector;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.jetbrains.annotations.Contract;
 import org.nocturne.caption.Captions;
 import org.nocturne.caption.CaptionsImpl;
 import org.nocturne.collection.SingleEntryList;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.exception.NocturneException;
 import org.nocturne.exception.ReflectionException;
-import org.nocturne.geoip.GeoipUtil;
+import org.nocturne.geoip.GeoIpUtil;
 import org.nocturne.link.Link;
 import org.nocturne.module.Module;
 import org.nocturne.reset.ResetStrategy;
@@ -20,6 +22,8 @@ import org.nocturne.util.ReflectionUtil;
 import org.nocturne.util.RequestUtil;
 import org.nocturne.util.StringUtil;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -57,12 +61,12 @@ public class ApplicationContext {
     /**
      * Current page. Stored as ThreadLocal.
      */
-    private final ThreadLocal<Page> currentPage = new ThreadLocal<>();
+    private static final ThreadLocal<Page> currentPage = new ThreadLocal<>();
 
     /**
      * Current component. Stored as ThreadLocal.
      */
-    private final ThreadLocal<Component> currentComponent = new ThreadLocal<>();
+    private static final ThreadLocal<Component> currentComponent = new ThreadLocal<>();
 
     /**
      * Is in debug mode?
@@ -168,7 +172,7 @@ public class ApplicationContext {
     /**
      * Allowed languages (use 2-letter codes). Only English by default.
      */
-    private List<String> allowedLanguages = Arrays.asList("en");
+    private List<String> allowedLanguages = Collections.singletonList("en");
 
     /**
      * To use geoip to setup language by 2-letter uppercase country code (ISO 3166 code).
@@ -204,12 +208,12 @@ public class ApplicationContext {
     /**
      * RequestContext for current thread.
      */
-    private final ThreadLocal<RequestContext> requestsPerThread = new ThreadLocal<>();
+    private static final ThreadLocal<RequestContext> requestsPerThread = new ThreadLocal<>();
 
     /**
      * Reloading class loader for current thread, used in debug mode only.
      */
-    private final ThreadLocal<ClassLoader> reloadingClassLoaderPerThread = new ThreadLocal<>();
+    private static final ThreadLocal<ClassLoader> reloadingClassLoaderPerThread = new ThreadLocal<>();
 
     /**
      * Current reloading class loader.
@@ -240,6 +244,8 @@ public class ApplicationContext {
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
+    @Contract(pure = true)
     boolean isInitialized() {
         return initialized.get();
     }
@@ -257,7 +263,7 @@ public class ApplicationContext {
      * will return typical web-application class loader in production mode.
      *
      * @return Reloading class loader (for debug mode) and usual web-application
-     *         class loader (for production mode).
+     * class loader (for production mode).
      */
     public ClassLoader getReloadingClassLoader() {
         if (debug) {
@@ -269,9 +275,9 @@ public class ApplicationContext {
 
     /**
      * @return Returns application context path.
-     *         You should build paths in your application by
-     *         concatenation getContextPath() and relative path inside
-     *         the application.
+     * You should build paths in your application by
+     * concatenation getContextPath() and relative path inside
+     * the application.
      */
     public String getContextPath() {
         if (contextPath == null) {
@@ -288,6 +294,7 @@ public class ApplicationContext {
      *
      * @return Directory or null in the production mode.
      */
+    @Nullable
     public String getDebugCaptionsDir() {
         if (debug) {
             return debugCaptionsDir;
@@ -298,7 +305,7 @@ public class ApplicationContext {
 
     /**
      * @return Default application locale, specified by
-     *         nocturne.default-language. English if no one specified.
+     * nocturne.default-language. English if no one specified.
      */
     public Locale getDefaultLocale() {
         return defaultLocale;
@@ -313,8 +320,9 @@ public class ApplicationContext {
 
     /**
      * @return Map to setup language by 2-letter uppercase country code (ISO 3166 code).
-     *         The property should have a form like: RU,BY:ru;EN,GB,US,CA:en.
+     * The property should have a form like: RU,BY:ru;EN,GB,US,CA:en.
      */
+    @SuppressWarnings("WeakerAccess")
     public Map<String, String> getCountryToLanguage() {
         return Collections.unmodifiableMap(countryToLanguage);
     }
@@ -365,7 +373,7 @@ public class ApplicationContext {
 
     /**
      * @return What page to show if RequestRouter returns {@code null}.
-     *         Returns {@code null} if application should return 404 on it.
+     * Returns {@code null} if application should return 404 on it.
      */
     public String getDefaultPageClassName() {
         return defaultPageClassName;
@@ -373,7 +381,7 @@ public class ApplicationContext {
 
     /**
      * @return Encoding for caption files if
-     *         naive org.nocturne.caption.CaptionsImpl backed used.
+     * naive org.nocturne.caption.CaptionsImpl backed used.
      */
     public String getCaptionFilesEncoding() {
         return captionFilesEncoding;
@@ -412,7 +420,7 @@ public class ApplicationContext {
 
     /**
      * @return Link annotation instance, which was choosen by LinkedRequestRouter as
-     *         link for current request.
+     * link for current request.
      */
     public Link getLink() {
         return (Link) getRequest().getAttribute("nocturne.current-page-link");
@@ -446,9 +454,9 @@ public class ApplicationContext {
 
     /**
      * @return List of directories to be scanned for recompiled classes.
-     *         Used in the debug mode only.
-     *         Possibly, it depends on your IDE.
-     *         Setup it by nocturne.reloading-class-paths.
+     * Used in the debug mode only.
+     * Possibly, it depends on your IDE.
+     * Setup it by nocturne.reloading-class-paths.
      */
     public List<File> getReloadingClassPaths() {
         return new LinkedList<>(reloadingClassPaths);
@@ -511,7 +519,7 @@ public class ApplicationContext {
 
     /**
      * @return Returns request router instance. Specify nocturne.request-router
-     *         property to set its class name.
+     * property to set its class name.
      */
     public String getRequestRouter() {
         return requestRouter;
@@ -546,7 +554,7 @@ public class ApplicationContext {
 
     /**
      * @return List of packages (or classes) which will be reloaded using
-     *         ReloadingClassLoader. Set nocturne.class-reloading-packages to specify it.
+     * ReloadingClassLoader. Set nocturne.class-reloading-packages to specify it.
      */
     public List<String> getClassReloadingPackages() {
         return new LinkedList<>(classReloadingPackages);
@@ -554,8 +562,8 @@ public class ApplicationContext {
 
     /**
      * @return List of packages (or classes) which should not be reloaded
-     *         using ReloadingClassLoader, even they are in classReloadingPackages.
-     *         Set nocturne.class-reloading-exceptions to specify the value.
+     * using ReloadingClassLoader, even they are in classReloadingPackages.
+     * Set nocturne.class-reloading-exceptions to specify the value.
      */
     public List<String> getClassReloadingExceptions() {
         return new LinkedList<>(classReloadingExceptions);
@@ -563,8 +571,8 @@ public class ApplicationContext {
 
     /**
      * @return Where to find templates. Contains relative paths from deployed application root. For example: WEB-INF/templates.
-     *         Set nocturne.template-paths - semicolon separated list of paths.
-     *         Set nocturne.templates-path (deprecated) - single path.
+     * Set nocturne.template-paths - semicolon separated list of paths.
+     * Set nocturne.templates-path (deprecated) - single path.
      */
     public String[] getTemplatePaths() {
         return Arrays.copyOf(templatePaths, templatePaths.length);
@@ -572,8 +580,8 @@ public class ApplicationContext {
 
     /**
      * @return Flag that indicates if template loader should stick to last successful template path
-     *         or always check template paths in the configured order.
-     *         Default value is {@code true}.
+     * or always check template paths in the configured order.
+     * Default value is {@code true}.
      */
     public boolean isStickyTemplatePaths() {
         return stickyTemplatePaths;
@@ -609,7 +617,7 @@ public class ApplicationContext {
 
     /**
      * @return if request.getServletPath() (example: /some/path) matches it, request ignored by nocturne.
-     *         Use nocturne.skip-regex to set it.
+     * Use nocturne.skip-regex to set it.
      */
     public Pattern getSkipRegex() {
         return skipRegex;
@@ -689,8 +697,9 @@ public class ApplicationContext {
     /**
      * @param shortcut Shortcut value.
      * @return Use the method to work with captions from your code.
-     *         Usually, it is not good idea, because captions are part of view layer.
+     * Usually, it is not good idea, because captions are part of view layer.
      */
+    @SuppressWarnings("DollarSignInName")
     public String $(String shortcut) {
         return $(shortcut, ArrayUtils.EMPTY_OBJECT_ARRAY);
     }
@@ -699,25 +708,12 @@ public class ApplicationContext {
      * @param shortcut Shortcut value.
      * @param args     Shortcut arguments.
      * @return Use the method to work with captions from your code.
-     *         Usually, it is not good idea, because captions are part of view layer.
+     * Usually, it is not good idea, because captions are part of view layer.
      */
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings({"OverloadedVarargsMethod", "DollarSignInName"})
     public String $(String shortcut, Object... args) {
         shortcut = shortcut.trim();
-
-        if (captions == null) {
-            lock.lock();
-            try {
-                Class<? extends Captions> clazz
-                        = (Class<? extends Captions>) getClass().getClassLoader().loadClass(captionsImplClass);
-                captions = injector.getInstance(clazz);
-            } catch (ClassNotFoundException e) {
-                throw new ConfigurationException("Class " + captionsImplClass + " should implement Captions.", e);
-            } finally {
-                lock.unlock();
-            }
-        }
-
+        initializeCaptions();
         return captions.find(shortcut, args);
     }
 
@@ -726,24 +722,12 @@ public class ApplicationContext {
      * @param shortcut Shortcut value.
      * @param args     Shortcut arguments.
      * @return Use the method to work with captions from your code.
-     *         Usually, it is not good idea, because captions are part of view layer.
+     * Usually, it is not good idea, because captions are part of view layer.
      */
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings("OverloadedVarargsMethod")
     public String getCaption(Locale locale, String shortcut, Object... args) {
         shortcut = shortcut.trim();
-
-        if (captions == null) {
-            lock.lock();
-            try {
-                Class<? extends Captions> clazz = (Class<? extends Captions>) getClass().getClassLoader().loadClass(captionsImplClass);
-                captions = injector.getInstance(clazz);
-            } catch (ClassNotFoundException e) {
-                throw new ConfigurationException("Class " + captionsImplClass + " should implement Captions.", e);
-            } finally {
-                lock.unlock();
-            }
-        }
-
+        initializeCaptions();
         return captions.find(locale, shortcut, args);
     }
 
@@ -751,25 +735,29 @@ public class ApplicationContext {
      * @param locale   Expected locale.
      * @param shortcut Shortcut value.
      * @return Use the method to work with captions from your code.
-     *         Usually, it is not good idea, because captions are part of view layer.
+     * Usually, it is not good idea, because captions are part of view layer.
      */
-    @SuppressWarnings({"unchecked"})
     public String getCaption(Locale locale, String shortcut) {
         shortcut = shortcut.trim();
+        initializeCaptions();
+        return captions.find(locale, shortcut);
+    }
 
-        if (captions == null) {
-            lock.lock();
-            try {
-                Class<? extends Captions> clazz = (Class<? extends Captions>) getClass().getClassLoader().loadClass(captionsImplClass);
-                captions = injector.getInstance(clazz);
-            } catch (ClassNotFoundException e) {
-                throw new ConfigurationException("Class " + captionsImplClass + " should implement Captions.", e);
-            } finally {
-                lock.unlock();
-            }
+    @SuppressWarnings("unchecked")
+    private void initializeCaptions() {
+        if (captions != null) {
+            return;
         }
 
-        return captions.find(locale, shortcut);
+        lock.lock();
+        try {
+            Class<? extends Captions> clazz = (Class<? extends Captions>) getClass().getClassLoader().loadClass(captionsImplClass);
+            captions = injector.getInstance(clazz);
+        } catch (ClassNotFoundException e) {
+            throw new ConfigurationException("Class " + captionsImplClass + " should implement Captions.", e);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -792,7 +780,7 @@ public class ApplicationContext {
 
     /**
      * @return Prefix before attributes in request which
-     *         will be injected as parameters in Components.
+     * will be injected as parameters in Components.
      */
     public static String getAdditionalParamsRequestAttributePrefix() {
         return "nocturne.additional-parameter.";
@@ -812,8 +800,8 @@ public class ApplicationContext {
 
     /**
      * @return Action for current request (how request router decided). Empty string if
-     *         no one specified. Typically, gets from action parameter (example: ?action=test)
-     *         or link template (example: "user/{action}").
+     * no one specified. Typically, gets from action parameter (example: ?action=test)
+     * or link template (example: "user/{action}").
      */
     public String getRequestAction() {
         return (String) getRequest().getAttribute(getActionRequestParamName());
@@ -844,23 +832,20 @@ public class ApplicationContext {
     /**
      * @param runnable Runnable to be executed after ApplicationContext has been initialized.
      */
-    public void executeAfterInitialization(final Runnable runnable) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                initializedLock.lock();
-                try {
-                    while (!isInitialized()) {
-                        try {
-                            initializedCondition.await();
-                        } catch (InterruptedException ignored) {
-                            // No operations.
-                        }
+    public void executeAfterInitialization(Runnable runnable) {
+        new Thread(() -> {
+            initializedLock.lock();
+            try {
+                while (!isInitialized()) {
+                    try {
+                        initializedCondition.await();
+                    } catch (InterruptedException ignored) {
+                        // No operations.
                     }
-                    runnable.run();
-                } finally {
-                    initializedLock.unlock();
                 }
+                runnable.run();
+            } finally {
+                initializedLock.unlock();
             }
         }).start();
     }
@@ -891,7 +876,7 @@ public class ApplicationContext {
          */
         private Map<String, List<String>> overrideParameters;
 
-        private RequestContext(HttpServletRequest request, HttpServletResponse response) {
+        private RequestContext(@Nullable HttpServletRequest request, @Nullable HttpServletResponse response) {
             if ((request == null) ^ (response == null)) {
                 throw new IllegalArgumentException("It is not possible case '(request == null) ^ (response == null)'.");
             }
@@ -922,15 +907,16 @@ public class ApplicationContext {
 
         /**
          * @return Locale for current request.
-         *         Uses lang, language, locale parameters to find
-         *         current locale: 2-letter language code.
-         *         If it specified once, stores current locale in the session.
+         * Uses lang, language, locale parameters to find
+         * current locale: 2-letter language code.
+         * If it specified once, stores current locale in the session.
          */
         public Locale getLocale() {
             return locale;
         }
 
-        private static boolean isInvalidLanguage(String lang) {
+        @Contract(value = "null -> true", pure = true)
+        private static boolean isInvalidLanguage(@Nullable String lang) {
             return lang == null || lang.length() != 2;
         }
 
@@ -958,7 +944,7 @@ public class ApplicationContext {
                 }
 
                 if (isInvalidLanguage(lang)) {
-                    lang = getLanguageByGeoip();
+                    lang = getLanguageByGeoIp();
                     if (isInvalidLanguage(lang)) {
                         String[] languages = getAcceptLanguages();
                         for (String language : languages) {
@@ -977,6 +963,7 @@ public class ApplicationContext {
             }
         }
 
+        @Nullable
         private String getCookie(String cookieName) {
             Cookie[] cookies = request.getCookies();
             if (cookies != null) {
@@ -1015,14 +1002,14 @@ public class ApplicationContext {
             }
         }
 
-        private String getLanguageByGeoip() {
-            String countryCode = GeoipUtil.getCountryCode(request);
+        @Nullable
+        private String getLanguageByGeoIp() {
+            String countryCode = GeoIpUtil.getCountryCode(request);
 
             String lang = getInstance().getCountryToLanguage().get(countryCode);
             String[] languages = getAcceptLanguages();
 
-            if (ArrayUtils.indexOf(languages, lang) >= 0
-                    && getInstance().getAllowedLanguages().contains(lang)) {
+            if (ArrayUtils.indexOf(languages, lang) >= 0 && getInstance().getAllowedLanguages().contains(lang)) {
                 return lang;
             }
 
@@ -1039,9 +1026,10 @@ public class ApplicationContext {
             }
         }
 
-        private static Locale localeByLanguage(String language) {
+        @Nonnull
+        private static Locale localeByLanguage(@Nullable String language) {
             if (getInstance().getAllowedLanguages().contains(language)) {
-                return new Locale(language);
+                return new Locale(Preconditions.checkNotNull(language));
             } else {
                 return getInstance().getDefaultLocale();
             }

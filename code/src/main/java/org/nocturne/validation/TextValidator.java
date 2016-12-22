@@ -1,6 +1,6 @@
 package org.nocturne.validation;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 
 /**
  * Checks that parameter doesn't contain binary characters (with codes less than 9).
@@ -33,7 +33,8 @@ public class TextValidator extends Validator {
 
     /**
      * Creates validator with default error message: Field can't contain binary data.
-     * @param strict        Strict model enable flag.
+     *
+     * @param strict Strict model enable flag.
      */
     public TextValidator(boolean strict) {
         this(strict, "Field can't contain binary data", ArrayUtils.EMPTY_OBJECT_ARRAY);
