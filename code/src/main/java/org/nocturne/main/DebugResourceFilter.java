@@ -4,7 +4,6 @@
 package org.nocturne.main;
 
 import eu.medsea.mimeutil.MimeType;
-import eu.medsea.mimeutil.MimeUtil;
 import eu.medsea.mimeutil.detector.ExtensionMimeDetector;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.Contract;
@@ -18,6 +17,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * You may use this filter only for debug purpose.
@@ -25,11 +26,12 @@ import java.util.List;
  * resources from modules and if you change
  * resources in IDE it will load renewed version.
  */
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class DebugResourceFilter implements Filter {
     private static final Logger logger = Logger.getLogger(DebugResourceFilter.class);
 
     static {
-        MimeUtil.registerMimeDetector(ExtensionMimeDetector.class.getName());
+        eu.medsea.mimeutil.MimeUtil.registerMimeDetector(ExtensionMimeDetector.class.getName());
     }
 
     @Override
@@ -99,9 +101,7 @@ public class DebugResourceFilter implements Filter {
 
     private static boolean writeResourceByPathAndStream(ServletResponse response, String path, InputStream inputStream) throws IOException {
         if (inputStream != null) {
-            OutputStream outputStream = response.getOutputStream();
-
-            try {
+            try (OutputStream outputStream = response.getOutputStream()) {
                 setupContentType(path, response);
 
                 int size = 0;
@@ -119,7 +119,6 @@ public class DebugResourceFilter implements Filter {
                 }
                 response.setContentLength(size);
             } finally {
-                outputStream.close();
                 inputStream.close();
             }
 
@@ -132,9 +131,10 @@ public class DebugResourceFilter implements Filter {
     @Contract("null, _ -> fail")
     private static void setupContentType(String path, ServletResponse response) {
         if (path != null) {
-            MimeType mimeType = MimeUtil.getMostSpecificMimeType(MimeUtil.getMimeTypes(new File(path).getName()));
+            String mimeType = MimeUtil.getMimeType(path);
+
             if (mimeType != null) {
-                response.setContentType(mimeType.toString());
+                response.setContentType(mimeType);
                 return;
             }
         }
@@ -145,4 +145,66 @@ public class DebugResourceFilter implements Filter {
     @Override
     public void destroy() {
     }
+
+    private static final class MimeUtil {
+        private static final Map<String, String> mimeTypeByExtension = new ConcurrentHashMap<>();
+
+        private static void add(String mimeType, String... extensions) {
+            for (String extension : extensions) {
+                if (mimeTypeByExtension.containsKey(extension)) {
+                    throw new NocturneException("Already has registered mime type by " + extension + ".");
+                }
+                mimeTypeByExtension.put(extension, mimeType);
+            }
+        }
+
+        private static String getMimeType(String path) {
+            String extension = (path.indexOf('.') < 0 ? path : path.substring(path.lastIndexOf('.') + 1)).toLowerCase();
+            String result = mimeTypeByExtension.get(extension);
+            if (result != null) {
+                return result;
+            }
+
+            MimeType mimeType = eu.medsea.mimeutil.MimeUtil.getMostSpecificMimeType(eu.medsea.mimeutil.MimeUtil.getMimeTypes(new File(path).getName()));
+            if (mimeType != null) {
+                return mimeType.toString();
+            }
+
+            return "application/octet-stream";
+        }
+
+        static {
+            add("application/json", "json");
+            add("application/javascript", "js");
+            add("application/pdf", "pdf");
+            add("application/postscript", "ps");
+            add("application/font-woff", "woff");
+            add("application/xhtml+xml", "xhtml");
+            add("application/xml-dtd", "dtd");
+            add("application/zip", "zip");
+            add("application/gzip", "gzip");
+            add("application/x-tex", "tex");
+            add("application/xml", "xml");
+            add("audio/aac", "acc");
+            add("audio/mpeg", "mp3");
+            add("audio/ogg", "ogg");
+            add("image/gif", "gif");
+            add("image/jpeg", "jpeg");
+            add("image/png", "png");
+            add("image/svg+xml", "svg");
+            add("image/tiff", "tiff");
+            add("image/webp", "webp");
+            add("image/bmp", "bmp");
+            add("text/plain", "txt");
+            add("text/css", "css");
+            add("text/html", "html", "htm");
+            add("text/x-java-source", "java");
+            add("text/x-c", "cpp");
+            add("text/x-c", "c");
+            add("video/avi", "avi");
+            add("video/mp4", "mp4");
+            add("video/mpeg", "mpeg");
+        }
+    }
+
 }

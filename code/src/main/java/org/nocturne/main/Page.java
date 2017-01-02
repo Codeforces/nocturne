@@ -91,7 +91,9 @@ public abstract class Page extends Component {
     }
 
     void putRequestCache(String key, Object value) {
-        requestCache.put(key, value);
+        if (requestCache != null) {
+            requestCache.put(key, value);
+        }
     }
 
     Object getRequestCache(String key) {
