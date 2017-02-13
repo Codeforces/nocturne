@@ -1239,11 +1239,8 @@ public abstract class Component {
      *         variables in this case.
      */
     public boolean runValidation() {
-        return runValidation(new ErrorValidationHandler() {
-            @Override
-            public void onError(String fieldName, String errorText) {
-                // No operations.
-            }
+        return runValidation((fieldName, errorText) -> {
+            // No operations.
         });
     }
 
