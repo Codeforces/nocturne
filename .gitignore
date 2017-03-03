@@ -2,3 +2,7 @@
 /code/*.iml
 /code/*.ipr
 /code/*.iws
+/dreamcatcher/target
+/dreamcatcher/*.iml
+/dreamcatcher/*.ipr
+/dreamcatcher/*.iws
