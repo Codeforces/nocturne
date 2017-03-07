@@ -3,3 +3,8 @@
 /code/*.ipr
 /code/*.iws
 /code/.idea
+/dreamcatcher/target
+/dreamcatcher/*.iml
+/dreamcatcher/*.ipr
+/dreamcatcher/*.iws
+/dreamcatcher/.idea
