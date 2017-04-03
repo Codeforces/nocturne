@@ -31,7 +31,10 @@ public class DebugResourceFilter implements Filter {
     private static final Logger logger = Logger.getLogger(DebugResourceFilter.class);
 
     static {
-        eu.medsea.mimeutil.MimeUtil.registerMimeDetector(ExtensionMimeDetector.class.getName());
+        String mimeDetectorName = ExtensionMimeDetector.class.getName();
+        if (eu.medsea.mimeutil.MimeUtil.getMimeDetector(mimeDetectorName) == null) {
+            eu.medsea.mimeutil.MimeUtil.registerMimeDetector(mimeDetectorName);
+        }
     }
 
     @Override
@@ -152,7 +155,7 @@ public class DebugResourceFilter implements Filter {
         private static void add(String mimeType, String... extensions) {
             for (String extension : extensions) {
                 if (mimeTypeByExtension.containsKey(extension)) {
-                    throw new NocturneException("Already has registered mime type by " + extension + ".");
+                    throw new NocturneException("Already has registered mime type by " + extension + '.');
                 }
                 mimeTypeByExtension.put(extension, mimeType);
             }
