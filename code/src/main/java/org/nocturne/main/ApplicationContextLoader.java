@@ -6,12 +6,14 @@ package org.nocturne.main;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.exception.ModuleInitializationException;
 import org.nocturne.exception.NocturneException;
 import org.nocturne.module.Module;
+import org.nocturne.module.StoppableConfiguration;
 import org.nocturne.reset.ResetStrategy;
 import org.nocturne.reset.annotation.Persist;
 import org.nocturne.reset.annotation.Reset;
@@ -385,12 +387,13 @@ class ApplicationContextLoader {
             module.init();
         }
 
-        Collections.sort(modules, new Comparator<Module>() {
-            @Override
-            public int compare(Module o1, Module o2) {
-                int priorityComparisonResult = Integer.valueOf(o2.getPriority()).compareTo(o1.getPriority());
-                return priorityComparisonResult == 0 ? o1.getName().compareTo(o2.getName()) : priorityComparisonResult;
+        modules.sort((moduleA, moduleB) -> {
+            int priorityComparisonResult = Integer.compare(moduleB.getPriority(), moduleA.getPriority());
+            if (priorityComparisonResult != 0) {
+                return priorityComparisonResult;
             }
+
+            return moduleA.getName().compareTo(moduleB.getName());
         });
 
         for (Module module : modules) {
@@ -504,6 +507,18 @@ class ApplicationContextLoader {
             setupInjector();
             runModuleStartups();
             ApplicationContext.getInstance().setInitialized();
+        }
+    }
+
+    static void shutdown() {
+        synchronized (ApplicationContextLoader.class) {
+            for (Module module : ObjectUtils.defaultIfNull(
+                    ApplicationContext.getInstance().getModules(), Collections.<Module>emptyList()
+            )) {
+                if (module.getConfiguration() instanceof StoppableConfiguration) {
+                    ((StoppableConfiguration) module.getConfiguration()).stop();
+                }
+            }
         }
     }
 

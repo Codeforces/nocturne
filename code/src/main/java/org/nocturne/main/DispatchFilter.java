@@ -98,9 +98,9 @@ public class DispatchFilter implements Filter {
     public void destroy() {
         if (reloadingContext.isDebug()) {
             destroyDebugMode();
-        } else {
-            productionModeRequestDispatcher.destroy();
         }
+
+        productionModeRequestDispatcher.destroy();
     }
 
     private static void destroyDebugMode() {

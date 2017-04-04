@@ -186,7 +186,7 @@ public class FileUtil {
      *
      * @param file    File to be write.
      * @param content Content to be write.
-     * @throws java.io.IOException if can't read file.
+     * @throws IOException if can't read file.
      */
     public static void writeFile(File file, String content) throws IOException {
         ensureParentDirectoryExists(file);
@@ -208,7 +208,7 @@ public class FileUtil {
      *
      * @param file  File to be write.
      * @param bytes Bytes to be write.
-     * @throws java.io.IOException if can't write file.
+     * @throws IOException if can't write file.
      */
     public static void writeFile(File file, byte[] bytes) throws IOException {
         ensureParentDirectoryExists(file);

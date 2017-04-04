@@ -42,7 +42,7 @@ public class IntegerValidator extends Validator {
 
     /**
      * @param value Value to be analyzed.
-     * @throws org.nocturne.validation.ValidationException
+     * @throws ValidationException
      *          On validation error. It is good idea to pass
      *          localized via captions value inside ValidationException,
      *          like {@code return new ValidationException($("Field can't be empty"));}.

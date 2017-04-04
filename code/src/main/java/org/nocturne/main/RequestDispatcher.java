@@ -72,7 +72,7 @@ public class RequestDispatcher {
      * @param request  Request.
      * @param response Response.
      * @return Page run result.
-     * @throws java.io.IOException when Something wrong with IO.
+     * @throws IOException when Something wrong with IO.
      */
     @SuppressWarnings({"unchecked"})
     private RunResult runProductionService(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -247,7 +247,7 @@ public class RequestDispatcher {
      * Reads configuration parameters from web.xml.
      *
      * @param config Config.
-     * @throws javax.servlet.ServletException when method fails.
+     * @throws ServletException when method fails.
      */
     public void init(FilterConfig config) throws ServletException {
         try {
@@ -320,6 +320,8 @@ public class RequestDispatcher {
     public void destroy() {
         templateEngineConfigurationPool.close();
         pageLoader.close();
+
+        ApplicationContextLoader.shutdown();
     }
 
     private static class RunResult {
