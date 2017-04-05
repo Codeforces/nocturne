@@ -6,14 +6,13 @@ package org.nocturne.main;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.exception.ModuleInitializationException;
 import org.nocturne.exception.NocturneException;
+import org.nocturne.module.Configuration;
 import org.nocturne.module.Module;
-import org.nocturne.module.StoppableConfiguration;
 import org.nocturne.reset.ResetStrategy;
 import org.nocturne.reset.annotation.Persist;
 import org.nocturne.reset.annotation.Reset;
@@ -512,13 +511,8 @@ class ApplicationContextLoader {
 
     static void shutdown() {
         synchronized (ApplicationContextLoader.class) {
-            for (Module module : ObjectUtils.defaultIfNull(
-                    ApplicationContext.getInstance().getModules(), Collections.<Module>emptyList()
-            )) {
-                if (module.getConfiguration() instanceof StoppableConfiguration) {
-                    ((StoppableConfiguration) module.getConfiguration()).stop();
-                }
-            }
+            ApplicationContext.getInstance().getModules().parallelStream()
+                    .map(Module::getConfiguration).filter(Objects::nonNull).forEach(Configuration::shutdown);
         }
     }
 
