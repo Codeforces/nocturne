@@ -28,20 +28,23 @@ public class OptionValidator extends Validator {
 
     /**
      * @param value Value to be analyzed.
-     * @throws ValidationException
-     *          On validation error. It is good idea to pass
-     *          localized via captions value inside ValidationException,
-     *          like {@code return new ValidationException($("Field can't be empty"));}.
+     * @throws ValidationException On validation error. It is good idea to pass
+     *                             localized via captions value inside ValidationException,
+     *                             like {@code return new ValidationException($("Field can't be empty"));}.
      */
     @Override
     public void run(String value) throws ValidationException {
-        for (Object option : options) {
-            if (option == null && value == null) {
-                return;
+        if (value == null) {
+            for (Object option : options) {
+                if (option == null) {
+                    return;
+                }
             }
-
-            if (option != null && option.toString().equals(value)) {
-                return;
+        } else {
+            for (Object option : options) {
+                if (option != null && option.toString().equals(value)) {
+                    return;
+                }
             }
         }
 
