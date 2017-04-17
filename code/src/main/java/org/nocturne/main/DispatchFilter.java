@@ -99,6 +99,7 @@ public class DispatchFilter implements Filter {
         if (reloadingContext.isDebug()) {
             destroyDebugMode();
         }
+        reloadingContext.stop();
 
         productionModeRequestDispatcher.destroy();
     }

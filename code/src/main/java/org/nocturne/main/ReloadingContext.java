@@ -18,6 +18,7 @@ public class ReloadingContext {
     private static final ReloadingContext INSTANCE = new ReloadingContext();
     private static final AtomicBoolean initialized = new AtomicBoolean(false);
 
+    private volatile boolean running = true;
     private boolean debug;
     private Pattern skipRegex;
 
@@ -40,6 +41,17 @@ public class ReloadingContext {
 
     public boolean isDebug() {
         return debug;
+    }
+
+    /**
+     * @return {@code true} iff web application is not stopped
+     */
+    public boolean isRunning() {
+        return running;
+    }
+
+    void stop() {
+        this.running = false;
     }
 
     public int getTemplatesUpdateDelay() {
