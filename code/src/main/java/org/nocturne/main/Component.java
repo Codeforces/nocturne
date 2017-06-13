@@ -1084,9 +1084,36 @@ public abstract class Component {
     @Contract("_ -> fail")
     public void abortWithRedirect(String target) {
         try {
+            String url = request.getRequestURL().toString();
+            if (target.startsWith("/")) {
+                int protocolEnds = url.indexOf("://");
+                if (protocolEnds >= 0) {
+                    int firstSlash = url.indexOf('/', protocolEnds + 3);
+                    if (firstSlash >= 0) {
+                        target = url.substring(0, firstSlash) + target;
+                    } else {
+                        target = url + target;
+                    }
+                }
+            } else {
+                if (!target.startsWith("http://") && !target.startsWith("https://")) {
+                    int lastSlash = url.lastIndexOf('/');
+                    if (lastSlash >= 0) {
+                        target = url.substring(0, lastSlash + 1) + target;
+                    } else {
+                        target = url + target;
+                    }
+                }
+            }
+
             // make it absolute
             if (!target.startsWith("/") && !target.contains("://")) {
                 target = ApplicationContext.getInstance().getContextPath() + '/' + target;
+            }
+
+            String xForwardedProto = request.getHeader("X-Forwarded-Proto");
+            if ("https".equals(xForwardedProto) && target.startsWith("http://")) {
+                target = "https://" + target.substring("http://".length());
             }
 
             response.sendRedirect(target);
