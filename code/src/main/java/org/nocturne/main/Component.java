@@ -12,8 +12,10 @@ import freemarker.template.Template;
 import freemarker.template.TemplateModel;
 import freemarker.template.TemplateModelException;
 import net.sf.cglib.reflect.FastMethod;
+import org.apache.commons.lang3.ThreadUtils;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.nocturne.cache.CacheHandler;
 import org.nocturne.caption.CaptionDirective;
 import org.nocturne.collection.SingleEntryList;
@@ -38,6 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -92,7 +95,7 @@ public abstract class Component {
     /**
      * Map to store frame contents after parse().
      */
-    private Map<String, String> frameMap = new HashMap<>();
+    private Map<String, String> frameMap = new HashMap<>(0);
 
     /**
      * Should workflow skip template processing?
@@ -176,10 +179,74 @@ public abstract class Component {
      */
     private FieldsResetter fieldsResetter;
 
+    /*
+    private final static AtomicInteger instanceCount = new AtomicInteger();
+    private final static Map<String, AtomicInteger> instanceCounts = new ConcurrentHashMap<>();
+    private final static Logger _logger = Logger.getLogger(Component.class);
+    private final static Lock lock = new ReentrantLock();
+
+    public Component() {
+        String clazzName = ReflectionUtil.getOriginalClass(getClass()).getSimpleName();
+        int classCount;
+
+        lock.lock();
+        try {
+            instanceCounts.putIfAbsent(clazzName, new AtomicInteger());
+            classCount = instanceCounts.get(clazzName).incrementAndGet();
+        } finally {
+            lock.unlock();
+        }
+
+        int instanceCountGet = instanceCount.incrementAndGet();
+        _logger.error("Created Component instance " + clazzName + ": " + classCount + "/" + instanceCountGet + ".");
+        if (instanceCountGet % 1000 == 0) {
+            printCounts();
+        }
+
+        if (classCount >= 2000 && classCount % 2000 <= 10) {
+            _logger.error("Instance of '" + clazzName + "' to take care [classCount=" + classCount + "].",
+                    new RuntimeException());
+        }
+    }
+
+    private void printCounts() {
+        List<Count> counts = new ArrayList<>();
+        lock.lock();
+        try {
+            for (Map.Entry<String, AtomicInteger> e : instanceCounts.entrySet()) {
+                counts.add(new Count(e.getKey(), e.getValue().get()));
+            }
+        } finally {
+            lock.unlock();
+        }
+        Collections.sort(counts);
+        StringBuilder sb = new StringBuilder("There are " + counts.size() + " entries: ");
+        for (Count count : counts) {
+            sb.append(count.clazz).append(": ").append(count.count).append("\n");
+        }
+        _logger.error("Created Components statistics: " + sb.toString());
+    }
+
+    private static final class Count implements Comparable<Count> {
+        private final String clazz;
+        private final int count;
+
+        public Count(String clazz, int count) {
+            this.clazz = clazz;
+            this.count = count;
+        }
+
+        @Override
+        public int compareTo(@NotNull Component.Count o) {
+            return Integer.compare(o.count, count);
+        }
+    }
+    */
+
     /**
      * @return Component cache handler. Use it if you want to avoid typical
-     *         rendering life-cycle and get component HTML (or other parsed result) from
-     *         cache.
+     * rendering life-cycle and get component HTML (or other parsed result) from
+     * cache.
      */
     public CacheHandler getCacheHandler() {
         return cacheHandler;
@@ -287,7 +354,7 @@ public abstract class Component {
 
     /**
      * @return Http servlet response output stream. It will call getResponse().getOutputStream()
-     *         but exactly once. It uses internal field to store value.
+     * but exactly once. It uses internal field to store value.
      */
     public OutputStream getOutputStream() {
         if (outputStream == null) {
@@ -303,8 +370,8 @@ public abstract class Component {
 
     /**
      * @return Http servlet response writer. Uses UTF-8 encoding. Invokes
-     *         new PrintWriter(new OutputStreamWriter(getOutputStream(), java.nio.charset.StandardCharsets.UTF_8), true)
-     *         but exactly once (uses lazy calculations).
+     * new PrintWriter(new OutputStreamWriter(getOutputStream(), java.nio.charset.StandardCharsets.UTF_8), true)
+     * but exactly once (uses lazy calculations).
      */
     public PrintWriter getWriter() {
         if (writer == null) {
@@ -341,8 +408,8 @@ public abstract class Component {
 
     /**
      * @return Returns log4j logger for this controller. So you don't need
-     *         to add field Logger logger = Logger.getLogger(MyPage.class) and use
-     *         getLogger().
+     * to add field Logger logger = Logger.getLogger(MyPage.class) and use
+     * getLogger().
      */
     public Logger getLogger() {
         if (logger == null) {
@@ -407,7 +474,7 @@ public abstract class Component {
      * @param key   Session attribute name.
      * @param clazz Value class.
      * @return Value as instance of class "clazz". Use JSON as internal format to
-     *         store values in the debug mode.
+     * store values in the debug mode.
      */
     @SuppressWarnings({"unchecked"})
     public <T extends Serializable> T getSession(String key, Class<T> clazz) {
@@ -459,7 +526,7 @@ public abstract class Component {
      * @param key  Session attribute name.
      * @param type Value type.
      * @return Value as instance of type "type". Use JSON as internal format to
-     *         store values in the debug mode.
+     * store values in the debug mode.
      */
     @SuppressWarnings({"unchecked", "RedundantTypeArguments"})
     public <T extends Serializable> T getSession(String key, Type type) {
@@ -529,8 +596,8 @@ public abstract class Component {
 
     /**
      * @return Creates (if needed) and returns templat. Uses simple class name as template
-     *         name (+ ".ftl") or specified if setTemplateFile(String) has been called. Do
-     *         not call the method getTemplate() manually.
+     * name (+ ".ftl") or specified if setTemplateFile(String) has been called. Do
+     * not call the method getTemplate() manually.
      */
     public Template getTemplate() {
         if (skipTemplate) {
@@ -712,8 +779,8 @@ public abstract class Component {
     /**
      * @param key Parameter name.
      * @return Returns parameter as boolean. Returns {@code false}
-     *         on invalid boolean value. Returns {@code true} if
-     *         key is "true", "on", "yes", "y", "1" or "checked" (case insensitive).
+     * on invalid boolean value. Returns {@code true} if
+     * key is "true", "on", "yes", "y", "1" or "checked" (case insensitive).
      */
     public boolean getBoolean(String key) {
         String value = getString(key);
@@ -725,7 +792,7 @@ public abstract class Component {
     /**
      * @param key Parameter name.
      * @return Returns parameter as character. Returns {@code 0}
-     *         on invalid character value.
+     * on invalid character value.
      */
     public char getChar(String key) {
         String value = getString(key);
@@ -735,7 +802,7 @@ public abstract class Component {
     /**
      * @param key Parameter name.
      * @return Returns parameter as byte. Returns {@code 0}
-     *         on invalid byte value.
+     * on invalid byte value.
      */
     public byte getByte(String key) {
         try {
@@ -748,7 +815,7 @@ public abstract class Component {
     /**
      * @param key Parameter name.
      * @return Returns parameter as short integer. Returns {@code 0}
-     *         on invalid short integer value.
+     * on invalid short integer value.
      */
     public short getShort(String key) {
         try {
@@ -761,7 +828,7 @@ public abstract class Component {
     /**
      * @param key Parameter name.
      * @return Returns parameter as integer. Returns {@code 0}
-     *         on invalid integer value.
+     * on invalid integer value.
      */
     public int getInteger(String key) {
         try {
@@ -774,7 +841,7 @@ public abstract class Component {
     /**
      * @param key Parameter name.
      * @return Returns parameter as long. Returns {@code 0}
-     *         on invalid long value.
+     * on invalid long value.
      */
     public long getLong(String key) {
         try {
@@ -787,7 +854,7 @@ public abstract class Component {
     /**
      * @param key Parameter name.
      * @return Returns parameter as double. Returns {@code 0.0}
-     *         on invalid float value.
+     * on invalid float value.
      */
     public double getFloat(String key) {
         try {
@@ -800,7 +867,7 @@ public abstract class Component {
     /**
      * @param key Parameter name.
      * @return Returns parameter as double. Returns {@code 0.0}
-     *         on invalid double value.
+     * on invalid double value.
      */
     public double getDouble(String key) {
         try {
@@ -894,7 +961,7 @@ public abstract class Component {
     /**
      * @param key Parameter name.
      * @return Returns {@code true} if there is such parameter and
-     *         it differs from {@code null}.
+     * it differs from {@code null}.
      */
     protected boolean hasParameter(String key) {
         return getString(key) != null;
@@ -1051,6 +1118,7 @@ public abstract class Component {
         }
 
         resetFields();
+        frameMap = new HashMap<>(0);
     }
 
     void resetFields() {
@@ -1189,7 +1257,7 @@ public abstract class Component {
      * @param parameter Parameter name.
      * @param validator Validator instance.
      * @return Component itself to support chains like
-     *         addValidator("login", v1).addValidator("login", v2).
+     * addValidator("login", v1).addValidator("login", v2).
      */
     public Component addValidator(String parameter, Validator validator) {
         if (!validators.containsKey(parameter)) {
@@ -1259,11 +1327,11 @@ public abstract class Component {
      * Runs all added validators.
      *
      * @return {@code true} iff all validators returns true. It will iterate through
-     *         parameters in some order and invokes its validators in order of addition.
-     *         If validator for parameter finds error, other validators for this parameter
-     *         skipped and error message added as template
-     *         variable "error__" + parameterName. Also all parameters added to template
-     *         variables in this case.
+     * parameters in some order and invokes its validators in order of addition.
+     * If validator for parameter finds error, other validators for this parameter
+     * skipped and error message added as template
+     * variable "error__" + parameterName. Also all parameters added to template
+     * variables in this case.
      */
     public boolean runValidation() {
         return runValidation((fieldName, errorText) -> {

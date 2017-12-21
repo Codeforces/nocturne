@@ -47,6 +47,6 @@ public class PagePool extends Pool<Page> {
      */
     @Override
     protected int getAcquireIncrement() {
-        return 25;
+        return 3;
     }
 }
