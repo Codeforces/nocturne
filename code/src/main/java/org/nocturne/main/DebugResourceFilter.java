@@ -177,6 +177,7 @@ public class DebugResourceFilter implements Filter {
         }
 
         static {
+            add("application/wasm", "wasm");
             add("application/json", "json");
             add("application/javascript", "js");
             add("application/pdf", "pdf");
