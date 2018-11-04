@@ -1099,9 +1099,9 @@ public abstract class Component {
 
         parametersInjector.inject(request);
 
-        put("frame", FrameDirective.getInstance());
         put("link", LinkDirective.getInstance());
         put("caption", CaptionDirective.getInstance());
+        put("frame", FrameDirective.getInstance());
 
         put("home", ApplicationContext.getInstance().getContextPath());
     }
@@ -1389,7 +1389,7 @@ public abstract class Component {
 
         Set<String> keySet = new HashSet<>(Arrays.asList(keys));
 
-        Map<String, String> params = new HashMap<>();
+        Map<String, String> params = new LinkedHashMap<>();
         for (Map.Entry<String, Object> entry : templateMap.entrySet()) {
             String key = entry.getKey();
             if (keySet.isEmpty() || keySet.contains(key)) {
@@ -1404,6 +1404,76 @@ public abstract class Component {
         Writer localWriter = getWriter();
         try {
             localWriter.write(getJsonConverter().toJson(params, mapType));
+            localWriter.flush();
+        } catch (IOException ignored) {
+            // No operations.
+        }
+    }
+
+    /**
+     * <p>
+     * Prints all the key-values added by put(String, Object) inside this Component
+     * as json into response writer.
+     * </p>
+     *
+     * @param keys If at least one key is specified then the method takes care only about
+     *             templateMap entries (putted key-value pairs), such that key is in keys array.
+     *             If keys are not specified, method returns all the entries.
+     */
+    public void printTemplateMapUsingJson(String... keys) {
+        Set<String> keySet = new HashSet<>(Arrays.asList(keys));
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : templateMap.entrySet()) {
+            String key = entry.getKey();
+            if (keySet.isEmpty() || keySet.contains(key)) {
+                Object value = entry.getValue();
+                if (value != null) {
+                    params.put(key, value);
+                }
+            }
+        }
+
+        response.setContentType("application/json");
+        Writer localWriter = getWriter();
+        try {
+            localWriter.write(getJsonConverter().toJson(params));
+            localWriter.flush();
+        } catch (IOException ignored) {
+            // No operations.
+        }
+    }
+
+    private static Map<String, Object> convertArrayToMap(Object... keysAndValues) {
+        int paramCount = keysAndValues.length;
+        if (paramCount == 0) {
+            return Collections.emptyMap();
+        }
+
+        if (paramCount % 2 != 0) {
+            throw new IllegalArgumentException("Params should contain even number of elements.");
+        }
+
+        Map<String, Object> map = new LinkedHashMap<>(paramCount / 2);
+        for (int paramIndex = 0; paramIndex < paramCount; paramIndex += 2) {
+            map.put(keysAndValues[paramIndex].toString(), keysAndValues[paramIndex + 1]);
+        }
+
+        return map;
+    }
+
+    /**
+     * Writes in components writer the given map as a JSON object.
+     *
+     * @param keysAndValues Sequence of key1, value1, key2, value2, ..., keyN, valueN.
+     */
+    public void printJson(Object... keysAndValues) {
+        Map<String, Object> map = convertArrayToMap(keysAndValues);
+
+        response.setContentType("application/json");
+        Writer localWriter = getWriter();
+        try {
+            localWriter.write(getJsonConverter().toJson(map));
             localWriter.flush();
         } catch (IOException ignored) {
             // No operations.

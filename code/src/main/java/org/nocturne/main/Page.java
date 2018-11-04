@@ -227,6 +227,7 @@ public abstract class Page extends Component {
 
         put("css", cssSet);
         put("js", jsSet);
+        putGlobal("once", new OnceDirective());
 
         processChain = false;
     }

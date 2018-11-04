@@ -10,7 +10,11 @@ import org.apache.commons.io.IOUtils;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.main.ApplicationContext;
 import org.nocturne.main.ReloadingContext;
+import org.nocturne.template.TemplatePreprocessor;
+import org.nocturne.template.impl.ComponentTemplatePreprocessor;
+import org.nocturne.util.StringUtil;
 
+import javax.security.auth.login.AppConfigurationEntry;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
@@ -21,10 +25,11 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * Scans loaded templates to contains {{...}} and uses captions framework to
- * substitute them to caption values.
+ * substitute them to caption values. Also prepares @once directive (sets scopes) and
  *
  * @author Mike Mirzayanov
  */
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class PreprocessFreemarkerFileTemplateLoader extends MultiTemplateLoader {
     private static final ConcurrentMap<String, InmemoryTemplateSource> templateSourceByName = new ConcurrentHashMap<>();
     private final int templateDirCount;
@@ -60,10 +65,9 @@ public class PreprocessFreemarkerFileTemplateLoader extends MultiTemplateLoader 
 
             Object result = super.findTemplateSource(name);
             if (result != null && !ReloadingContext.getInstance().isDebug()) {
-                Reader reader = super.getReader(result, StandardCharsets.UTF_8.name());
-                String text = IOUtils.toString(reader);
-                IOUtils.closeQuietly(reader);
-                addTemplateSource(name, text);
+                try (Reader reader = super.getReader(result, StandardCharsets.UTF_8.name())) {
+                    addTemplateSource(name, IOUtils.toString(reader));
+                }
             }
 
             return result;
@@ -76,7 +80,14 @@ public class PreprocessFreemarkerFileTemplateLoader extends MultiTemplateLoader 
     @Override
     public Reader getReader(Object templateSource, String encoding) throws IOException {
         StringBuilder stringBuilder = getTemplateAsStringBuilder(templateSource, encoding);
-        processText(stringBuilder);
+
+        if (ApplicationContext.getInstance().isUseComponentTemplates()) {
+            TemplatePreprocessor preprocessor = new ComponentTemplatePreprocessor();
+            preprocessor.preprocess(templateSource, stringBuilder);
+        }
+
+        processCaptions(stringBuilder);
+        processOnceDirectiveCalls(templateSource, stringBuilder);
         return new StringReader(stringBuilder.toString());
     }
 
@@ -84,18 +95,17 @@ public class PreprocessFreemarkerFileTemplateLoader extends MultiTemplateLoader 
         if (templateSource instanceof InmemoryTemplateSource) {
             return new StringBuilder(((InmemoryTemplateSource) templateSource).getContent());
         } else {
-            Reader reader = super.getReader(templateSource, encoding);
             StringBuilder builder = new StringBuilder();
-
-            char[] buffer = new char[65536];
-            while (true) {
-                int readByteCount = reader.read(buffer);
-                if (readByteCount == -1) {
-                    break;
+            try (Reader reader = super.getReader(templateSource, encoding)) {
+                char[] buffer = new char[65536];
+                while (true) {
+                    int readByteCount = reader.read(buffer);
+                    if (readByteCount == -1) {
+                        break;
+                    }
+                    builder.append(buffer, 0, readByteCount);
                 }
-                builder.append(buffer, 0, readByteCount);
             }
-            reader.close();
 
             return builder;
         }
@@ -106,7 +116,7 @@ public class PreprocessFreemarkerFileTemplateLoader extends MultiTemplateLoader 
      *
      * @param sb content to be processed
      */
-    private static void processText(StringBuilder sb) {
+    private static void processCaptions(StringBuilder sb) {
         int index = 0;
 
         while (index + 1 < sb.length()) {
@@ -125,7 +135,39 @@ public class PreprocessFreemarkerFileTemplateLoader extends MultiTemplateLoader 
                 }
             }
 
-            ++index;
+            index++;
+        }
+    }
+
+    private void processOnceDirectiveCalls(Object templateSource, StringBuilder sb) {
+        int index = 0;
+        while (index + 6 < sb.length()) {
+            if (sb.charAt(index) == '<' && sb.charAt(index + 1) == '@' && sb.charAt(index + 2) == 'o'
+                    && sb.charAt(index + 3) == 'n' && sb.charAt(index + 4) == 'c' && sb.charAt(index + 5) == 'e'
+                    && (Character.isWhitespace(sb.charAt(index + 6)) || sb.charAt(index + 6) == '>')) {
+                String scopeAttr = " scope=\"" + escape(templateSource.toString()) + ":" + index + "\"";
+                sb.insert(index + 6, scopeAttr);
+            }
+            index++;
+        }
+    }
+
+    private String escape(String s) {
+        if (StringUtil.isEmpty(s)) {
+            return s;
+        } else {
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < s.length(); i++) {
+                if (s.charAt(i) == '\\') {
+                    result.append('/');
+                    continue;
+                }
+                if (s.charAt(i) == '\"') {
+                    continue;
+                }
+                result.append(s.charAt(i));
+            }
+            return result.toString();
         }
     }
 

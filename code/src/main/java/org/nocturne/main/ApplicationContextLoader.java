@@ -342,6 +342,27 @@ class ApplicationContextLoader {
                 ApplicationContext.getInstance().setStickyTemplatePaths(Boolean.parseBoolean(stickyTemplatePaths));
             }
         }
+
+        if (properties.containsKey("nocturne.use-component-templates")) {
+            String useComponentTemplates = properties.getProperty("nocturne.use-component-templates");
+            if (!"false".equals(useComponentTemplates) && !"true".equals(useComponentTemplates)) {
+                throw new ConfigurationException("Parameter nocturne.use-component-templates expected to be 'false' or 'true'.");
+            }
+            boolean use = "true".equals(useComponentTemplates);
+            ApplicationContext.getInstance().setUseComponentTemplates(use);
+            if (use && properties.containsKey("nocturne.component-templates-less-commons-file")) {
+                String componentTemplatesLessCommonsFileAsString
+                        = properties.getProperty("nocturne.component-templates-less-commons-file");
+                if (!StringUtil.isBlank(componentTemplatesLessCommonsFileAsString)) {
+                    File componentTemplatesLessCommonsFile = new File(componentTemplatesLessCommonsFileAsString);
+                    if (componentTemplatesLessCommonsFile.isFile()) {
+                        ApplicationContext.getInstance().setComponentTemplatesLessCommonsFile(componentTemplatesLessCommonsFile);
+                    } else {
+                        throw new ConfigurationException("Parameter nocturne.component-templates-less-commons-file is expected to be a file.");
+                    }
+                }
+            }
+        }
     }
 
     private static void setupDebug() {

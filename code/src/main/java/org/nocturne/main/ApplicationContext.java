@@ -124,6 +124,16 @@ public class ApplicationContext {
     private boolean stickyTemplatePaths = true;
 
     /**
+     * Preprocess FTL templates to read as component templates (if <template>...</template> has found).
+     */
+    private boolean useComponentTemplates;
+
+    /**
+     * Autoimported file for all component LESS styles.
+     */
+    private File componentTemplatesLessCommonsFile;
+
+    /**
      * Servlet context.
      */
     private ServletContext servletContext;
@@ -357,6 +367,22 @@ public class ApplicationContext {
 
     void setTemplatesUpdateDelay(int templatesUpdateDelay) {
         this.templatesUpdateDelay = templatesUpdateDelay;
+    }
+
+    void setUseComponentTemplates(boolean useComponentTemplates) {
+        this.useComponentTemplates = useComponentTemplates;
+    }
+
+    public boolean isUseComponentTemplates() {
+        return useComponentTemplates;
+    }
+
+    public File getComponentTemplatesLessCommonsFile() {
+        return componentTemplatesLessCommonsFile;
+    }
+
+    void setComponentTemplatesLessCommonsFile(File componentTemplatesLessCommonsFile) {
+        this.componentTemplatesLessCommonsFile = componentTemplatesLessCommonsFile;
     }
 
     void setResetStrategy(ResetStrategy resetStrategy) {
