@@ -595,7 +595,7 @@ public abstract class Component {
     }
 
     /**
-     * @return Creates (if needed) and returns templat. Uses simple class name as template
+     * @return Creates (if needed) and returns template. Uses simple class name as template
      * name (+ ".ftl") or specified if setTemplateFile(String) has been called. Do
      * not call the method getTemplate() manually.
      */

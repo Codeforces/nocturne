@@ -158,7 +158,13 @@ public class FileUtil {
         } catch (IOException e) {
             throw new IOException("Can't read from reader.", e);
         } finally {
-            IOUtils.closeQuietly(reader);
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (Exception ignored) {
+                    // No operations.
+                }
+            }
         }
         return result.toString();
     }
@@ -167,7 +173,7 @@ public class FileUtil {
      * @param file File to be read.
      * @return String containing file data.
      * @throws IOException if can't read file. Possibly, file parameter
-     *                     doesn't exists, is directory or not enought permissions.
+     *                     doesn't exists, is directory or not enough permissions.
      */
     public static String readFile(File file) throws IOException {
         return readFromReader(new FileReader(file));
@@ -191,14 +197,8 @@ public class FileUtil {
     public static void writeFile(File file, String content) throws IOException {
         ensureParentDirectoryExists(file);
 
-        FileWriter writer = null;
-
-        try {
-            writer = new FileWriter(file);
+        try (FileWriter writer = new FileWriter(file)) {
             writer.write(content);
-            writer.close();
-        } finally {
-            IOUtils.closeQuietly(writer);
         }
     }
 
@@ -496,6 +496,11 @@ public class FileUtil {
                 result = servletContext.getRealPath('/' + path);
             }
         }
+
+        if (result == null && new File(path).isAbsolute()) {
+            return path;
+        }
+
         return result;
     }
 

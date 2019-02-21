@@ -149,10 +149,7 @@ public class Module {
             throw new ModuleInitializationException("Entry module.xml should be file in module " + file.getName() + '.');
         }
 
-        InputStream inputStream = null;
-        try {
-            inputStream = file.getInputStream(webappEntry);
-
+        try (InputStream inputStream = file.getInputStream(webappEntry)) {
             byte[] moduleXmlBytes = StreamUtil.getAsByteArray(inputStream);
 
             if (getApplicationContext().isDebug()) {
@@ -172,8 +169,6 @@ public class Module {
             setupName(moduleXmlBytes);
         } catch (IOException e) {
             throw new ModuleInitializationException("Can't perform IO operation [module=" + file.getName() + "].", e);
-        } finally {
-            IOUtils.closeQuietly(inputStream);
         }
     }
 

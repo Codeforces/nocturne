@@ -8,3 +8,8 @@
 /dreamcatcher/*.ipr
 /dreamcatcher/*.iws
 /dreamcatcher/.idea
+/code/clean.bat
+.idea
+target
+/samples/helloworld/helloworld.iml
+/samples/helloworld/helloworld.log
