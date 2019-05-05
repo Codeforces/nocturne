@@ -30,6 +30,7 @@ import java.util.Set;
  *
  * @author Mike Mirzayanov
  */
+@SuppressWarnings("unused")
 public class Events {
     /**
      * Each class has no more than MAX_LISTENER_COUNT listeners.
@@ -93,6 +94,7 @@ public class Events {
         AFTER_ACTION_SCOPE.fire(component);
     }
 
+    @SuppressWarnings("WeakerAccess")
     private static class Scope {
         /**
          * Stores listeners for each .

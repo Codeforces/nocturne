@@ -45,6 +45,7 @@ import java.util.regex.Pattern;
  *
  * @author Mike Mirzayanov
  */
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class ApplicationContext {
     /**
      * The only singleton instance.
@@ -999,6 +1000,7 @@ public class ApplicationContext {
             }
         }
 
+        @SuppressWarnings("SameParameterValue")
         @Nullable
         private String getCookie(String cookieName) {
             Cookie[] cookies = request.getCookies();
@@ -1012,6 +1014,7 @@ public class ApplicationContext {
             return null;
         }
 
+        @SuppressWarnings("SameParameterValue")
         private void addCookie(String cookieName, String cookieValue, long maxAge) {
             boolean updated = false;
             if (request.getCookies() != null) {

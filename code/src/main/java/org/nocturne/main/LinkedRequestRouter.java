@@ -14,6 +14,7 @@ import java.util.Map;
 /**
  * @author Mike Mirzayanov
  */
+@SuppressWarnings("unused")
 public class LinkedRequestRouter implements RequestRouter {
     @Override
     public Resolution route(String path, Map<String, List<String>> parameterMap) {
@@ -39,6 +40,7 @@ public class LinkedRequestRouter implements RequestRouter {
                 action = linkMatchResult.getLink().action();
             }
 
+            //noinspection ConstantConditions
             if (action == null) {
                 action = "";
             }

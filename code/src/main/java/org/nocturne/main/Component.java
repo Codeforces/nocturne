@@ -12,10 +12,8 @@ import freemarker.template.Template;
 import freemarker.template.TemplateModel;
 import freemarker.template.TemplateModelException;
 import net.sf.cglib.reflect.FastMethod;
-import org.apache.commons.lang3.ThreadUtils;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 import org.nocturne.cache.CacheHandler;
 import org.nocturne.caption.CaptionDirective;
 import org.nocturne.collection.SingleEntryList;
@@ -40,7 +38,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -50,7 +47,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author Mike Mirzayanov
  */
-@SuppressWarnings({"DollarSignInName", "NonStaticInitializer", "NoopMethodInAbstractClass", "ClassReferencesSubclass", "OverloadedVarargsMethod", "WeakerAccess"})
+@SuppressWarnings({"DollarSignInName", "NonStaticInitializer", "NoopMethodInAbstractClass", "ClassReferencesSubclass", "OverloadedVarargsMethod", "WeakerAccess", "unused"})
 public abstract class Component {
     /**
      * Lock to synchronise some operations related to this component.
@@ -1087,15 +1084,15 @@ public abstract class Component {
         parentComponent = ApplicationContext.getInstance().getCurrentComponent();
         ApplicationContext.getInstance().setCurrentComponent(this);
 
-        templateMap = Collections.synchronizedMap(new HashMap<String, Object>());
-        instanceIndexForCacheForGetInstance = Collections.synchronizedMap(new HashMap<Class<?>, Integer>());
+        templateMap = Collections.synchronizedMap(new HashMap<>());
+        instanceIndexForCacheForGetInstance = Collections.synchronizedMap(new HashMap<>());
         template = null;
         skipTemplate = false;
         outputStream = null;
         writer = null;
         validators = new LinkedHashMap<>();
         frameMap = new HashMap<>();
-        overrideParameters = Collections.synchronizedMap(new HashMap<String, List<String>>());
+        overrideParameters = Collections.synchronizedMap(new HashMap<>());
 
         parametersInjector.inject(request);
 
@@ -1524,17 +1521,8 @@ public abstract class Component {
     public <T> T getInstance(Class<T> clazz) {
         componentLock.lock();
         try {
-            Integer index = instanceIndexForCacheForGetInstance.get(clazz);
-            if (index == null) {
-                index = 0;
-                instanceIndexForCacheForGetInstance.put(clazz, index);
-            }
-
-            List<Object> clazzList = cacheForGetInstance.get(clazz);
-            if (clazzList == null) {
-                clazzList = new ArrayList<>(2);
-                cacheForGetInstance.put(clazz, clazzList);
-            }
+            Integer index = instanceIndexForCacheForGetInstance.computeIfAbsent(clazz, k -> 0);
+            List<Object> clazzList = cacheForGetInstance.computeIfAbsent(clazz, k -> new ArrayList<>(2));
 
             if (clazzList.size() <= index) {
                 clazzList.add(ApplicationContext.getInstance().getInjector().getInstance(clazz));
@@ -1563,7 +1551,7 @@ public abstract class Component {
     }
 
     /* init */ {
-        synchronized (getClass()) {
+        synchronized (Component.class) {
             if (!actionMaps.containsKey(getClass())) {
                 actionMaps.putIfAbsent(getClass(), new ActionMap(getClass()));
             }

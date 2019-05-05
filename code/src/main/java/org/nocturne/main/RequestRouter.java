@@ -33,6 +33,7 @@ public interface RequestRouter {
      * Incapsulates response from RequestRouter: the controller class,
      * action and override parameters.
      */
+    @SuppressWarnings({"WeakerAccess", "unused"})
     class Resolution {
         /**
          * Controller class name.

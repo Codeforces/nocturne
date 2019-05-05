@@ -20,6 +20,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author Mike Mirzayanov
  */
+@SuppressWarnings("WeakerAccess")
 public class PageLoader {
     private static final Logger logger = Logger.getLogger(PageLoader.class);
 
@@ -111,7 +112,7 @@ public class PageLoader {
 
     public void close() {
         Collection<PagePool> values = pagePoolMap.values();
-        PagePool[] pools = values.toArray(new PagePool[values.size()]);
+        PagePool[] pools = values.toArray(new PagePool[0]);
 
         for (PagePool pool : pools) {
             pool.close();

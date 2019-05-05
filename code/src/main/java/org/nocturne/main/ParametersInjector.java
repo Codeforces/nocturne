@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
  *
  * @author Mike Mirzayanov
  */
-public class ParametersInjector {
+class ParametersInjector {
     private static final Pattern INTEGRAL_VALUE_PATTERN = Pattern.compile("0|(-?[1-9][0-9]*)");
     private static final Pattern REAL_VALUE_PATTERN = Pattern.compile("(0|(-?[1-9][0-9]*))((\\.[0-9]+)?)");
 
@@ -58,7 +58,7 @@ public class ParametersInjector {
     /**
      * @param component Object which has fields with @Parameter annotation.
      */
-    public ParametersInjector(Object component) {
+    ParametersInjector(Object component) {
         this.component = component;
     }
 
@@ -66,7 +66,7 @@ public class ParametersInjector {
      * @param request Request to be analyzed to find parameters for injection.
      *                Also more priority parameters are retrieved from ApplicationContext.getInstance().getRequestOverrideParameters().
      */
-    public void inject(HttpServletRequest request) {
+    void inject(HttpServletRequest request) {
         if (fields == null) {
             scanFields();
         }
@@ -81,7 +81,7 @@ public class ParametersInjector {
      * @param method  Method which parameters will be analyzed to assign values.
      * @return Object[] containing values for method parameters from the http request.
      */
-    public Object[] setupParameters(HttpServletRequest request, FastMethod method) {
+    Object[] setupParameters(HttpServletRequest request, FastMethod method) {
         Class<?>[] parameterTypes = method.getParameterTypes();
         Annotation[][] parameterAnnotations = method.getJavaMethod().getParameterAnnotations();
 
@@ -168,7 +168,7 @@ public class ParametersInjector {
         }
     }
 
-    public static Object getArrayAssignValue(
+    static Object getArrayAssignValue(
             @Nullable InjectField field, @Nullable List<String> values, Class<?> fieldType) {
         Class<?> componentType = fieldType.getComponentType();
 

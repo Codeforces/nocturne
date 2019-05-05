@@ -27,6 +27,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * @author Mike Mirzayanov
  */
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class RequestDispatcher {
     private static final Logger logger = Logger.getLogger(RequestDispatcher.class);
 
@@ -74,7 +75,6 @@ public class RequestDispatcher {
      * @return Page run result.
      * @throws IOException when Something wrong with IO.
      */
-    @SuppressWarnings({"unchecked"})
     private RunResult runProductionService(HttpServletRequest request, HttpServletResponse response) throws IOException {
         RunResult result = new RunResult();
 
@@ -198,6 +198,8 @@ public class RequestDispatcher {
             }
         } catch (Throwable e) {
             pageThrowable = e;
+            System.err.println("Can't process " + request.getRequestURL() + '.');
+            e.printStackTrace(System.err);
             logger.fatal("Can't process " + request.getRequestURL() + '.', e);
         } finally {
             if (page != null) {

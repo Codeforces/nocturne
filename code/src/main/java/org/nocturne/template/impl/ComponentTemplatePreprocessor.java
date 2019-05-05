@@ -170,9 +170,9 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
                             if (j < templateCloseTag) {
                                 addClasses(classes, text, from, j);
                             }
-                        } else if (Character.isJavaIdentifierPart(text.charAt(j))) {
+                        } else if (isCssClassPart(text.charAt(j))) {
                             int from = j;
-                            while (j < templateCloseTag && Character.isJavaIdentifierPart(text.charAt(j))) {
+                            while (j < templateCloseTag && isCssClassPart(text.charAt(j))) {
                                 j++;
                             }
                             addClasses(classes, text, from, j);
@@ -231,7 +231,7 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
                     && (index + 1 < sb.length() && Character.isLetter(sb.charAt(index + 1)))
                     ) {
                 int length = 1;
-                while (index + length < sb.length() && Character.isJavaIdentifierPart(sb.charAt(index + length))) {
+                while (index + length < sb.length() && isCssClassPart(sb.charAt(index + length))) {
                     length++;
                 }
                 if (length >= 2
@@ -244,6 +244,10 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
 
             index++;
         }
+    }
+
+    private boolean isCssClassPart(char c) {
+        return Character.isJavaIdentifierPart(c) || c == '-';
     }
 
     private boolean isComponentClassDelimiter(char c) {

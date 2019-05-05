@@ -34,12 +34,9 @@ class GenericIocModule implements Module {
         binder.bindListener(new ClassToTypeLiteralMatcherAdapter(Matchers.subclassesOf(Component.class)), new TypeListener() {
             @Override
             public <I> void hear(TypeLiteral<I> typeLiteral, TypeEncounter<I> typeEncounter) {
-                typeEncounter.register(new InjectionListener<I>() {
-                    @Override
-                    public void afterInjection(Object o) {
-                        Component component = (Component) o;
-                        component.resetFields();
-                    }
+                typeEncounter.register((InjectionListener<I>) o -> {
+                    Component component = (Component) o;
+                    component.resetFields();
                 });
             }
         });

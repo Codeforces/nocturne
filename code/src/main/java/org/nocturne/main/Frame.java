@@ -21,10 +21,12 @@ import java.util.Map;
  *
  * @author Mike Mirzayanov
  */
+@SuppressWarnings("WeakerAccess")
 public abstract class Frame extends Component {
     /**
      * @return Current processing page for current request.
      */
+    @SuppressWarnings("unused")
     public Page getCurrentPage() {
         return ApplicationContext.getInstance().getCurrentPage();
     }
@@ -82,9 +84,7 @@ public abstract class Frame extends Component {
             } else {
                 return result;
             }
-        } catch (TemplateException e) {
-            throw new FreemarkerException("Can't parse frame " + getClass().getSimpleName() + '.', e);
-        } catch (IOException e) {
+        } catch (TemplateException | IOException e) {
             throw new FreemarkerException("Can't parse frame " + getClass().getSimpleName() + '.', e);
         } finally {
             finalizeAfterAction();

@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 /**
  * @author Mike Mirzayanov
  */
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class ReloadingContext {
     private static final ReloadingContext INSTANCE = new ReloadingContext();
     private static final AtomicBoolean initialized = new AtomicBoolean(false);

@@ -15,6 +15,7 @@ import java.util.List;
 /**
  * @author Mike Mirzayanov
  */
+@SuppressWarnings("WeakerAccess")
 class ReloadingClassLoader extends ClassLoader {
     /**
      * Standard class loader class path.
@@ -47,8 +48,7 @@ class ReloadingClassLoader extends ClassLoader {
 
         delegationClassLoaderClassPath.addAll(Arrays.asList(classPathUrls));
 
-        delegationClassLoader = new DelegationClassLoader(delegationClassLoaderClassPath.toArray(
-                new URL[delegationClassLoaderClassPath.size()]));
+        delegationClassLoader = new DelegationClassLoader(delegationClassLoaderClassPath.toArray(new URL[0]));
     }
 
     /**

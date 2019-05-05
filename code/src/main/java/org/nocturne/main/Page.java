@@ -21,6 +21,7 @@ import java.util.*;
  *
  * @author Mike Mirzayanov
  */
+@SuppressWarnings({"unused", "WeakerAccess"})
 public abstract class Page extends Component {
     /**
      * Global template variables map.
@@ -220,8 +221,8 @@ public abstract class Page extends Component {
 
         setupCurrentPage();
 
-        globalTemplateMap = Collections.synchronizedMap(new HashMap<String, Object>());
-        requestCache = Collections.synchronizedMap(new HashMap<String, Object>());
+        globalTemplateMap = Collections.synchronizedMap(new HashMap<>());
+        requestCache = Collections.synchronizedMap(new HashMap<>());
 
         super.prepareForAction();
 

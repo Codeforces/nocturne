@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * resources from modules and if you change
  * resources in IDE it will load renewed version.
  */
-@SuppressWarnings({"WeakerAccess", "unused"})
+@SuppressWarnings({"unused"})
 public class DebugResourceFilter implements Filter {
     private static final Logger logger = Logger.getLogger(DebugResourceFilter.class);
 
@@ -37,6 +37,7 @@ public class DebugResourceFilter implements Filter {
         }
     }
 
+    @SuppressWarnings("RedundantThrows")
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         // No operations.

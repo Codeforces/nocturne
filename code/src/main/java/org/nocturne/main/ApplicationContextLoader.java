@@ -78,7 +78,7 @@ class ApplicationContextLoader {
 
         String resetAnnotations = properties.getProperty("nocturne.reset.reset-annotations");
         if (StringUtil.isEmpty(resetAnnotations)) {
-            ApplicationContext.getInstance().setResetAnnotations(Arrays.asList(Reset.class.getName()));
+            ApplicationContext.getInstance().setResetAnnotations(Collections.singletonList(Reset.class.getName()));
         } else {
             String[] annotations = ITEMS_SPLIT_PATTERN.split(resetAnnotations);
             ApplicationContext.getInstance().setResetAnnotations(Arrays.asList(annotations));
@@ -538,20 +538,11 @@ class ApplicationContextLoader {
     }
 
     static {
-        InputStream inputStream = ApplicationContextLoader.class.getResourceAsStream(Constants.CONFIGURATION_FILE);
 
-        try {
+        try (InputStream inputStream = ApplicationContextLoader.class.getResourceAsStream(Constants.CONFIGURATION_FILE)) {
             properties.load(inputStream);
         } catch (IOException e) {
             throw new ConfigurationException("Can't load resource file " + Constants.CONFIGURATION_FILE + '.', e);
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException ignored) {
-                    // No operations.
-                }
-            }
         }
     }
 }
