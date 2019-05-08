@@ -33,7 +33,8 @@ import java.util.regex.Pattern;
  *
  * @author Mike Mirzayanov
  */
-class ParametersInjector {
+@SuppressWarnings("WeakerAccess")
+public class ParametersInjector {
     private static final Pattern INTEGRAL_VALUE_PATTERN = Pattern.compile("0|(-?[1-9][0-9]*)");
     private static final Pattern REAL_VALUE_PATTERN = Pattern.compile("(0|(-?[1-9][0-9]*))((\\.[0-9]+)?)");
 
@@ -58,7 +59,7 @@ class ParametersInjector {
     /**
      * @param component Object which has fields with @Parameter annotation.
      */
-    ParametersInjector(Object component) {
+    public ParametersInjector(Object component) {
         this.component = component;
     }
 
@@ -66,7 +67,7 @@ class ParametersInjector {
      * @param request Request to be analyzed to find parameters for injection.
      *                Also more priority parameters are retrieved from ApplicationContext.getInstance().getRequestOverrideParameters().
      */
-    void inject(HttpServletRequest request) {
+    public void inject(HttpServletRequest request) {
         if (fields == null) {
             scanFields();
         }

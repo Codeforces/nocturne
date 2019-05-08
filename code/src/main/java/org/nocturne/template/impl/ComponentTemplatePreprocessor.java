@@ -251,7 +251,7 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
     }
 
     private boolean isComponentClassDelimiter(char c) {
-        return c == ' ' || c == '\"' || c == '\'' || c == '.' || c == '>' || c == '+';
+        return c == ' ' || c == '\"' || c == '\'' || c == '.' || c == '>' || c == '+' || c == ':';
     }
 
     private int ignoreCaseIndexOf(StringBuilder text, String substring, boolean openTag) {
