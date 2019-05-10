@@ -1,3 +1,5 @@
+<#-- @ftlvariable name="message" type="java.lang.String" -->
+<#-- @ftlvariable name="home" type="java.lang.String" -->
 <#setting url_escaping_charset='UTF-8'>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
 <html>
