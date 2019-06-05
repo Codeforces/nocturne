@@ -1,3 +1,7 @@
+.classpath
+.project
+.settings/
+
 /code/target
 /code/*.iml
 /code/*.ipr
