@@ -110,7 +110,10 @@ public class RequestDispatcher {
         } catch (Exception e) {
             pageThrowable = e;
             if (!isClientAbortException(e)) {
-                e.printStackTrace();
+                e.printStackTrace(System.err);
+                System.err.flush();
+                e.printStackTrace(System.out);
+                System.out.flush();
                 logger.fatal("Can't process " + request.getRequestURL() + '.', e);
             }
         } finally {
