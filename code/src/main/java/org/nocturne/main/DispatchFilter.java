@@ -67,9 +67,6 @@ public class DispatchFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-        servletRequest.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        servletResponse.setCharacterEncoding(StandardCharsets.UTF_8.name());
-
         if (servletRequest instanceof HttpServletRequest && servletResponse instanceof HttpServletResponse) {
             HttpServletRequest request = (HttpServletRequest) servletRequest;
             HttpServletResponse response = (HttpServletResponse) servletResponse;
@@ -77,6 +74,8 @@ public class DispatchFilter implements Filter {
             if (reloadingContext.getSkipRegex() != null && reloadingContext.getSkipRegex().matcher(request.getServletPath()).matches()) {
                 filterChain.doFilter(request, response);
             } else {
+                servletRequest.setCharacterEncoding(StandardCharsets.UTF_8.name());
+                servletResponse.setCharacterEncoding(StandardCharsets.UTF_8.name());
                 if (reloadingContext.isDebug()) {
                     updateRequestDispatcher();
 
