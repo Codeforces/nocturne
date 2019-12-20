@@ -604,11 +604,20 @@ public abstract class Component {
                 try {
                     template = templateEngineConfiguration.getTemplate(templateFileName, ApplicationContext.getInstance().getLocale());
                 } catch (IOException e) {
+                    if (templateFileName.endsWith(".ftl")) {
+                        String templateFileNameH = templateFileName + "h"; // .ftlh
+                        try {
+                            template = templateEngineConfiguration.getTemplate(templateFileNameH, ApplicationContext.getInstance().getLocale());
+                        } catch (IOException ignored) {
+                            throw new FreemarkerException("Can't get freemarker template [name=" + templateFileName + "].", e);
+                        }
+                        templateFileName = templateFileNameH;
+                    }
+
                     throw new FreemarkerException("Can't get freemarker template [name=" + templateFileName + "].", e);
                 }
             }
         }
-        //ApplicationContext.getInstance().setComponentByTemplate(template, this);
         return template;
     }
 

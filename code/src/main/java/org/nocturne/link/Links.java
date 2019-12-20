@@ -47,7 +47,8 @@ public class Links {
 
     private static final int INTERCEPTOR_MAX_PERMIT_COUNT = 8 * Runtime.getRuntime().availableProcessors();
     private static final Semaphore interceptorSemaphore = new Semaphore(INTERCEPTOR_MAX_PERMIT_COUNT);
-    private static final ConcurrentMap<String, Interceptor> interceptorByNameMap = new ConcurrentHashMap<>();
+    private static final Map<String, Interceptor> interceptorByNameMap = new LinkedHashMap<>();
+
 
     /**
      * Stores maps for each page class. Each map contains single patterns as keys
@@ -196,6 +197,7 @@ public class Links {
 
         int bestMatchedCount = -1;
         List<LinkSection> bestMatchedLinkSections = null;
+        Link bestMatchedLink = null;
 
         for (Map.Entry<String, Link> entry : getLinksByPageClass(clazz).entrySet()) {
             if (linkName != null && !linkName.isEmpty() && !linkName.equals(entry.getValue().name())) {
@@ -219,6 +221,7 @@ public class Links {
             if (matched && matchedCount > bestMatchedCount) {
                 bestMatchedCount = matchedCount;
                 bestMatchedLinkSections = sections;
+                bestMatchedLink = entry.getValue();
             }
         }
 
@@ -284,8 +287,16 @@ public class Links {
 
         interceptorSemaphore.acquireUninterruptibly();
         try {
-            for (Interceptor interceptor : interceptorByNameMap.values()) {
-                linkResult = interceptor.postprocess(linkResult, clazz, linkName, params);
+            for (Map.Entry<String, Interceptor> e : interceptorByNameMap.entrySet()) {
+                boolean skip = false;
+                for (String skipInterceptor : bestMatchedLink.skipInterceptors()) {
+                    if (skipInterceptor.equals(e.getKey())) {
+                        skip = true;
+                    }
+                }
+                if (!skip) {
+                    linkResult = e.getValue().postprocess(linkResult, clazz, linkName, params);
+                }
             }
         } finally {
             interceptorSemaphore.release();

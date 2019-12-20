@@ -54,6 +54,11 @@ public @interface Link {
     Class<? extends Type>[] types() default {};
 
     /**
+     * @return List of interceptors to skip.
+     */
+    String[] skipInterceptors() default {};
+
+    /**
      * Marker interface for type of link.
      */
     interface Type {
@@ -86,6 +91,11 @@ public @interface Link {
                 @Override
                 public Class<? extends Annotation> annotationType() {
                     return Link.class;
+                }
+
+                @Override
+                public String[] skipInterceptors() {
+                    return new String[0];
                 }
             };
         }
