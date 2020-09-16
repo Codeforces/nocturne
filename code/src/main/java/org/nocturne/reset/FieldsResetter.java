@@ -2,9 +2,6 @@ package org.nocturne.reset;
 
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.main.ApplicationContext;
-import org.nocturne.main.Component;
-import org.nocturne.main.Frame;
-import org.nocturne.main.Page;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
@@ -19,14 +16,14 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author Mike Mirzayanov
  */
-public class FieldsResetter {
+abstract class FieldsResetter {
     private static final Map<Class<?>, Object> PRIMITIVES_DEFAULT_VALUES = new ConcurrentHashMap<>();
     private static final ConcurrentMap<AnnotatedElement, Boolean> RESET_ANNOTATIONS_CACHE = new ConcurrentHashMap<>();
     private static final ConcurrentMap<AnnotatedElement, Boolean> PERSIST_ANNOTATIONS_CACHE = new ConcurrentHashMap<>();
 
-    private final Component component;
+    private final Object object;
     private final List<Field> fieldsToReset = new ArrayList<>();
-    private final ResetStrategy componentStrategy;
+    private final ResetStrategy resetStrategy;
 
     private static boolean hasResetAnnotation(AnnotatedElement annotatedElement) {
         Boolean result = RESET_ANNOTATIONS_CACHE.get(annotatedElement);
@@ -66,13 +63,13 @@ public class FieldsResetter {
         return result;
     }
 
-    public FieldsResetter(Component component) {
-        componentStrategy = getStrategy(ApplicationContext.getInstance().getResetStrategy(),
-                hasResetAnnotation(component.getClass()),
-                hasPersistAnnotation(component.getClass()),
-                component.getClass().getCanonicalName());
+    public FieldsResetter(Object object) {
+        resetStrategy = getStrategy(ApplicationContext.getInstance().getResetStrategy(),
+                hasResetAnnotation(object.getClass()),
+                hasPersistAnnotation(object.getClass()),
+                object.getClass().getCanonicalName());
 
-        this.component = component;
+        this.object = object;
         addFieldsToReset();
     }
 
@@ -82,8 +79,8 @@ public class FieldsResetter {
     }
 
     private void addFieldsToReset() {
-        Class<?> clazz = component.getClass();
-        while (!isNocturneComponent(clazz)) {
+        Class<?> clazz = object.getClass();
+        while (!isResetStopClass(clazz)) {
             Field[] declaredFields = clazz.getDeclaredFields();
             for (Field declaredField : declaredFields) {
                 if (Modifier.isStatic(declaredField.getModifiers())
@@ -93,7 +90,7 @@ public class FieldsResetter {
                 }
 
                 ResetStrategy fieldStrategy = getStrategy(
-                        componentStrategy,
+                        resetStrategy,
                         hasResetAnnotation(declaredField), hasPersistAnnotation(declaredField),
                         declaredField.toString()
                 );
@@ -106,11 +103,7 @@ public class FieldsResetter {
         }
     }
 
-    private static boolean isNocturneComponent(Class<?> clazz) {
-        return clazz.getCanonicalName().equals(Component.class.getCanonicalName())
-                || clazz.getCanonicalName().equals(Page.class.getCanonicalName())
-                || clazz.getCanonicalName().equals(Frame.class.getCanonicalName());
-    }
+    abstract boolean isResetStopClass(Class<?> clazz);
 
     public void resetFields() {
         for (Field field : fieldsToReset) {
@@ -128,7 +121,7 @@ public class FieldsResetter {
             }
 
             try {
-                field.set(component, null);
+                field.set(object, null);
             } catch (IllegalAccessException ignored) {
                 // No operations.
             }
@@ -141,7 +134,7 @@ public class FieldsResetter {
         Class<?> type = field.getType();
         if (type != void.class) {
             try {
-                field.set(component, PRIMITIVES_DEFAULT_VALUES.get(type));
+                field.set(object, PRIMITIVES_DEFAULT_VALUES.get(type));
             } catch (IllegalAccessException ignored) {
                 // No operations.
             }
