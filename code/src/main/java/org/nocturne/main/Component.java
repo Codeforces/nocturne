@@ -20,7 +20,7 @@ import org.nocturne.collection.SingleEntryList;
 import org.nocturne.exception.*;
 import org.nocturne.link.LinkDirective;
 import org.nocturne.link.Links;
-import org.nocturne.reset.FieldsResetter;
+import org.nocturne.reset.ComponentFieldsResetter;
 import org.nocturne.util.ReflectionUtil;
 import org.nocturne.util.RequestUtil;
 import org.nocturne.validation.ValidationException;
@@ -47,7 +47,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author Mike Mirzayanov
  */
-@SuppressWarnings({"DollarSignInName", "NonStaticInitializer", "NoopMethodInAbstractClass", "ClassReferencesSubclass", "OverloadedVarargsMethod", "WeakerAccess", "unused"})
+@SuppressWarnings({"DollarSignInName", "NonStaticInitializer", "NoopMethodInAbstractClass", "ClassReferencesSubclass", "OverloadedVarargsMethod", "WeakerAccess", "unused", "RedundantSuppression"})
 public abstract class Component {
     /**
      * Lock to synchronise some operations related to this component.
@@ -174,7 +174,7 @@ public abstract class Component {
     /**
      * Object to clean fields between requests.
      */
-    private FieldsResetter fieldsResetter;
+    private ComponentFieldsResetter fieldsResetter;
 
     /*
     private final static AtomicInteger instanceCount = new AtomicInteger();
@@ -1129,7 +1129,7 @@ public abstract class Component {
 
     void resetFields() {
         if (fieldsResetter == null) {
-            fieldsResetter = new FieldsResetter(this);
+            fieldsResetter = new ComponentFieldsResetter(this);
         }
 
         fieldsResetter.resetFields();
