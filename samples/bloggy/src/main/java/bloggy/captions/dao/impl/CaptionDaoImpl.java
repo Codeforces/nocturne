@@ -49,7 +49,7 @@ public class CaptionDaoImpl extends ApplicationDaoImpl<Caption> implements Capti
         String result = utf8Cache.get(s);
 
         if (StringUtil.isEmpty(result)) {
-            result = getJacuzzi().findString("SELECT CONVERT(SHA1(?) USING utf8)", s);
+            result = getJacuzzi().findString("SELECT CONVERT(SHA1(?) USING utf8mb4)", s);
             utf8Cache.putIfAbsent(s, result);
         }
 
@@ -64,7 +64,7 @@ public class CaptionDaoImpl extends ApplicationDaoImpl<Caption> implements Capti
     @Override
     public void save(Caption object) {
         if (StringUtil.isNotEmpty(object.getShortcut())) {
-            object.setShortcutSha1(getJacuzzi().findString("SELECT CONVERT(SHA1(?) USING utf8)",
+            object.setShortcutSha1(getJacuzzi().findString("SELECT CONVERT(SHA1(?) USING utf8mb4)",
                     object.getShortcut()));
         }
 

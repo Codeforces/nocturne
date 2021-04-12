@@ -78,20 +78,19 @@ public class ApplicationPageRequestListener implements PageRequestListener {
     }
 
     private static void addRequestAttributes(Page page, StringBuilder paramsDump) {
-        Enumeration enumeration = page.getRequest().getAttributeNames();
+        Enumeration<String> enumeration = page.getRequest().getAttributeNames();
         while (enumeration.hasMoreElements()) {
-            String name = enumeration.nextElement().toString();
+            String name = enumeration.nextElement();
             Object value = page.getRequest().getAttribute(name);
             addParam(paramsDump, name, value);
         }
     }
 
     private static void addRequestParameters(Page page, StringBuilder paramsDump) {
-        for (Object o : page.getRequest().getParameterMap().entrySet()) {
-            Map.Entry entry = (Map.Entry) o;
-            String key = entry.getKey().toString();
-            Object valueObject = entry.getValue();
-            addParam(paramsDump, key, valueObject);
+        for (Map.Entry<String, String[]> entry : page.getRequest().getParameterMap().entrySet()) {
+            String key = entry.getKey();
+            String[] values = entry.getValue();
+            addParam(paramsDump, key, values);
         }
     }
 

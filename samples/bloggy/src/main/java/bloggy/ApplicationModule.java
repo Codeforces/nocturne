@@ -44,7 +44,7 @@ public class ApplicationModule implements Module {
             public boolean matches(Method method) {
                 return method.getAnnotation(PostOnly.class) != null;
             }
-        }, (MethodInterceptor) invocation -> {
+        }, invocation -> {
             HttpServletRequest request = ApplicationContext.getInstance().getRequest();
             if (request != null && StringUtil.equalsIgnoreCase(request.getMethod(), HttpMethod.POST.name())) {
                 return invocation.proceed();

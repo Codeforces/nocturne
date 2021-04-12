@@ -1,13 +1,13 @@
 CREATE TABLE `Caption` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `shortcut` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  `locale` char(2) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  `value` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  `shortcutSha1` char(40) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `shortcut` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `locale` char(2) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `shortcutSha1` char(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `updateTime` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `creationTime` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO `Caption` (`id`, `shortcut`, `locale`, `value`, `shortcutSha1`, `updateTime`, `creationTime`) VALUES
 (1, 'In Russian', 'en', 'In Russian', 'c51e7e5c58d08b29cf9be46527aa7dd81ffc4993', '2019-05-05 18:17:13', '2019-05-06 00:17:13'),
@@ -34,13 +34,13 @@ INSERT INTO `Caption` (`id`, `shortcut`, `locale`, `value`, `shortcutSha1`, `upd
 CREATE TABLE `Post` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `userId` bigint(20) NOT NULL,
-  `title` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  `text` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `deleted` tinyint(1) NOT NULL,
   `updateTime` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `creationTime` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO `Post` (`id`, `userId`, `title`, `text`, `deleted`, `updateTime`, `creationTime`) VALUES
 (1, 1, 'About me', 'Newton was a fellow of Trinity College and the second Lucasian Professor of Mathematics at the University of Cambridge. He was a devout but unorthodox Christian who privately rejected the doctrine of the Trinity. Unusually for a member of the Cambridge faculty of the day, he refused to take holy orders in the Church of England. Beyond his work on the mathematical sciences, Newton dedicated much of his time to the study of alchemy and biblical chronology, but most of his work in those areas remained unpublished until long after his death. Politically and personally tied to the Whig party, Newton served two brief terms as Member of Parliament for the University of Cambridge, in 1689–90 and 1701–02. He was knighted by Queen Anne in 1705 and spent the last three decades of his life in London, serving as Warden (1696–1700) and Master (1700–1727) of the Royal Mint, as well as president of the Royal Society (1703–1727).', 0, '2019-05-05 18:26:46', '2019-05-06 00:26:46'),
@@ -51,13 +51,13 @@ INSERT INTO `Post` (`id`, `userId`, `title`, `text`, `deleted`, `updateTime`, `c
 
 CREATE TABLE `User` (
   `id` bigint(20) NOT NULL,
-  `login` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  `passwordSha` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `login` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `passwordSha` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `updateTime` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `creationTime` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO `User` (`id`, `login`, `passwordSha`, `name`, `updateTime`, `creationTime`) VALUES
 (1, 'newton', 'a5cf605f5e3ca64a8e200fcb7324846cc7b4e849', 'Sir Isaac Newton', '2019-05-05 18:23:25', '2019-05-06 00:23:25'),
