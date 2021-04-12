@@ -25,7 +25,6 @@ public class PostsViewFrame extends ApplicationFrame {
 
     private void putPosts(List<Post> posts) {
         for (Post post : posts) {
-
             PostViewFrame postViewFrame = getInstance(PostViewFrame.class);
             postViewFrame.setPost(post);
             postViewFrame.setShortMode(true);
