@@ -176,70 +176,6 @@ public abstract class Component {
      */
     private ComponentFieldsResetter fieldsResetter;
 
-    /*
-    private final static AtomicInteger instanceCount = new AtomicInteger();
-    private final static Map<String, AtomicInteger> instanceCounts = new ConcurrentHashMap<>();
-    private final static Logger _logger = Logger.getLogger(Component.class);
-    private final static Lock lock = new ReentrantLock();
-
-    public Component() {
-        String clazzName = ReflectionUtil.getOriginalClass(getClass()).getSimpleName();
-        int classCount;
-
-        lock.lock();
-        try {
-            instanceCounts.putIfAbsent(clazzName, new AtomicInteger());
-            classCount = instanceCounts.get(clazzName).incrementAndGet();
-        } finally {
-            lock.unlock();
-        }
-
-        int instanceCountGet = instanceCount.incrementAndGet();
-        _logger.error("Created Component instance " + clazzName + ": " + classCount + "/" + instanceCountGet + ".");
-        if (instanceCountGet % 1000 == 0) {
-            printCounts();
-        }
-
-        if (classCount >= 2000 && classCount % 2000 <= 10) {
-            _logger.error("Instance of '" + clazzName + "' to take care [classCount=" + classCount + "].",
-                    new RuntimeException());
-        }
-    }
-
-    private void printCounts() {
-        List<Count> counts = new ArrayList<>();
-        lock.lock();
-        try {
-            for (Map.Entry<String, AtomicInteger> e : instanceCounts.entrySet()) {
-                counts.add(new Count(e.getKey(), e.getValue().get()));
-            }
-        } finally {
-            lock.unlock();
-        }
-        Collections.sort(counts);
-        StringBuilder sb = new StringBuilder("There are " + counts.size() + " entries: ");
-        for (Count count : counts) {
-            sb.append(count.clazz).append(": ").append(count.count).append("\n");
-        }
-        _logger.error("Created Components statistics: " + sb.toString());
-    }
-
-    private static final class Count implements Comparable<Count> {
-        private final String clazz;
-        private final int count;
-
-        public Count(String clazz, int count) {
-            this.clazz = clazz;
-            this.count = count;
-        }
-
-        @Override
-        public int compareTo(@NotNull Component.Count o) {
-            return Integer.compare(o.count, count);
-        }
-    }
-    */
-
     /**
      * @return Component cache handler. Use it if you want to avoid typical
      * rendering life-cycle and get component HTML (or other parsed result) from
@@ -621,8 +557,8 @@ public abstract class Component {
         return template;
     }
 
-    private static void ensureArgumentIs(String key, Object value, String expectedKey, Object expectedValue) {
-        if (key.equals(expectedKey) && !expectedValue.equals(value)) {
+    private static void ensureArgumentIs(String key, String reservedKey) {
+        if (key.equals(reservedKey)) {
             throw new IllegalArgumentException("Argument '" + key + "' is reserved for internal usage.");
         }
     }
@@ -644,7 +580,7 @@ public abstract class Component {
      * @param value Variable value.
      */
     public void put(String key, @Nullable Object value) {
-        validateParameter(key, value);
+        validateParameter(key);
 
         internalGetTemplateMap().put(key, value);
     }
@@ -657,14 +593,17 @@ public abstract class Component {
      * @param value Variable value.
      */
     public void putGlobal(String key, Object value) {
-        validateParameter(key, value);
+        validateParameter(key);
         getCurrentPage().internalGetGlobalTemplateMap().put(key, value);
     }
 
-    private static void validateParameter(String key, Object value) {
-        ensureArgumentIs(key, value, "frame", FrameDirective.getInstance());
-        ensureArgumentIs(key, value, "css", getCurrentPage().getCssSet());
-        ensureArgumentIs(key, value, "js", getCurrentPage().getJsSet());
+    private static void validateParameter(String key) {
+        ensureArgumentIs(key,  "frame");
+        ensureArgumentIs(key,  "link");
+        ensureArgumentIs(key,  "caption");
+        ensureArgumentIs(key,  "once");
+        ensureArgumentIs(key,  "css");
+        ensureArgumentIs(key,  "js");
     }
 
     /**
@@ -677,17 +616,6 @@ public abstract class Component {
     public Object get(String key) {
         return internalGetTemplateMap().get(key);
     }
-
-//    protected void setTemplateName(String name) {
-//        try {
-//            template = getTemplateEngineConfiguration().getTemplate(
-//                    name,
-//                    ApplicationContext.getInstance().getLocale()
-//            );
-//        } catch (IOException e) {
-//            throw new FreemarkerException("Can't get freemarker template [name=" + name + "].", e);
-//        }
-//    }
 
     /**
      * @return Is template processing will be skipped? It may be useful for AJAX pages.
@@ -1105,9 +1033,8 @@ public abstract class Component {
 
         parametersInjector.inject(request);
 
-        put("link", LinkDirective.getInstance());
-        put("caption", CaptionDirective.getInstance());
-        put("frame", FrameDirective.getInstance());
+        internalGetTemplateMap().put("link", LinkDirective.getInstance());
+        internalGetTemplateMap().put("caption", CaptionDirective.getInstance());
 
         put("home", ApplicationContext.getInstance().getContextPath());
     }
@@ -1275,9 +1202,9 @@ public abstract class Component {
     }
 
     private boolean runValidation(ErrorValidationHandler handler) {
-        Map parameterMap = getRequestParams();
+        Map<?, ?> parameterMap = getRequestParams();
         for (Object entryObject : parameterMap.entrySet()) {
-            Map.Entry entry = (Map.Entry) entryObject;
+            Map.Entry<?, ?> entry = (Map.Entry<?, ?>) entryObject;
             Object key = entry.getKey();
             Object value = entry.getValue();
             if (value == null) {
@@ -1530,7 +1457,7 @@ public abstract class Component {
     public <T> T getInstance(Class<T> clazz) {
         componentLock.lock();
         try {
-            Integer index = instanceIndexForCacheForGetInstance.computeIfAbsent(clazz, k -> 0);
+            int index = instanceIndexForCacheForGetInstance.computeIfAbsent(clazz, k -> 0);
             List<Object> clazzList = cacheForGetInstance.computeIfAbsent(clazz, k -> new ArrayList<>(2));
 
             if (clazzList.size() <= index) {
