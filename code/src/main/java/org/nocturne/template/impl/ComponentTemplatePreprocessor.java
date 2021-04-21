@@ -3,6 +3,7 @@ package org.nocturne.template.impl;
 import org.nocturne.main.ApplicationContext;
 import org.nocturne.template.TemplatePreprocessor;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -11,12 +12,23 @@ import java.util.Set;
  * @author MikeMirzayanov (mirzayanovmr@gmail.com)
  */
 public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
+    public static final String UNIQUE_MAGIC_OPEN_PREFIX = "<!--unique:f0d9672b1fc78bcf:";
+    public static final String UNIQUE_MAGIC_CLOSE_PREFIX = "<!--/unique:f0d9672b1fc78bcf:";
+
     private static final String TAG_TEMPLATE_OPEN = "<template";
     private static final String TAG_TEMPLATE_CLOSE = "</template>";
     private static final String TAG_STYLE_OPEN = "<style";
     private static final String TAG_STYLE_CLOSE = "</style>";
     private static final String TAG_SCRIPT_OPEN = "<script";
     private static final String TAG_SCRIPT_CLOSE = "</script>";
+
+    private String getUniqueRenderKey(Object source) {
+        if (source instanceof File) {
+            return ((File) source).getAbsolutePath();
+        } else {
+            return source.toString();
+        }
+    }
 
     @Override
     public void preprocess(Object source, StringBuilder text) throws IOException {
@@ -121,12 +133,13 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
         }
 
         if (end < text.length()) {
-            text.insert(end, "<@once>\n");
+            String uniqueRenderKey = getUniqueRenderKey(source);
+            text.insert(end, UNIQUE_MAGIC_OPEN_PREFIX + uniqueRenderKey + ">\n");
             int last = text.length() - 1;
             while (last >= 0 && Character.isWhitespace(text.charAt(last))) {
                 last--;
             }
-            text.insert(last + 1, "\n</@once>");
+            text.insert(last + 1, UNIQUE_MAGIC_CLOSE_PREFIX + uniqueRenderKey + ">\n");
         }
 
         String replacement = "<#-- <template name=\"" + getComponentClassName(source) + "\"> -->";
@@ -228,8 +241,7 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
         while (index + 1 < sb.length()) {
             if ((index == 0 || isComponentClassDelimiter(sb.charAt(index - 1)))
                     && sb.charAt(index) == '_'
-                    && (index + 1 < sb.length() && Character.isLetter(sb.charAt(index + 1)))
-                    ) {
+                    && (index + 1 < sb.length() && Character.isLetter(sb.charAt(index + 1)))) {
                 int length = 1;
                 while (index + length < sb.length() && isCssClassPart(sb.charAt(index + length))) {
                     length++;

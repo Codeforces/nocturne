@@ -172,7 +172,9 @@ public abstract class Page extends Component {
                         StringWriter stringWriter = new StringWriter(65536);
                         getTemplate().process(params, stringWriter);
                         stringWriter.close();
-                        result = stringWriter.getBuffer().toString();
+
+                        result = ((FrameDirective) getGlobalTemplateMap().get("frame")).processComponentUniques(
+                                new StringBuilder(stringWriter.getBuffer()));
 
                         if (cacheHandler != null) {
                             cacheHandler.postprocess(this, result);
@@ -226,9 +228,11 @@ public abstract class Page extends Component {
 
         super.prepareForAction();
 
-        put("css", cssSet);
-        put("js", jsSet);
-        putGlobal("once", new OnceDirective());
+        internalGetGlobalTemplateMap().put("frame", new FrameDirective());
+        internalGetGlobalTemplateMap().put("once", new OnceDirective());
+
+        internalGetTemplateMap().put("css", cssSet);
+        internalGetTemplateMap().put("js", jsSet);
 
         processChain = false;
     }

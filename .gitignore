@@ -17,3 +17,5 @@
 target
 /samples/helloworld/helloworld.iml
 /samples/helloworld/helloworld.log
+/samples/bloggy/*.iml
+/samples/bloggy/*.log
