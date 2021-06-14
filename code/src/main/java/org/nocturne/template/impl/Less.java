@@ -3,25 +3,30 @@ package org.nocturne.template.impl;
 import com.github.sommeri.less4j.Less4jException;
 import com.github.sommeri.less4j.LessCompiler;
 import com.github.sommeri.less4j.core.DefaultLessCompiler;
-import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Logger;
+import org.nocturne.util.StringUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.*;
+import java.util.Objects;
 
 /**
  * @author MikeMirzayanov (mirzayanovmr@gmail.com)
  */
 public class Less {
+    private static final Logger logger = Logger.getLogger(Less.class);
+
     private static final String CACHE_OPEN_TAG = "<cache>";
     private static final String CACHE_CLOSE_TAG = "</cache>";
     private static File tmpDir;
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public static String compile(@Nonnull Object source, @Nonnull String lessCode, @Nullable  File commonsFile) throws IOException {
+    public synchronized static String compile(@Nonnull Object source, @Nonnull String lessCode, @Nullable File commonsFile) throws IOException {
         long commonsFileLastModified = commonsFile == null ? 0 : commonsFile.lastModified();
         long commonsFileLength = commonsFile == null ? 0 : commonsFile.length();
-        String cacheKey = Long.toString(commonsFileLastModified) + "_" + commonsFileLength + "_" + hash(lessCode);
+        String cacheKey = getName(source).trim() + "_" + commonsFileLastModified + "_" + commonsFileLength + "_" + hash(lessCode);
+
         File cacheDir = new File(tmpDir, "cache");
         if (!cacheDir.isDirectory()) {
             cacheDir.mkdirs();
@@ -29,11 +34,16 @@ public class Less {
                 throw new IOException("Can't create " + cacheDir + ".");
             }
         }
+
         File cacheFile = new File(cacheDir, cacheKey);
         if (cacheFile.exists() && cacheFile.isFile()) {
             String result = readFile(cacheFile);
             if (result.startsWith(CACHE_OPEN_TAG) && result.endsWith(CACHE_CLOSE_TAG)) {
-                return result.substring(CACHE_OPEN_TAG.length(), result.length() - CACHE_CLOSE_TAG.length());
+                String css = result.substring(CACHE_OPEN_TAG.length(), result.length() - CACHE_CLOSE_TAG.length());
+                if (css.length() * 2 < lessCode.length()) {
+                    logger.error("Weird case: " + source + " lessCode has length " + lessCode.length() + ", but css is '" + css + "'.");
+                }
+                return css;
             }
         }
         if (cacheFile.exists()) {
@@ -74,6 +84,16 @@ public class Less {
                 workCommonsFile.delete();
             }
             workDir.delete();
+        }
+    }
+
+    private static String getName(Object source) {
+        String s = StringUtil.nullToEmpty(Objects.toString(source));
+        int pos = Math.max(s.lastIndexOf('/'), s.lastIndexOf('\\'));
+        if (pos >= 0) {
+            return s.substring(pos + 1);
+        } else {
+            return s;
         }
     }
 
@@ -128,4 +148,3 @@ public class Less {
         }
     }
 }
-
