@@ -30,6 +30,11 @@ public class PostsViewFrame extends ApplicationFrame {
             postViewFrame.setShortMode(true);
             parse("post" + post.getId(), postViewFrame);
         }
+        putPostIds(posts);
+    }
+
+    private void putPostIds(List<Post> posts) {
         put("postIds", posts.stream().map(Post::getId).collect(Collectors.toList()));
+        put("note", postDao.findNote());
     }
 }

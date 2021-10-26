@@ -1051,7 +1051,8 @@ public abstract class Component {
         }
 
         resetFields();
-        frameMap = new HashMap<>(0);
+        templateMap = null;
+        frameMap = null;
     }
 
     void resetFields() {

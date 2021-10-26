@@ -1,7 +1,6 @@
 [#ftl]
 
 [#-- @implicitly included --]
-[#-- @ftlvariable name="_longlong" type="java.lang.Long" --]
 
-[#macro link name postId=_longlong][/#macro]
+[#macro link name postId=0?long][/#macro]
 [#macro frame name][/#macro]
