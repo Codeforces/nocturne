@@ -23,4 +23,9 @@ public class PostDaoImpl extends ApplicationDaoImpl<Post> implements PostDao {
     public List<Post> findByUser(User user) {
         return findBy("userId=? AND NOT deleted ORDER BY updateTime DESC", user.getId());
     }
+
+    @Override
+    public String findNote() {
+        return "note11";
+    }
 }

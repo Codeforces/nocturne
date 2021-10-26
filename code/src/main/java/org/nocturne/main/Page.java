@@ -205,6 +205,7 @@ public abstract class Page extends Component {
 
     void finalizeAfterAction() {
         requestCache = null;
+        globalTemplateMap = null;
         super.finalizeAfterAction();
     }
 

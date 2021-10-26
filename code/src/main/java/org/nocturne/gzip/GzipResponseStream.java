@@ -1,6 +1,8 @@
 package org.nocturne.gzip;
 
+import javax.annotation.Nonnull;
 import javax.servlet.ServletOutputStream;
+import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -60,16 +62,26 @@ public class GzipResponseStream extends ServletOutputStream {
     }
 
     @Override
-    public void write(byte b[]) throws IOException {
+    public void write(@Nonnull byte[] b) throws IOException {
         write(b, 0, b.length);
     }
 
     @Override
-    public void write(byte b[], int off, int len) throws IOException {
+    public void write(@Nonnull byte[] b, int off, int len) throws IOException {
         if (closed) {
             throw new IOException("Cannot write to a closed output stream");
         }
 
         gzipStream.write(b, off, len);
+    }
+
+    @Override
+    public boolean isReady() {
+        return output.isReady();
+    }
+
+    @Override
+    public void setWriteListener(WriteListener writeListener) {
+        output.setWriteListener(writeListener);
     }
 }
