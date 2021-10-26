@@ -3,4 +3,7 @@ image: maven:3-jdk-8
 build:
   script:
     - cd code
+    - pushd lib
+    - cat install.bat | sh
+    - popd
     - mvn -Dfile.encoding=UTF-8 -DcreateChecksum=true clean source:jar javadoc:jar repository:bundle-create install --batch-mode
