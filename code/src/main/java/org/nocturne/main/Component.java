@@ -645,7 +645,7 @@ public abstract class Component {
     }
 
     public Map<String, Object> getTemplateMap() {
-        return new HashMap<>(templateMap);
+        return templateMap == null ? null : new HashMap<>(templateMap);
     }
 
     /**

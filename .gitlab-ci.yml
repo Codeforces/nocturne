@@ -4,6 +4,6 @@ build:
   script:
     - cd code
     - pushd lib
-    - cat install.bat | sh
+    - cat install.bat | tr -d '\r' | sh
     - popd
     - mvn -Dfile.encoding=UTF-8 -DcreateChecksum=true clean source:jar javadoc:jar repository:bundle-create install --batch-mode
