@@ -1,6 +1,8 @@
 .classpath
 .project
 .settings/
+*.iml
+.idea/
 
 /code/target
 /code/*.iml
