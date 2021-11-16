@@ -116,7 +116,7 @@ public abstract class Page extends Component {
     }
 
     public Map<String, Object> getGlobalTemplateMap() {
-        return new HashMap<>(globalTemplateMap);
+        return globalTemplateMap == null ? null : new HashMap<>(globalTemplateMap);
     }
 
     Map<String, Object> internalGetGlobalTemplateMap() {
