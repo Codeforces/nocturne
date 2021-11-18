@@ -9,25 +9,15 @@
       <repositories>
         <repository>
           <id>github</id>
-          <name>GitHub Packages (commons)</name>
+          <name>GitHub Packages</name>
+          <!-- Actually used for all artifacts, not only commons -->
           <url>https://maven.pkg.github.com/Codeforces/codeforces-commons</url>
         </repository>
       </repositories>
     </profile>
-    <!-- <profile>
-      <id>jacuzzi</id>
-      <repositories>
-        <repository>
-          <id>github</id>
-          <name>GitHub Packages (jacuzzi)</name>
-          <url>https://maven.pkg.github.com/Codeforces/jacuzzi</url>
-        </repository>
-      </repositories>
-    </profile> -->
   </profiles>
   <activeProfiles>
     <activeProfile>commons</activeProfile>
-    <!-- <activeProfile>jacuzzi</activeProfile> -->
   </activeProfiles>
   <servers>
     <server>
