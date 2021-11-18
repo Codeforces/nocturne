@@ -26,8 +26,12 @@ jobs:
           mvn --batch-mode validate
       - name: Test
         run: |
-          cd code
-          mvn --batch-mode test
+          PROJECTS=code dreamcatcher samples/* tools/nocturne-archetype
+          for path in $PROJECTS; do
+            pushd $path
+            mvn --batch-mode test
+            popd
+          done
   publish:
     if: github.ref == 'refs/heads/master' && github.repository_owner == 'Codeforces'
     needs: test
