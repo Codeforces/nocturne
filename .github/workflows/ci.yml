@@ -46,6 +46,7 @@ jobs:
       - name: Test bloggy
         run: |
           cd samples/bloggy
+          mvn --batch-mode validate
           mvn --batch-mode test
       - name: Test helloworld
         run: |
