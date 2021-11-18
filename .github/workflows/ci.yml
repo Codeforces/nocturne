@@ -24,10 +24,12 @@ jobs:
           servers: |
             [{
               "id": "github-commons",
-              "password": "${{ secrets.GITHUB_TOKEN }}"
+              "username": ${{ secrets.PACKAGES_USER }}
+              "password": "${{ secrets.PACKAGES_TOKEN }}"
             }, {
               "id": "github-jacuzzi",
-              "password": "${{ secrets.GITHUB_TOKEN }}"
+              "username": ${{ secrets.PACKAGES_USER }}
+              "password": "${{ secrets.PACKAGES_TOKEN }}"
             }]
       - name: Validate
         run: |
