@@ -19,18 +19,6 @@ jobs:
         with:
           java-version: ${{ matrix.java-version }}
           distribution: "adopt"
-      - uses: s4u/maven-settings-action@v2.4.1
-        with:
-          servers: |
-            [{
-              "id": "github-commons",
-              "username": "$GITHUB_ACTOR",
-              "password": "${{ secrets.GITHUB_TOKEN }}"
-            }, {
-              "id": "github-jacuzzi",
-              "username": "$GITHUB_ACTOR",
-              "password": "${{ secrets.GITHUB_TOKEN }}"
-            }]
       - name: Validate
         run: |
           cd code
