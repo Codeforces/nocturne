@@ -1,0 +1,39 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                      http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+  <profiles>
+    <profile>
+      <id>commons</id>
+      <repositories>
+        <repository>
+          <id>github</id>
+          <name>GitHub Packages (commons)</name>
+          <url>https://maven.pkg.github.com/Codeforces/codeforces-commons</url>
+        </repository>
+      </repositories>
+    </profile>
+    <profile>
+      <id>jacuzzi</id>
+      <repositories>
+        <repository>
+          <id>github</id>
+          <name>GitHub Packages (jacuzzi)</name>
+          <url>https://maven.pkg.github.com/Codeforces/jacuzzi</url>
+        </repository>
+      </repositories>
+    </profile>
+  </profiles>
+  <activeProfiles>
+    <activeProfile>commons</activeProfile>
+    <activeProfile>jacuzzi</activeProfile>
+  </activeProfiles>
+  <servers>
+    <server>
+      <id>github</id>
+      <username>${env.GITHUB_ACTOR}</username>
+      <password>${env.GITHUB_TOKEN}</password>
+    </server>
+  </servers>
+</settings>

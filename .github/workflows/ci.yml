@@ -19,6 +19,8 @@ jobs:
         with:
           java-version: ${{ matrix.java-version }}
           distribution: "adopt"
+      - name: Setup settings.xml
+        run: cp settings.xml ~/.m2/settings.xml
       - name: Validate
         run: |
           cd code
