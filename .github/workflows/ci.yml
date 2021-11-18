@@ -25,7 +25,7 @@ jobs:
           mvn --batch-mode validate
       - name: Test
         run: |
-          PROJECTS=code dreamcatcher samples/* tools/nocturne-archetype
+          PROJECTS="code dreamcatcher samples/* tools/nocturne-archetype"
           for path in $PROJECTS; do
             pushd $path
             mvn --batch-mode test
