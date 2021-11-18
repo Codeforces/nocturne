@@ -24,11 +24,11 @@ jobs:
           servers: |
             [{
               "id": "github-commons",
-              "username": "${{ secrets.PACKAGES_USER }}"
+              "username": "${{ secrets.PACKAGES_USER }}",
               "password": "${{ secrets.PACKAGES_TOKEN }}"
             }, {
               "id": "github-jacuzzi",
-              "username": "${{ secrets.PACKAGES_USER }}"
+              "username": "${{ secrets.PACKAGES_USER }}",
               "password": "${{ secrets.PACKAGES_TOKEN }}"
             }]
       - name: Validate
