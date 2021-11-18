@@ -15,12 +15,12 @@
 
     <repositories>
         <repository>
-            <id>github</id>
+            <id>github-commons</id>
             <name>GitHub Packages (commons)</name>
             <url>https://maven.pkg.github.com/Codeforces/codeforces-commons</url>
         </repository>
         <repository>
-            <id>github</id>
+            <id>github-jacuzzi</id>
             <name>GitHub Packages (Jacuzzi)</name>
             <url>https://maven.pkg.github.com/Codeforces/jacuzzi</url>
         </repository>
