@@ -57,6 +57,8 @@ jobs:
         with:
           java-version: "17"
           distribution: "adopt"
+      - name: Setup settings.xml
+        run: cp settings.xml ~/.m2/settings.xml
       - name: Publish
         run: |
           cd code
