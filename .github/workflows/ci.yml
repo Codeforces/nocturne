@@ -24,10 +24,6 @@ jobs:
           distribution: "adopt"
       - name: Setup settings.xml
         run: cp settings.xml ~/.m2/settings.xml
-      - name: Validate
-        run: |
-          cd code
-          mvn --batch-mode validate
       - name: Install
         run: |
           cd code
@@ -62,10 +58,6 @@ jobs:
         with:
           java-version: "17"
           distribution: "adopt"
-      - name: Validate
-        run: |
-          cd code
-          mvn --batch-mode validate
       - name: Publish
         run: |
           cd code
