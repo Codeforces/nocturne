@@ -44,7 +44,7 @@ jobs:
         run: |
           cd tools/nocturne-archetype
           mvn --batch-mode test
-  publish:
+  deploy:
     if: github.ref == 'refs/heads/master' && github.repository_owner == 'Codeforces'
     needs: test
     runs-on: windows-latest
@@ -59,7 +59,7 @@ jobs:
           distribution: "adopt"
       - name: Setup settings.xml
         run: cp settings.xml ~/.m2/settings.xml
-      - name: Publish
+      - name: Deploy
         run: |
           cd code
           mvn --batch-mode deploy -DskipTests
