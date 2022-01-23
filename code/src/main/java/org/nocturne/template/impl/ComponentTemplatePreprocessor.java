@@ -21,6 +21,7 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
     private static final String TAG_STYLE_CLOSE = "</style>";
     private static final String TAG_SCRIPT_OPEN = "<script";
     private static final String TAG_SCRIPT_CLOSE = "</script>";
+    private static final String ATTR_DATA_NOCTURNE_TRUE = " data-nocturne=\"true\"";
 
     private String getUniqueRenderKey(Object source) {
         if (source instanceof File) {
@@ -85,6 +86,7 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
 
         if (styleOpenTag != -1) {
             preprocessStyle(source, text);
+            moveStyleUp(source, text);
         }
     }
 
@@ -93,6 +95,8 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
         if (styleOpenTag == -1 || styleOpenTag == Integer.MAX_VALUE) {
             throw new IOException("Expected exactly one <style> tag [" + source + "].");
         }
+
+        text.insert(styleOpenTag + TAG_STYLE_OPEN.length(), ATTR_DATA_NOCTURNE_TRUE);
 
         int styleCloseTag = ignoreCaseIndexOf(text, TAG_STYLE_CLOSE, false);
         if (styleCloseTag == -1 || styleCloseTag == Integer.MAX_VALUE) {
@@ -139,7 +143,7 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
             while (last >= 0 && Character.isWhitespace(text.charAt(last))) {
                 last--;
             }
-            text.insert(last + 1, UNIQUE_MAGIC_CLOSE_PREFIX + uniqueRenderKey + ">\n");
+            text.insert(last + 1, "\n" + UNIQUE_MAGIC_CLOSE_PREFIX + uniqueRenderKey + ">");
         }
 
         String replacement = "<#-- <template name=\"" + getComponentClassName(source) + "\"> -->";
@@ -206,6 +210,10 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
 
     private void preprocessScript(Object source, StringBuilder text) throws IOException {
         int scriptOpenTag = ignoreCaseIndexOf(text, TAG_SCRIPT_OPEN, true);
+        if (scriptOpenTag >= 0 && scriptOpenTag < Integer.MAX_VALUE) {
+            text.insert(scriptOpenTag + TAG_SCRIPT_OPEN.length(), ATTR_DATA_NOCTURNE_TRUE);
+        }
+
         int scriptOpenTagEnd = text.indexOf(">", scriptOpenTag);
         if (scriptOpenTagEnd < 0) {
             throw new IOException("Something wrong with <script> tag [" + source + "].");
@@ -304,5 +312,58 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
         }
 
         return result;
+    }
+
+    private void moveStyleUp(Object source, StringBuilder text) throws IOException {
+        int uniqueStartPos = text.indexOf(UNIQUE_MAGIC_OPEN_PREFIX);
+        if (uniqueStartPos < 0) {
+            return;
+        }
+
+        int uniqueFinishPos = text.indexOf(UNIQUE_MAGIC_CLOSE_PREFIX);
+        if (uniqueFinishPos < uniqueStartPos) {
+            throw new IOException("Something wrong with unique magic:"
+                    + " it doesn't have finish or it finishes before the start [" + source + "].");
+        }
+
+        int styleStartPos = text.indexOf(TAG_STYLE_OPEN + ATTR_DATA_NOCTURNE_TRUE, uniqueStartPos);
+        if (styleStartPos < 0) {
+            return;
+        }
+
+        int styleFinishPos = text.indexOf(TAG_STYLE_CLOSE, uniqueStartPos);
+        if (styleFinishPos < styleStartPos) {
+            throw new IOException("Something wrong with nocturne component style element:"
+                    + " it doesn't have finish or it finishes before the start [" + source + "].");
+        }
+        if (styleFinishPos > uniqueFinishPos) {
+            throw new IOException("Something wrong with nocturne component style element:"
+                    + " it finishes after unique marker ends [" + source + "].");
+        }
+
+        String tagTemplateOpenReplacement = "<#-- <template name=\"" + getComponentClassName(source) + "\"> -->";
+        int templateStartPos = text.indexOf(tagTemplateOpenReplacement);
+        if (templateStartPos < 0) {
+            return;
+        }
+
+        String tagTemplateCloseReplacement = "<#-- </template name=\"" + getComponentClassName(source) + "\"> -->";
+        int templateFinishPos = text.indexOf(tagTemplateCloseReplacement);
+        if (templateFinishPos < templateStartPos) {
+            throw new IOException("Something wrong with nocturne component template element:"
+                    + " it doesn't have finish or it finishes before the start [" + source + "].");
+        }
+        if (styleStartPos < templateFinishPos) {
+            throw new IOException("Something wrong with nocturne component template element:"
+                    + " it finishes after style starts [" + source + "].");
+        }
+
+        String styleUniqueRenderKey = getUniqueRenderKey(source) + ".css";
+        String style = UNIQUE_MAGIC_OPEN_PREFIX + styleUniqueRenderKey + ">\n"
+                + text.substring(styleStartPos, styleFinishPos + TAG_STYLE_CLOSE.length() + 1)
+                + UNIQUE_MAGIC_CLOSE_PREFIX + styleUniqueRenderKey + ">\n\n";
+
+        text.delete(styleStartPos, styleFinishPos + TAG_STYLE_CLOSE.length() + 1);
+        text.insert(templateStartPos, style);
     }
 }
