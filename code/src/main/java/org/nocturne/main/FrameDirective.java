@@ -12,8 +12,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.nocturne.template.impl.ComponentTemplatePreprocessor.UNIQUE_MAGIC_CLOSE_PREFIX;
 import static org.nocturne.template.impl.ComponentTemplatePreprocessor.UNIQUE_MAGIC_OPEN_PREFIX;
+import static org.nocturne.template.impl.ComponentTemplatePreprocessor.UNIQUE_MAGIC_CLOSE_PREFIX;
 
 /**
  * Use code like {@code <@frame name="loginFormFrame"/>} to inject
