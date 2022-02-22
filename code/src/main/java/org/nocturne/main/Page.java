@@ -4,9 +4,11 @@
 package org.nocturne.main;
 
 import freemarker.template.TemplateException;
+import io.prometheus.client.Summary;
 import org.nocturne.cache.CacheHandler;
 import org.nocturne.exception.*;
 import org.nocturne.postprocess.ResponsePostprocessor;
+import org.nocturne.prometheus.Prometheus;
 import org.nocturne.util.ReflectionUtil;
 
 import java.io.IOException;
@@ -127,6 +129,12 @@ public abstract class Page extends Component {
      * Handles main part of page workflow and parses template (writes it to response) if needed.
      */
     public void parseTemplate() {
+        String simpleClassName = ReflectionUtil.getOriginalClass(getClass()).getSimpleName();
+
+        Prometheus.getPagesCounter().labels(simpleClassName).inc();
+        Summary.Timer overallTimer = Prometheus.getPagesLatencySeconds()
+                .labels(simpleClassName, "overall").startTimer();
+
         try {
             prepareForAction();
 
@@ -140,32 +148,69 @@ public abstract class Page extends Component {
             if (result == null) {
                 boolean interrupted = false;
 
+                Summary.Timer initializeActionTimer = Prometheus.getPagesLatencySeconds()
+                        .labels(simpleClassName, "initializeAction").startTimer();
                 try {
                     initializeAction();
                 } catch (InterruptException e) {
                     interrupted = true;
+                } finally {
+                    initializeActionTimer.observeDuration();
                 }
 
                 if (!interrupted) {
-                    Events.fireBeforeAction(this);
-                    try {
-                        internalRunAction(getActionName());
-                    } catch (InterruptException ignored) {
-                        // No operations.
+                    // Before action.
+                    {
+                        Summary.Timer beforeActionTimer = Prometheus.getPagesLatencySeconds()
+                                .labels(simpleClassName, "beforeAction").startTimer();
+                        try {
+                            Events.fireBeforeAction(this);
+                        } finally {
+                            beforeActionTimer.observeDuration();
+                        }
                     }
-                    Events.fireAfterAction(this);
+
+                    // Action.
+                    {
+                        Summary.Timer actionTimer = Prometheus.getPagesLatencySeconds()
+                                .labels(simpleClassName, "action").startTimer();
+                        try {
+                            internalRunAction(getActionName());
+                        } catch (InterruptException ignored) {
+                            // No operations.
+                        } finally {
+                            actionTimer.observeDuration();
+                        }
+                    }
+
+                    // After action.
+                    {
+                        Summary.Timer afterActionTimer = Prometheus.getPagesLatencySeconds()
+                                .labels(simpleClassName, "afterAction").startTimer();
+                        try {
+                            Events.fireAfterAction(this);
+                        } finally {
+                            afterActionTimer.observeDuration();
+                        }
+                    }
                 }
 
+                Summary.Timer finalizeActionTimer = Prometheus.getPagesLatencySeconds()
+                        .labels(simpleClassName, "finalizeAction").startTimer();
                 try {
                     finalizeAction();
                 } catch (InterruptException ignored) {
                     // No operations.
+                } finally {
+                    finalizeActionTimer.observeDuration();
                 }
 
                 if (!isSkipTemplate()) {
                     Map<String, Object> params = new HashMap<>(internalGetTemplateMap());
                     params.putAll(internalGetGlobalTemplateMap());
 
+                    Summary.Timer templateTimer = Prometheus.getPagesLatencySeconds()
+                            .labels(simpleClassName, "template").startTimer();
                     try {
                         getTemplate().setOutputEncoding(StandardCharsets.UTF_8.name());
 
@@ -187,6 +232,8 @@ public abstract class Page extends Component {
                         if (!e.toString().contains("ClientAbortException")) {
                             throw new FreemarkerException("Can't parse template for page " + getClass().getName() + '.', e);
                         }
+                    } finally {
+                        templateTimer.observeDuration();
                     }
                 }
             }
@@ -200,6 +247,7 @@ public abstract class Page extends Component {
             throw new FreemarkerException("Can't write page " + getClass().getName() + '.', e);
         } finally {
             finalizeAfterAction();
+            overallTimer.observeDuration();
         }
     }
 
