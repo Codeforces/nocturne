@@ -229,6 +229,11 @@
             <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient</artifactId>
+            <version>0.15.0</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -4,9 +4,13 @@
 package org.nocturne.main;
 
 import freemarker.template.TemplateException;
+import io.prometheus.client.Summary;
+import org.jetbrains.annotations.Nullable;
 import org.nocturne.cache.CacheHandler;
 import org.nocturne.exception.FreemarkerException;
 import org.nocturne.exception.InterruptException;
+import org.nocturne.prometheus.Prometheus;
+import org.nocturne.util.ReflectionUtil;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -32,6 +36,21 @@ public abstract class Frame extends Component {
     }
 
     public String parseTemplate() {
+        String simpleClassName = ReflectionUtil.getOriginalClass(getClass()).getSimpleName();
+
+        Prometheus.getFramesCounter().labels(simpleClassName).inc();
+        Summary.Timer overallTimer = Prometheus.getFramesLatencySeconds()
+                .labels(simpleClassName, "overall").startTimer();
+
+        try {
+            return internalParseTemplate(simpleClassName);
+        } finally {
+            overallTimer.observeDuration();
+        }
+    }
+
+    @Nullable
+    private String internalParseTemplate(String simpleClassName) {
         prepareForAction();
 
         CacheHandler cacheHandler = getCacheHandler();
@@ -44,26 +63,61 @@ public abstract class Frame extends Component {
             if (result == null) {
                 boolean interrupted = false;
 
+                Summary.Timer initializeActionTimer = Prometheus.getFramesLatencySeconds()
+                        .labels(simpleClassName, "initializeAction").startTimer();
                 try {
                     initializeAction();
                 } catch (InterruptException ignored) {
                     interrupted = true;
+                } finally {
+                    initializeActionTimer.observeDuration();
                 }
 
                 if (!interrupted) {
-                    Events.fireBeforeAction(this);
-                    try {
-                        internalRunAction(getActionName());
-                    } catch (InterruptException ignored) {
-                        // No operations.
+                    // Before action.
+                    {
+                        Summary.Timer beforeActionTimer = Prometheus.getFramesLatencySeconds()
+                                .labels(simpleClassName, "beforeAction").startTimer();
+                        try {
+                            Events.fireBeforeAction(this);
+                        } finally {
+                            beforeActionTimer.observeDuration();
+                        }
                     }
-                    Events.fireAfterAction(this);
+
+                    // Action.
+                    {
+                        Summary.Timer actionTimer = Prometheus.getFramesLatencySeconds()
+                                .labels(simpleClassName, "action").startTimer();
+                        try {
+                            internalRunAction(getActionName());
+                        } catch (InterruptException ignored) {
+                            // No operations.
+                        } finally {
+                            actionTimer.observeDuration();
+                        }
+                    }
+
+                    // After action.
+                    {
+                        Summary.Timer afterActionTimer = Prometheus.getFramesLatencySeconds()
+                                .labels(simpleClassName, "afterAction").startTimer();
+                        try {
+                            Events.fireAfterAction(this);
+                        } finally {
+                            afterActionTimer.observeDuration();
+                        }
+                    }
                 }
 
+                Summary.Timer finalizeActionTimer = Prometheus.getFramesLatencySeconds()
+                        .labels(simpleClassName, "finalizeAction").startTimer();
                 try {
                     finalizeAction();
                 } catch (InterruptException ignored) {
                     // No operations.
+                } finally {
+                    finalizeActionTimer.observeDuration();
                 }
 
                 if (isSkipTemplate()) {
@@ -72,14 +126,21 @@ public abstract class Frame extends Component {
                     StringWriter writer = new StringWriter(4096);
                     Map<String, Object> params = new HashMap<>(internalGetTemplateMap());
                     params.putAll(ApplicationContext.getInstance().getCurrentPage().internalGetGlobalTemplateMap());
-                    getTemplate().process(params, writer);
-                    writer.close();
 
-                    result = writer.getBuffer().toString();
-                    if (cacheHandler != null) {
-                        cacheHandler.postprocess(this, result);
+                    Summary.Timer templateTimer = Prometheus.getFramesLatencySeconds()
+                            .labels(simpleClassName, "template").startTimer();
+                    try {
+                        getTemplate().process(params, writer);
+                        writer.close();
+
+                        result = writer.getBuffer().toString();
+                        if (cacheHandler != null) {
+                            cacheHandler.postprocess(this, result);
+                        }
+                        return result;
+                    } finally {
+                        templateTimer.observeDuration();
                     }
-                    return result;
                 }
             } else {
                 return result;
