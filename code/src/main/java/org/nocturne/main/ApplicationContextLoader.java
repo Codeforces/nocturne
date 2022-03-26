@@ -13,6 +13,7 @@ import org.nocturne.exception.ModuleInitializationException;
 import org.nocturne.exception.NocturneException;
 import org.nocturne.module.Configuration;
 import org.nocturne.module.Module;
+import org.nocturne.prometheus.Prometheus;
 import org.nocturne.reset.ResetStrategy;
 import org.nocturne.reset.annotation.Persist;
 import org.nocturne.reset.annotation.Reset;
@@ -224,7 +225,7 @@ class ApplicationContextLoader {
     private static void setupClassReloadingExceptions() {
         List<String> exceptions = new ArrayList<>();
         exceptions.add(ApplicationContext.class.getName());
-
+        exceptions.add(Prometheus.class.getName());
         if (properties.containsKey("nocturne.class-reloading-exceptions")) {
             String exceptionsAsString = properties.getProperty("nocturne.class-reloading-exceptions");
             if (exceptionsAsString != null) {
