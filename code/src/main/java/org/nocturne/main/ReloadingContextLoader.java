@@ -4,6 +4,7 @@
 package org.nocturne.main;
 
 import org.nocturne.exception.ConfigurationException;
+import org.nocturne.prometheus.Prometheus;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,11 +50,12 @@ class ReloadingContextLoader {
     private static void setupClassReloadingExceptions() {
         List<String> exceptions = new ArrayList<>();
         exceptions.add(ReloadingContext.class.getName());
+        exceptions.add(Prometheus.class.getName());
         if (properties.containsKey("nocturne.class-reloading-exceptions")) {
             String exceptionsAsString = properties.getProperty("nocturne.class-reloading-exceptions");
             if (exceptionsAsString != null) {
-                String[] candidats = exceptionsAsString.split("\\s*;\\s*");
-                for (String item : candidats) {
+                String[] candidates = exceptionsAsString.split("\\s*;\\s*");
+                for (String item : candidates) {
                     if (!item.isEmpty()) {
                         exceptions.add(item);
                     }
@@ -82,8 +84,8 @@ class ReloadingContextLoader {
         if (properties.containsKey("nocturne.class-reloading-packages")) {
             String packagesAsString = properties.getProperty("nocturne.class-reloading-packages");
             if (packagesAsString != null) {
-                String[] candidats = packagesAsString.split("\\s*;\\s*");
-                for (String item : candidats) {
+                String[] candidates = packagesAsString.split("\\s*;\\s*");
+                for (String item : candidates) {
                     if (!item.isEmpty()) {
                         packages.add(item);
                     }
@@ -118,7 +120,7 @@ class ReloadingContextLoader {
 
         if (properties.containsKey("nocturne.debug")) {
             try {
-                debug = Boolean.valueOf(properties.getProperty("nocturne.debug"));
+                debug = Boolean.parseBoolean(properties.getProperty("nocturne.debug"));
             } catch (NullPointerException e) {
                 throw new ConfigurationException("Can't cast nocturne.debug to boolean.");
             }
