@@ -34,7 +34,7 @@ import java.util.Set;
 public class Events {
     /**
      * Each class has no more than MAX_LISTENER_COUNT listeners.
-     * If you are try to add more, an exception will be thrown.
+     * If you are trying to add more, an exception will be thrown.
      * Usually it means that you are trying to add listeners on each request,
      * but you shouldn't do it
      */
@@ -48,7 +48,7 @@ public class Events {
      * Add listener to events of class "eventClass".
      *
      * @param <T>        Event class.
-     * @param eventClass Class to be listen. If event has "eventClass" as its
+     * @param eventClass Class to be listened. If event has "eventClass" as its
      *                   superclass listeners will be notified too.
      * @param listener   Listener instance.
      */
@@ -68,7 +68,7 @@ public class Events {
 
     /**
      * @param <T>            Component class.
-     * @param componentClass Component class to be listen.
+     * @param componentClass Component class to be listened.
      * @param listener       Listener which will be notified before any action
      *                       for componentClass will be processed.
      */
@@ -82,7 +82,7 @@ public class Events {
 
     /**
      * @param <T>            Component class.
-     * @param componentClass Component class to be listen.
+     * @param componentClass Component class to be listened.
      * @param listener       Listener which will be notified after any action
      *                       for componentClass will be processed.
      */
@@ -99,7 +99,7 @@ public class Events {
         /**
          * Stores listeners for each .
          */
-        private final Map<Class<?>, Set<Listener>> listenersByEvent = new LinkedHashMap<>();
+        private final Map<Class<?>, Set<Listener<?>>> listenersByEvent = new LinkedHashMap<>();
 
         public <T> void listen(Class<T> eventClass, Listener<T> listener) {
             if (!listenersByEvent.containsKey(eventClass)) {
@@ -128,7 +128,7 @@ public class Events {
         @SuppressWarnings({"unchecked"})
         private <T> void fireExactMatchedListeners(T event, Class<? super T> clazz) {
             if (listenersByEvent.containsKey(clazz)) {
-                Set<Listener> listeners = listenersByEvent.get(clazz);
+                Set<Listener<?>> listeners = listenersByEvent.get(clazz);
                 for (Listener<?> listener : listeners) {
                     Listener<? super T> t = (Listener<? super T>) listener;
                     t.onEvent(event);

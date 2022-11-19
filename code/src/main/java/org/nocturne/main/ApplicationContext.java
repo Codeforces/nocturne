@@ -1043,7 +1043,7 @@ public class ApplicationContext {
 
         @Nullable
         private String getLanguageByGeoIp() {
-            String countryCode = GeoIpUtil.getCountryCode(request);
+            String countryCode = null; // GeoIpUtil.getCountryCode(request);
             String lang = getInstance().getCountryToLanguage().get(countryCode);
             String[] languages = getAcceptLanguages();
 
