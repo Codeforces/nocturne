@@ -33,25 +33,26 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
 
     @Override
     public void preprocess(Object source, StringBuilder text) throws IOException {
-        int templateOpenTag = ignoreCaseIndexOf(text, TAG_TEMPLATE_OPEN, true);
+        int templateOpenTag = ignoreCaseIndexOf(text, TAG_TEMPLATE_OPEN,
+                true, OccurencePolicy.FIND_FIRST_IGNORE_MULTIPLE);
         if (templateOpenTag < 0) {
             return;
         }
-        if (templateOpenTag == Integer.MAX_VALUE) {
-            throw new IOException("Expected at most one <template> tag [" + source + "].");
-        }
 
-        int templateCloseTag = ignoreCaseIndexOf(text, TAG_TEMPLATE_CLOSE, false);
+        int templateCloseTag = ignoreCaseIndexOf(text, TAG_TEMPLATE_CLOSE,
+                false, OccurencePolicy.FIND_LAST);
         if (templateCloseTag < 0 || templateCloseTag == Integer.MAX_VALUE || templateOpenTag >= templateCloseTag) {
-            throw new IOException("Expected exactly one </template> tag, it should be after <template> [" + source + "].");
+            throw new IOException("Expected </template> tag, it should be after first <template> [" + source + "].");
         }
 
-        int scriptOpenTag = ignoreCaseIndexOf(text, TAG_SCRIPT_OPEN, true);
+        int scriptOpenTag = ignoreCaseIndexOf(text, TAG_SCRIPT_OPEN,
+                true, OccurencePolicy.FIND_FIRST_FAIL_MULTIPLE);
         if (scriptOpenTag == Integer.MAX_VALUE || (scriptOpenTag != -1 && scriptOpenTag <= templateCloseTag)) {
             throw new IOException("Expected at most one <script> tag, it should be after </template> [" + source + "].");
         }
 
-        int scriptCloseTag = ignoreCaseIndexOf(text, TAG_SCRIPT_CLOSE, false);
+        int scriptCloseTag = ignoreCaseIndexOf(text, TAG_SCRIPT_CLOSE,
+                false, OccurencePolicy.FIND_FIRST_FAIL_MULTIPLE);
         if (scriptCloseTag == Integer.MAX_VALUE || (scriptCloseTag != -1 && scriptOpenTag >= scriptCloseTag)) {
             throw new IOException("Expected exactly one </script> tag, it should be after <script> [" + source + "].");
         }
@@ -62,12 +63,14 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
 
         int scriptOrTemplateCloseTag = Math.max(scriptCloseTag, templateCloseTag);
 
-        int styleOpenTag = ignoreCaseIndexOf(text, TAG_STYLE_OPEN, true);
+        int styleOpenTag = ignoreCaseIndexOf(text, TAG_STYLE_OPEN, true,
+                OccurencePolicy.FIND_FIRST_FAIL_MULTIPLE);
         if (styleOpenTag == Integer.MAX_VALUE | (styleOpenTag != -1 && styleOpenTag <= scriptOrTemplateCloseTag)) {
             throw new IOException("Expected at most one <style> tag, it should be after </template> and </script> [" + source + "].");
         }
 
-        int styleCloseTag = ignoreCaseIndexOf(text, TAG_STYLE_CLOSE, false);
+        int styleCloseTag = ignoreCaseIndexOf(text, TAG_STYLE_CLOSE,
+                false, OccurencePolicy.FIND_FIRST_FAIL_MULTIPLE);
         if (styleCloseTag == Integer.MAX_VALUE || (styleCloseTag != -1 && styleOpenTag >= styleCloseTag)) {
             throw new IOException("Expected exactly one </style> tag, it should be after <style> [" + source + "].");
         }
@@ -91,14 +94,16 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
     }
 
     private void preprocessStyle(Object source, StringBuilder text) throws IOException {
-        int styleOpenTag = ignoreCaseIndexOf(text, TAG_STYLE_OPEN, true);
+        int styleOpenTag = ignoreCaseIndexOf(text, TAG_STYLE_OPEN,
+                true, OccurencePolicy.FIND_FIRST_FAIL_MULTIPLE);
         if (styleOpenTag == -1 || styleOpenTag == Integer.MAX_VALUE) {
             throw new IOException("Expected exactly one <style> tag [" + source + "].");
         }
 
         text.insert(styleOpenTag + TAG_STYLE_OPEN.length(), ATTR_DATA_NOCTURNE_TRUE);
 
-        int styleCloseTag = ignoreCaseIndexOf(text, TAG_STYLE_CLOSE, false);
+        int styleCloseTag = ignoreCaseIndexOf(text, TAG_STYLE_CLOSE,
+                false, OccurencePolicy.FIND_FIRST_FAIL_MULTIPLE);
         if (styleCloseTag == -1 || styleCloseTag == Integer.MAX_VALUE) {
             throw new IOException("Expected exactly one </style> tag [" + source + "].");
         }
@@ -110,7 +115,8 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
 
         String textLessAttr = "type=\"text/less\"";
         String textCssAttr = "type=\"text/css\"";
-        int less = ignoreCaseIndexOf(text, textLessAttr, true);
+        int less = ignoreCaseIndexOf(text, textLessAttr,
+                true, OccurencePolicy.FIND_FIRST_FAIL_MULTIPLE);
         if (less == -1) {
             return;
         } else if (less == Integer.MAX_VALUE) {
@@ -127,9 +133,10 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
     }
 
     private void preprocessTemplate(Object source, StringBuilder text, int templateOpenTag, Set<String> classes) throws IOException {
-        int templateCloseTag = ignoreCaseIndexOf(text, TAG_TEMPLATE_CLOSE, false);
+        int templateCloseTag = ignoreCaseIndexOf(text, TAG_TEMPLATE_CLOSE,
+                false, OccurencePolicy.FIND_LAST);
         if (templateCloseTag < 0 || templateCloseTag == Integer.MAX_VALUE || templateOpenTag >= templateCloseTag) {
-            throw new IOException("Expected exactly one </template> tag, it should be after <template> [" + source + "].");
+            throw new IOException("Expected </template> tag, it should be after first <template> [" + source + "].");
         }
         int end = templateCloseTag + TAG_TEMPLATE_CLOSE.length();
         while (end < text.length() && Character.isWhitespace(text.charAt(end))) {
@@ -156,9 +163,10 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
         }
 
         replacement = "<#-- </template name=\"" + getComponentClassName(source) + "\"> -->";
-        templateCloseTag = ignoreCaseIndexOf(text, TAG_TEMPLATE_CLOSE, false);
+        templateCloseTag = ignoreCaseIndexOf(text, TAG_TEMPLATE_CLOSE,
+                false, OccurencePolicy.FIND_LAST);
         if (templateCloseTag < 0 || templateCloseTag == Integer.MAX_VALUE || templateOpenTag >= templateCloseTag) {
-            throw new IOException("Expected exactly one </template> tag, it should be after <template> [" + source + "].");
+            throw new IOException("Expected </template> tag, it should be after first <template> [" + source + "].");
         }
         text.replace(templateCloseTag, templateCloseTag + TAG_TEMPLATE_CLOSE.length(), replacement);
 
@@ -209,7 +217,8 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
     }
 
     private void preprocessScript(Object source, StringBuilder text) throws IOException {
-        int scriptOpenTag = ignoreCaseIndexOf(text, TAG_SCRIPT_OPEN, true);
+        int scriptOpenTag = ignoreCaseIndexOf(text, TAG_SCRIPT_OPEN,
+                true, OccurencePolicy.FIND_FIRST_FAIL_MULTIPLE);
         if (scriptOpenTag >= 0 && scriptOpenTag < Integer.MAX_VALUE) {
             text.insert(scriptOpenTag + TAG_SCRIPT_OPEN.length(), ATTR_DATA_NOCTURNE_TRUE);
         }
@@ -221,7 +230,8 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
 
         text.insert(scriptOpenTagEnd + 1, " $(function () {");
 
-        int scriptCloseTag = ignoreCaseIndexOf(text, TAG_SCRIPT_CLOSE, false);
+        int scriptCloseTag = ignoreCaseIndexOf(text, TAG_SCRIPT_CLOSE,
+                false, OccurencePolicy.FIND_FIRST_FAIL_MULTIPLE);
         if (scriptCloseTag == -1 || scriptCloseTag == Integer.MAX_VALUE) {
             throw new IOException("Something wrong with </script> tag [" + source + "].");
         }
@@ -274,7 +284,8 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
         return c == ' ' || c == '\"' || c == '\'' || c == '.' || c == '>' || c == '+' || c == ':' || c == ',';
     }
 
-    private int ignoreCaseIndexOf(StringBuilder text, String substring, boolean openTag) {
+    private int ignoreCaseIndexOf(StringBuilder text, String substring,
+                                  boolean openTag, OccurencePolicy occurencePolicy) {
         if (text.length() < substring.length()) {
             return -1;
         }
@@ -305,8 +316,16 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
             if (find) {
                 if (result == -1) {
                     result = i;
+                    if (occurencePolicy == OccurencePolicy.FIND_FIRST_IGNORE_MULTIPLE) {
+                        break;
+                    }
                 } else {
-                    return Integer.MAX_VALUE;
+                    if (occurencePolicy == OccurencePolicy.FIND_FIRST_FAIL_MULTIPLE) {
+                        return Integer.MAX_VALUE;
+                    }
+                    if (occurencePolicy == OccurencePolicy.FIND_LAST) {
+                        result = i;
+                    }
                 }
             }
         }
@@ -365,5 +384,11 @@ public class ComponentTemplatePreprocessor implements TemplatePreprocessor {
 
         text.delete(styleStartPos, styleFinishPos + TAG_STYLE_CLOSE.length() + 1);
         text.insert(templateStartPos, style);
+    }
+
+    private enum OccurencePolicy {
+        FIND_FIRST_FAIL_MULTIPLE,
+        FIND_FIRST_IGNORE_MULTIPLE,
+        FIND_LAST
     }
 }
