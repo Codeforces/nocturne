@@ -33,6 +33,13 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/Codeforces/nocturne</url>
+        </repository>
+    </distributionManagement>
     <scm>
         <connection>scm:git:git://github.com/Codeforces/nocturne.git</connection>
         <developerConnection>scm:git:git://github.com/Codeforces/nocturne.git</developerConnection>

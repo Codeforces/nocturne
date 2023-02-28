@@ -6,12 +6,6 @@
     <packaging>war</packaging>
     <version>${version}</version>
     <name>${artifactId}</name>
-    <repositories>
-        <repository>
-            <id>nocturne</id>
-            <url>http://nocturne.googlecode.com/svn/trunk/repo/</url>
-        </repository>
-    </repositories>
     <dependencies>
         <dependency>
             <groupId>org.nocturne</groupId>

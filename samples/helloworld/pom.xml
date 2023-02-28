@@ -10,7 +10,7 @@
         <dependency>
             <groupId>org.nocturne</groupId>
             <artifactId>nocturne</artifactId>
-            <version>1.3.4-SNAPSHOT</version>
+            <version>1.4.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
     <build>
