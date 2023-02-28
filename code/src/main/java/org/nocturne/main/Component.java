@@ -14,6 +14,7 @@ import freemarker.template.TemplateModelException;
 import net.sf.cglib.reflect.FastMethod;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.nocturne.cache.CacheHandler;
 import org.nocturne.caption.CaptionDirective;
 import org.nocturne.collection.SingleEntryList;
@@ -26,6 +27,7 @@ import org.nocturne.util.RequestUtil;
 import org.nocturne.validation.ValidationException;
 import org.nocturne.validation.Validator;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
@@ -598,12 +600,12 @@ public abstract class Component {
     }
 
     private static void validateParameter(String key) {
-        ensureArgumentIs(key,  "frame");
-        ensureArgumentIs(key,  "link");
-        ensureArgumentIs(key,  "caption");
-        ensureArgumentIs(key,  "once");
-        ensureArgumentIs(key,  "css");
-        ensureArgumentIs(key,  "js");
+        ensureArgumentIs(key, "frame");
+        ensureArgumentIs(key, "link");
+        ensureArgumentIs(key, "caption");
+        ensureArgumentIs(key, "once");
+        ensureArgumentIs(key, "css");
+        ensureArgumentIs(key, "js");
     }
 
     /**
@@ -1202,7 +1204,7 @@ public abstract class Component {
         return this;
     }
 
-    private boolean runValidation(ErrorValidationHandler handler) {
+    protected boolean runValidation(ErrorValidationHandler handler) {
         Map<?, ?> parameterMap = getRequestParams();
         for (Object entryObject : parameterMap.entrySet()) {
             Map.Entry<?, ?> entry = (Map.Entry<?, ?>) entryObject;
@@ -1482,9 +1484,19 @@ public abstract class Component {
 
     protected final Gson getJsonConverter() {
         if (jsonConverter == null) {
-            jsonConverter = new Gson();
+            jsonConverter = newJsonConverter();
         }
         return jsonConverter;
+    }
+
+    /**
+     * Override the method to use custom Gson instances.
+     *
+     * @return Gson instance.
+     */
+    @Nonnull
+    protected Gson newJsonConverter() {
+        return new Gson();
     }
 
     /* init */ {
@@ -1525,7 +1537,7 @@ public abstract class Component {
         }
     }
 
-    private interface ErrorValidationHandler {
+    protected interface ErrorValidationHandler {
         void onError(String fieldName, String errorText);
     }
 }
