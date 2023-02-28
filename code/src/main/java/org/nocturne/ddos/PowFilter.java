@@ -108,7 +108,7 @@ public class PowFilter implements Filter {
                     "    justify-content: center;\n" +
                     "    align-items: center;\n" +
                     "}\n" +
-                    "</style>\n<p>Please wait. Your browser is being checked. it may take a few seconds...</p>");
+                    "</style>\n<p>Please wait. Your browser is being checked. It may take a few seconds...</p>");
             writer.println("<script>");
             writer.println(getObfuscatedJsCode());
 //            writer.println(getJsCode());
