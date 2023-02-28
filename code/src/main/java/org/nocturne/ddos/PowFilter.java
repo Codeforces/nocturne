@@ -23,6 +23,26 @@ public class PowFilter implements Filter {
             ^ System.currentTimeMillis()
             ^ Runtime.getRuntime().freeMemory()).getBytes(StandardCharsets.UTF_8));
 
+    @Override
+    public void init(FilterConfig filterConfig) {
+        // No operations.
+    }
+
+    @Override
+    public void destroy() {
+        // No operations.
+    }
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response,
+                         FilterChain chain) throws IOException, ServletException {
+        if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
+            doInternalFilter((HttpServletRequest) request, (HttpServletResponse) response, chain);
+        } else {
+            chain.doFilter(request, response);
+        }
+    }
+
     private static String getIp(HttpServletRequest httpRequest) {
         String ip = httpRequest.getHeader(X_REAL_IP);
         if (StringUtil.isNotEmpty(ip)) {
@@ -34,16 +54,6 @@ public class PowFilter implements Filter {
 
     private static String getUserAgent(HttpServletRequest httpRequest) {
         return httpRequest.getHeader("User-Agent");
-    }
-
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response,
-                         FilterChain chain) throws IOException, ServletException {
-        if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
-            doInternalFilter((HttpServletRequest) request, (HttpServletResponse) response, chain);
-        } else {
-            chain.doFilter(request, response);
-        }
     }
 
     private static String getRequestFingerprint(HttpServletRequest request) {
