@@ -3,6 +3,7 @@
  */
 package org.nocturne.main;
 
+import com.google.common.base.Throwables;
 import org.apache.log4j.Logger;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.pool.PagePool;
@@ -106,6 +107,7 @@ public class PageLoader {
             Class<Page> pageClass = (Class<Page>) PageLoader.class.getClassLoader().loadClass(pageClassName);
             return ApplicationContext.getInstance().getInjector().getInstance(pageClass);
         } catch (Exception e) {
+            logger.error("Can't load page " + pageClassName + '.', e);
             throw new ConfigurationException("Can't load page " + pageClassName + '.', e);
         }
     }
