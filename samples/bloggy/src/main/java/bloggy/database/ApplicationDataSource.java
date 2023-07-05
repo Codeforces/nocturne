@@ -3,9 +3,9 @@
  */
 package bloggy.database;
 
-import com.mysql.cj.jdbc.MysqlDataSource;
 import org.apache.log4j.Logger;
 import bloggy.exception.ApplicationException;
+import org.mariadb.jdbc.MariaDbDataSource;
 
 import javax.annotation.Nonnull;
 import javax.sql.DataSource;
@@ -37,10 +37,14 @@ public class ApplicationDataSource {
         private static final DataSource INSTANCE;
 
         static {
-            MysqlDataSource instance = new MysqlDataSource();
-            instance.setUrl(PROPERTIES.getProperty("database.url"));
-            instance.setUser(PROPERTIES.getProperty("database.user"));
-            instance.setPassword(PROPERTIES.getProperty("database.password"));
+            MariaDbDataSource instance = new MariaDbDataSource();
+            try {
+                instance.setUrl(PROPERTIES.getProperty("database.url"));
+                instance.setUser(PROPERTIES.getProperty("database.user"));
+                instance.setPassword(PROPERTIES.getProperty("database.password"));
+            } catch (SQLException e) {
+                throw new ApplicationException("Can't initialize database connection", e);
+            }
 
             try (Connection ignored = instance.getConnection()) {
                 logger.info("Database has been initialized, test database connection is OK.");
