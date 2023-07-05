@@ -46,7 +46,7 @@
     </main>
 </div>
 <footer>
-    <a href="<@link name="IndexPage"/>">Bloggy</a> &copy; 2009-2019 by Mike Mirzayanov
+    <a href="<@link name="IndexPage"/>">Bloggy</a> &copy; 2009-2023 by Mike Mirzayanov
     <div class="time">${now?string('yyyy-MM-dd HH:mm:ss')}</div>
 </footer>
 <script>
