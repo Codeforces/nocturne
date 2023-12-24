@@ -1,6 +1,7 @@
 package org.nocturne.ddos;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.log4j.Logger;
 import org.nocturne.util.StringUtil;
 
@@ -34,6 +35,8 @@ public class PowFilter implements Filter {
 
     private static final List<RequestFilter> REQUEST_FILTERS = new ArrayList<>();
 
+    private static final ThreadLocal<String> rayIdLocal = new ThreadLocal<>();
+
     @Override
     public void init(FilterConfig filterConfig) {
         // No operations.
@@ -44,6 +47,17 @@ public class PowFilter implements Filter {
         // No operations.
     }
 
+    private void info(String message) {
+        if (logging) {
+            message = "PowFilter: powRayId=" + rayIdLocal.get() + ": " + message;
+            logger.info(message);
+
+            String print = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + ": " + message;
+            System.out.println(print);
+            System.err.println(print);
+        }
+    }
+
     @Override
     public void doFilter(ServletRequest request, ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
@@ -51,7 +65,12 @@ public class PowFilter implements Filter {
             HttpServletRequest httpServletRequest = (HttpServletRequest) request;
             HttpServletResponse httpServletResponse = (HttpServletResponse) response;
 
+            String rayId = RandomStringUtils.randomAlphanumeric(8);
+            rayIdLocal.set(rayId);
+
             info("Starting processing request [uri=" + httpServletRequest.getRequestURI()
+                    + ", url=" + httpServletRequest.getRequestURL()
+                    + ", query=" + httpServletRequest.getQueryString()
                     + ", ip=" + getIp(httpServletRequest) + "].");
 
             for (RequestFilter requestFilter : REQUEST_FILTERS) {
@@ -73,17 +92,6 @@ public class PowFilter implements Filter {
             doInternalFilter(httpServletRequest, httpServletResponse, chain);
         } else {
             chain.doFilter(request, response);
-        }
-    }
-
-    private void info(String message) {
-        if (logging) {
-            message = "PowFilter: " + message;
-            logger.info(message);
-
-            String print = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + ": " + message;
-            System.out.println(print);
-            System.err.println(print);
         }
     }
 
