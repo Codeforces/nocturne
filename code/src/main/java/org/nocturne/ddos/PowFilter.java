@@ -178,6 +178,7 @@ public class PowFilter implements Filter {
         } else if (cookie != null && isResult(cookie, half)) {
             info("cookie != null && isResult(cookie, half): cookie=" + cookie + ", half=" + half + ".");
             Cookie powCookie = new Cookie("pow", sha);
+            powCookie.setPath("/");
             powCookie.setMaxAge((int) TimeUnit.DAYS.toSeconds(1));
             response.addCookie(powCookie);
             info("Set-Cookie: pow=" + sha + ".");
@@ -185,6 +186,7 @@ public class PowFilter implements Filter {
         } else {
             info("else case: cookie=" + cookie + ", half=" + half + ".");
             Cookie powCookie = new Cookie("pow", half);
+            powCookie.setPath("/");
             powCookie.setMaxAge((int) TimeUnit.DAYS.toSeconds(1));
             response.addCookie(powCookie);
             response.setContentType("text/html");
