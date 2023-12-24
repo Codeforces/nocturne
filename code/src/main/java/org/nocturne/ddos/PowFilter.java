@@ -15,10 +15,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unused")
@@ -73,6 +70,33 @@ public class PowFilter implements Filter {
                     + ", query=" + httpServletRequest.getQueryString()
                     + ", ip=" + getIp(httpServletRequest) + "].");
 
+            if (logging) {
+                info("Headers:");
+                Enumeration<String> headerNames = httpServletRequest.getHeaderNames();
+                while (headerNames.hasMoreElements()) {
+                    String headerName = headerNames.nextElement();
+                    info("    " + headerName + ": " + httpServletRequest.getHeader(headerName));
+                }
+
+                HttpSession session = httpServletRequest.getSession(true);
+                if (session != null) {
+                    info("Session attributes:");
+                    Enumeration<String> attributeNames = session.getAttributeNames();
+                    while (attributeNames.hasMoreElements()) {
+                        String attributeName = attributeNames.nextElement();
+                        info("    " + attributeName + ": " + session.getAttribute(attributeName));
+                    }
+                }
+
+                info("Cookies:");
+                Cookie[] cookies = httpServletRequest.getCookies();
+                if (cookies != null) {
+                    for (Cookie cookie : cookies) {
+                        info("    " + cookie.getName() + ": " + cookie.getValue());
+                    }
+                }
+            }
+
             for (RequestFilter requestFilter : REQUEST_FILTERS) {
                 Integer verdict = requestFilter.filter(httpServletRequest);
                 info("Request filter " + requestFilter.getClass().getSimpleName() + " returned " + verdict + ".");
@@ -120,7 +144,10 @@ public class PowFilter implements Filter {
         String sha = (String) session.getAttribute("sha");
         String requestFingerprint = getRequestFingerprint(request);
 
-        info("secret=" + secret + ", sha=" + sha + ", requestFingerprint=" + requestFingerprint + ".");
+        info("sessionId= " + session.getId()
+                + ", secret=" + secret
+                + ", sha=" + sha
+                + ", requestFingerprint=" + requestFingerprint + ".");
 
         if (StringUtil.isEmpty(secret)
                 || StringUtil.isEmpty(sha)
@@ -129,7 +156,7 @@ public class PowFilter implements Filter {
             session.setAttribute("secret", secret);
             sha = DigestUtils.sha1Hex(secret + requestFingerprint);
             session.setAttribute("sha", sha);
-            info("If case: secret=" + secret + ", sha=" + sha + ".");
+            info("If empty case: secret=" + secret + ", sha=" + sha + ".");
         }
 
         String half = sha.substring(0, 20);
