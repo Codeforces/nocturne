@@ -1,6 +1,7 @@
 package org.nocturne.ddos;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.log4j.Logger;
 import org.nocturne.util.StringUtil;
 
 import javax.servlet.*;
@@ -12,14 +13,20 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unused")
 public class PowFilter implements Filter {
+    private static final Logger logger = Logger.getLogger(PowFilter.class);
+
     private static final String X_REAL_IP = "X-Real-IP";
+
+    private static final boolean logging = System.getProperty("PowFilter.logging", "false").equals("true");
 
     private static final Random RANDOM = new SecureRandom(Long.toString(System.nanoTime()
             ^ System.currentTimeMillis()
@@ -43,20 +50,40 @@ public class PowFilter implements Filter {
         if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
             HttpServletRequest httpServletRequest = (HttpServletRequest) request;
             HttpServletResponse httpServletResponse = (HttpServletResponse) response;
+
+            info("Starting processing request [uri=" + httpServletRequest.getRequestURI()
+                    + ", ip=" + getIp(httpServletRequest) + "].");
+
             for (RequestFilter requestFilter : REQUEST_FILTERS) {
                 Integer verdict = requestFilter.filter(httpServletRequest);
+                info("Request filter " + requestFilter.getClass().getSimpleName() + " returned " + verdict + ".");
+
                 if (verdict != null) {
                     if (verdict == 0) {
+                        info("Do 'chain.doFilter(request, response);' and return.");
                         chain.doFilter(request, response);
                     } else {
+                        info("Send error " + verdict + " and return.");
                         httpServletResponse.sendError(verdict);
                     }
                     return;
                 }
             }
+
             doInternalFilter(httpServletRequest, httpServletResponse, chain);
         } else {
             chain.doFilter(request, response);
+        }
+    }
+
+    private void info(String message) {
+        if (logging) {
+            message = "PowFilter: " + message;
+            logger.info(message);
+
+            String print = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + ": " + message;
+            System.out.println(print);
+            System.err.println(print);
         }
     }
 
@@ -85,6 +112,8 @@ public class PowFilter implements Filter {
         String sha = (String) session.getAttribute("sha");
         String requestFingerprint = getRequestFingerprint(request);
 
+        info("secret=" + secret + ", sha=" + sha + ", requestFingerprint=" + requestFingerprint + ".");
+
         if (StringUtil.isEmpty(secret)
                 || StringUtil.isEmpty(sha)
                 || !sha.equals(DigestUtils.sha1Hex(secret + requestFingerprint))) {
@@ -92,6 +121,7 @@ public class PowFilter implements Filter {
             session.setAttribute("secret", secret);
             sha = DigestUtils.sha1Hex(secret + requestFingerprint);
             session.setAttribute("sha", sha);
+            info("If case: secret=" + secret + ", sha=" + sha + ".");
         }
 
         String half = sha.substring(0, 20);
@@ -105,14 +135,20 @@ public class PowFilter implements Filter {
             }
         }
 
+        info("half=" + half + ", cookie=" + cookie + ".");
+
         if (cookie != null && cookie.equals(sha)) {
+            info("cookie != null && cookie.equals(sha).");
             chain.doFilter(request, response);
         } else if (cookie != null && isResult(cookie, half)) {
+            info("cookie != null && isResult(cookie, half): cookie=" + cookie + ", half=" + half + ".");
             Cookie powCookie = new Cookie("pow", sha);
             powCookie.setMaxAge((int) TimeUnit.DAYS.toSeconds(1));
             response.addCookie(powCookie);
+            info("Set-Cookie: pow=" + sha + ".");
             chain.doFilter(request, response);
         } else {
+            info("else case: cookie=" + cookie + ", half=" + half + ".");
             Cookie powCookie = new Cookie("pow", half);
             powCookie.setMaxAge((int) TimeUnit.DAYS.toSeconds(1));
             response.addCookie(powCookie);
@@ -131,6 +167,7 @@ public class PowFilter implements Filter {
 //            writer.println(getJsCode());
             writer.println("</script>");
             writer.flush();
+            info("writer.flush(), Set-Cookie: pow=" + half + ".");
         }
     }
 
