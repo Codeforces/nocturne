@@ -190,26 +190,30 @@ public class PowFilter implements Filter {
             powCookie.setMaxAge((int) TimeUnit.DAYS.toSeconds(1));
             response.addCookie(powCookie);
             response.setContentType("text/html");
-            PrintWriter writer = response.getWriter();
-            writer.println("<style>\n" +
-                    "p {\n" +
-                    "    height: 100vh;\n" +
-                    "    display: flex;\n" +
-                    "    justify-content: center;\n" +
-                    "    align-items: center;\n" +
-                    "}\n" +
-                    "</style>\n<p>Please wait. Your browser is being checked. It may take a few seconds...</p>");
-            writer.println("<script>");
-            writer.println(getObfuscatedJsCode());
-//            writer.println(getJsCode());
-            writer.println("</script>");
-            writer.flush();
+            printResponse(response);
             info("writer.flush(), Set-Cookie: pow=" + half + ".");
         }
     }
 
+    private static void printResponse(HttpServletResponse response) throws IOException {
+        PrintWriter writer = response.getWriter();
+        writer.println("<style>\n" +
+                "p {\n" +
+                "    height: 100vh;\n" +
+                "    display: flex;\n" +
+                "    justify-content: center;\n" +
+                "    align-items: center;\n" +
+                "}\n" +
+                "</style>\n<p>Please wait. Your browser is being checked. It may take a few seconds...</p>");
+        writer.println("<script>");
+//            writer.println(getObfuscatedJsCode());
+        writer.println(getJsCode());
+        writer.println("</script>");
+        writer.flush();
+    }
+
     private boolean isResult(String cookie, String halfSecret) {
-        if (cookie.endsWith(":" + halfSecret)) {
+        if (StringUtil.isNotEmpty(cookie) && cookie.endsWith("_" + halfSecret)) {
             String hash = DigestUtils.sha1Hex(cookie);
             return hash.startsWith("0000");
         } else {
@@ -399,7 +403,7 @@ public class PowFilter implements Filter {
                 "    var c = getCookie('pow').substring(0, 20);\n" +
                 "    var i = 0;\n" +
                 "    for (i = 0;; i++) {\n" +
-                "        var s = i.toString() + ':' + c;\n" +
+                "        var s = i.toString() + '_' + c;\n" +
                 "        var hash = sha1(s);\n" +
                 "        var prefix = hash.substring(0, 4);\n" +
                 "        if (prefix === \"0000\") {\n" +
