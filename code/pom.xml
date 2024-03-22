@@ -63,9 +63,8 @@
         </dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
-            <artifactId>annotations</artifactId>
-            <version>3.0.1u2</version>
-            <scope>compile</scope>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
         </dependency>
         <dependency>
             <groupId>org.ow2.asm</groupId>
@@ -239,7 +238,7 @@
         <dependency>
             <groupId>io.prometheus</groupId>
             <artifactId>simpleclient</artifactId>
-            <version>0.15.0</version>
+            <version>0.16.0</version>
         </dependency>
     </dependencies>
 
