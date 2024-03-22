@@ -105,7 +105,8 @@ class ReloadingContextLoader {
                     if (!dir.isEmpty()) {
                         File file = new File(dir);
                         if (!file.isDirectory() && ReloadingContext.getInstance().isDebug()) {
-                            throw new ConfigurationException("Each item in nocturne.reloading-class-paths should be a directory.");
+                            throw new ConfigurationException("Each item in nocturne.reloading-class-paths should be a directory,"
+                                                             + " but '" + file + "' isn't.");
                         }
                         reloadingClassPaths.add(file);
                     }
