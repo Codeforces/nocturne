@@ -42,10 +42,12 @@ public class PageLoader {
                                 ApplicationContext.getInstance().getRequestRouter()
                         ).getConstructor().newInstance();
                     } catch (NoSuchMethodException e) {
+                        logger.error(
+                                "Application page class name resolver does not have default constructor.", e);
                         throw new ConfigurationException(
-                                "Application page class name resolver does not have default constructor.", e
-                        );
+                                "Application page class name resolver does not have default constructor.", e);
                     } catch (Exception e) {
+                        logger.error("Can't load application page class name resolver.", e);
                         throw new ConfigurationException("Can't load application page class name resolver.", e);
                     }
                 }

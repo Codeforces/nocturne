@@ -47,6 +47,8 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class ApplicationContext {
+    private static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(ApplicationContext.class);
+
     /**
      * The only singleton instance.
      */
@@ -698,6 +700,7 @@ public class ApplicationContext {
      */
     public void addReloadingClassPath(File dir) {
         if (!dir.isDirectory()) {
+            logger.error("Path " + dir.getName() + " expected to be a directory.");
             throw new ConfigurationException("Path " + dir.getName() + " expected to be a directory.");
         }
         reloadingClassPaths.add(dir);
@@ -707,6 +710,7 @@ public class ApplicationContext {
             try {
                 ReflectionUtil.invoke(context, "addReloadingClassPath", dir);
             } catch (ReflectionException e) {
+                logger.error("Can't call addReloadingClassPath for ReloadingContext.", e);
                 throw new NocturneException("Can't call addReloadingClassPath for ReloadingContext.", e);
             }
         } else {
@@ -781,6 +785,7 @@ public class ApplicationContext {
             Class<? extends Captions> clazz = (Class<? extends Captions>) getClass().getClassLoader().loadClass(captionsImplClass);
             captions = injector.getInstance(clazz);
         } catch (ClassNotFoundException e) {
+            logger.error("Class " + captionsImplClass + " not found.", e);
             throw new ConfigurationException("Class " + captionsImplClass + " should implement Captions.", e);
         } finally {
             lock.unlock();
@@ -905,6 +910,7 @@ public class ApplicationContext {
 
         private RequestContext(@Nullable HttpServletRequest request, @Nullable HttpServletResponse response) {
             if ((request == null) ^ (response == null)) {
+                logger.error("It is not possible case '(request == null) ^ (response == null)'.");
                 throw new IllegalArgumentException("It is not possible case '(request == null) ^ (response == null)'.");
             }
 
