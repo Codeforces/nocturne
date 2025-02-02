@@ -22,7 +22,7 @@ public class Less {
     private static File tmpDir;
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public synchronized static String compile(@Nonnull Object source, @Nonnull String lessCode, @Nullable File commonsFile) throws IOException {
+    public static synchronized String compile(@Nonnull Object source, @Nonnull String lessCode, @Nullable File commonsFile) throws IOException {
         long commonsFileLastModified = commonsFile == null ? 0 : commonsFile.lastModified();
         long commonsFileLength = commonsFile == null ? 0 : commonsFile.length();
         String cacheKey = getName(source).trim() + "_" + commonsFileLastModified + "_" + commonsFileLength + "_" + hash(lessCode);
