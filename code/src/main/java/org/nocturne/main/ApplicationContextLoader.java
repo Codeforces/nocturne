@@ -124,6 +124,8 @@ class ApplicationContextLoader {
                 for (String token : tokens) {
                     if (!token.isEmpty()) {
                         if (token.length() != 2) {
+                            logger.error("nocturne.allowed-languages should contain the " +
+                                    "list of 2-letters language codes separated with comma.");
                             throw new ConfigurationException("nocturne.allowed-languages should contain the " +
                                     "list of 2-letters language codes separated with comma.");
                         }
@@ -144,6 +146,8 @@ class ApplicationContextLoader {
                 for (String token : tokens) {
                     if (!token.isEmpty()) {
                         if (!COUNTRIES_TO_LANGUAGE_PATTERN.matcher(token).matches()) {
+                            logger.error("nocturne.countries-to-language should have a form like " +
+                                    "\"RU,BY:ru;EN,GB,US,CA:en\".");
                             throw new ConfigurationException("nocturne.countries-to-language should have a form like " +
                                     "\"RU,BY:ru;EN,GB,US,CA:en\".");
                         }
@@ -182,6 +186,7 @@ class ApplicationContextLoader {
             String dir = properties.getProperty("nocturne.debug-captions-dir");
             if (dir != null && !dir.isEmpty()) {
                 if (!new File(dir).isDirectory() && ApplicationContext.getInstance().isDebug()) {
+                    logger.error("nocturne.debug-captions-dir property should be a directory.");
                     throw new ConfigurationException("nocturne.debug-captions-dir property should be a directory.");
                 }
                 ApplicationContext.getInstance().setDebugCaptionsDir(dir);
@@ -194,6 +199,7 @@ class ApplicationContextLoader {
             String language = properties.getProperty("nocturne.default-language");
             if (language != null && !language.isEmpty()) {
                 if (language.length() != 2) {
+                    logger.error("Language is expected to have exactly two letters.");
                     throw new ConfigurationException("Language is expected to have exactly two letters.");
                 }
                 ApplicationContext.getInstance().setDefaultLocale(language);
@@ -205,10 +211,12 @@ class ApplicationContextLoader {
         if (properties.containsKey("nocturne.request-router")) {
             String resolver = properties.getProperty("nocturne.request-router");
             if (resolver == null || resolver.isEmpty()) {
+                logger.error("Parameter nocturne.request-router can't be empty.");
                 throw new ConfigurationException("Parameter nocturne.request-router can't be empty.");
             }
             ApplicationContext.getInstance().setRequestRouter(resolver);
         } else {
+            logger.error("Missed parameter nocturne.request-router.");
             throw new ConfigurationException("Missed parameter nocturne.request-router.");
         }
     }
@@ -255,6 +263,7 @@ class ApplicationContextLoader {
                 try {
                     ApplicationContext.getInstance().setSkipRegex(Pattern.compile(regex));
                 } catch (PatternSyntaxException e) {
+                    logger.error("Parameter nocturne.skip-regex contains invalid pattern.", e);
                     throw new ConfigurationException("Parameter nocturne.skip-regex contains invalid pattern.", e);
                 }
             }
@@ -291,6 +300,8 @@ class ApplicationContextLoader {
                     if (dir != null && !dir.isEmpty()) {
                         File file = new File(dir);
                         if (!file.isDirectory() && ApplicationContext.getInstance().isDebug()) {
+                            logger.error("Each item in nocturne.reloading-class-paths should be a directory,"
+                                    + " but " + file + " is not.");
                             throw new ConfigurationException("Each item in nocturne.reloading-class-paths should be a directory,"
                                     + " but " + file + " is not.");
                         }
@@ -307,10 +318,12 @@ class ApplicationContextLoader {
             try {
                 int templatesUpdateDelay = Integer.parseInt(properties.getProperty("nocturne.templates-update-delay"));
                 if (templatesUpdateDelay < 0 || templatesUpdateDelay > 86400) {
+                    logger.error("Parameter nocturne.templates-update-delay should be non-negative integer not greater than 86400.");
                     throw new ConfigurationException("Parameter nocturne.templates-update-delay should be non-negative integer not greater than 86400.");
                 }
                 ApplicationContext.getInstance().setTemplatesUpdateDelay(templatesUpdateDelay);
             } catch (NumberFormatException e) {
+                logger.error("Parameter nocturne.templates-update-delay should be integer.", e);
                 throw new ConfigurationException("Parameter nocturne.templates-update-delay should be integer.", e);
             }
         }
@@ -322,6 +335,7 @@ class ApplicationContextLoader {
 
             for (String templatePath : templatePaths) {
                 if (templatePath.isEmpty()) {
+                    logger.error("Item of parameter nocturne.template-paths can't be empty.");
                     throw new ConfigurationException("Item of parameter nocturne.template-paths can't be empty.");
                 }
             }
@@ -331,10 +345,12 @@ class ApplicationContextLoader {
 
             String templatesPath = StringUtils.trimToEmpty(properties.getProperty("nocturne.templates-path"));
             if (templatesPath.isEmpty()) {
+                logger.error("Parameter nocturne.templates-path can't be empty.");
                 throw new ConfigurationException("Parameter nocturne.templates-path can't be empty.");
             }
             ApplicationContext.getInstance().setTemplatePaths(new String[]{templatesPath});
         } else {
+            logger.error("Missing parameter nocturne.template-paths.");
             throw new ConfigurationException("Missing parameter nocturne.template-paths.");
         }
 
@@ -348,6 +364,7 @@ class ApplicationContextLoader {
         if (properties.containsKey("nocturne.use-component-templates")) {
             String useComponentTemplates = properties.getProperty("nocturne.use-component-templates");
             if (!"false".equals(useComponentTemplates) && !"true".equals(useComponentTemplates)) {
+                logger.error("Parameter nocturne.use-component-templates expected to be 'false' or 'true'.");
                 throw new ConfigurationException("Parameter nocturne.use-component-templates expected to be 'false' or 'true'.");
             }
             boolean use = "true".equals(useComponentTemplates);
@@ -360,6 +377,7 @@ class ApplicationContextLoader {
                     if (componentTemplatesLessCommonsFile.isFile()) {
                         ApplicationContext.getInstance().setComponentTemplatesLessCommonsFile(componentTemplatesLessCommonsFile);
                     } else {
+                        logger.error("Parameter nocturne.component-templates-less-commons-file is expected to be a file.");
                         throw new ConfigurationException("Parameter nocturne.component-templates-less-commons-file is expected to be a file.");
                     }
                 }
@@ -433,6 +451,7 @@ class ApplicationContextLoader {
             try {
                 module.setModule(getApplicationModule(guiceModuleClassName));
             } catch (Exception e) {
+                logger.error("Can't load application Guice module.", e);
                 throw new ConfigurationException("Can't load application Guice module.", e);
             }
         }
@@ -445,10 +464,13 @@ class ApplicationContextLoader {
                 method.setAccessible(true);
                 method.invoke(ApplicationContext.getInstance(), injector);
             } catch (NoSuchMethodException e) {
+                logger.error("Can't find method setInjector.", e);
                 throw new NocturneException("Can't find method setInjector.", e);
             } catch (InvocationTargetException e) {
+                logger.error("InvocationTargetException", e);
                 throw new NocturneException("InvocationTargetException", e);
             } catch (IllegalAccessException e) {
+                logger.error("IllegalAccessException", e);
                 throw new NocturneException("IllegalAccessException", e);
             }
         } else {
@@ -509,9 +531,11 @@ class ApplicationContextLoader {
                     runnable = (Runnable) ApplicationContext.getInstance().getInjector().getInstance(
                             ApplicationContext.class.getClassLoader().loadClass(startupClassName));
                 } catch (ClassCastException e) {
+                    logger.error("Startup class " + startupClassName + " must implement Runnable.", e);
                     throw new ModuleInitializationException("Startup class " + startupClassName
                             + " must implement Runnable.", e);
                 } catch (ClassNotFoundException e) {
+                    logger.error("Can't load startup class be name " + startupClassName + '.', e);
                     throw new ModuleInitializationException("Can't load startup class be name "
                             + startupClassName + '.', e);
                 }
@@ -540,10 +564,10 @@ class ApplicationContextLoader {
     }
 
     static {
-
         try (InputStream inputStream = ApplicationContextLoader.class.getResourceAsStream(Constants.CONFIGURATION_FILE)) {
             properties.load(inputStream);
         } catch (IOException e) {
+            logger.error("Can't load resource file " + Constants.CONFIGURATION_FILE + '.', e);
             throw new ConfigurationException("Can't load resource file " + Constants.CONFIGURATION_FILE + '.', e);
         }
     }

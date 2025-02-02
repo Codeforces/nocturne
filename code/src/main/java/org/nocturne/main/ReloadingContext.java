@@ -3,6 +3,7 @@
  */
 package org.nocturne.main;
 
+import org.apache.log4j.Logger;
 import org.nocturne.exception.ConfigurationException;
 
 import java.io.File;
@@ -16,6 +17,8 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class ReloadingContext {
+    private static final Logger logger = Logger.getLogger(ReloadingContext.class);
+
     private static final ReloadingContext INSTANCE = new ReloadingContext();
     private static final AtomicBoolean initialized = new AtomicBoolean(false);
 
@@ -101,6 +104,7 @@ public class ReloadingContext {
 
     void addReloadingClassPath(File dir) {
         if (!dir.isDirectory()) {
+            logger.error("Path " + dir.getName() + " expected to be a directory.");
             throw new ConfigurationException("Path " + dir.getName() + " expected to be a directory.");
         }
         if (!reloadingClassPaths.contains(dir)) {

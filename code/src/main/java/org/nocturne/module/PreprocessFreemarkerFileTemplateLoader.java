@@ -31,6 +31,9 @@ import java.util.concurrent.ConcurrentMap;
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class PreprocessFreemarkerFileTemplateLoader extends MultiTemplateLoader {
+    private static final org.apache.log4j.Logger logger
+            = org.apache.log4j.Logger.getLogger(PreprocessFreemarkerFileTemplateLoader.class);
+
     private static final ConcurrentMap<String, InmemoryTemplateSource> templateSourceByName = new ConcurrentHashMap<>();
     private final int templateDirCount;
 
@@ -42,6 +45,7 @@ public class PreprocessFreemarkerFileTemplateLoader extends MultiTemplateLoader 
     private static TemplateLoader[] getTemplateLoaders(File[] templateDirs) throws IOException {
         int templateDirCount = templateDirs.length;
         if (templateDirCount <= 0) {
+            logger.error("Please specify at least one template directory.");
             throw new ConfigurationException("Please specify at least one template directory.");
         }
 
@@ -127,6 +131,7 @@ public class PreprocessFreemarkerFileTemplateLoader extends MultiTemplateLoader 
                     String content = sb.substring(index + 2, closeIndex);
 
                     if (content.startsWith("!")) {
+                        logger.error("{{!...}} syntax is no more supported.");
                         throw new UnsupportedOperationException("{{!...}} syntax is no more supported.");
                     }
 

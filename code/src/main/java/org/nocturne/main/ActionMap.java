@@ -24,6 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Mike Mirzayanov
  */
 class ActionMap {
+    private static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(ActionMap.class);
+
     /* Default action has empty key "". */
     private final Map<String, ActionMethod> actions = new ConcurrentHashMap<>();
 
@@ -55,6 +57,8 @@ class ActionMap {
     private void processMethodAsDefault(FastClass clazz, Method method) {
         if (!actions.containsKey("") && "action".equals(method.getName()) && method.getParameterTypes().length == 0) {
             if (method.getReturnType() != void.class) {
+                logger.error("Default action method [name=" + method.getName() + ", " +
+                        "class=" + clazz.getName() + "] should return void.");
                 throw new ConfigurationException("Default action method [name=" + method.getName() + ", " +
                         "class=" + clazz.getName() + "] should return void.");
             }
@@ -63,6 +67,8 @@ class ActionMap {
 
         if (!validators.containsKey("") && "validate".equals(method.getName()) && method.getParameterTypes().length == 0) {
             if (method.getReturnType() != boolean.class) {
+                logger.error("Default validation method [name=" + method.getName() + ", " +
+                        "class=" + clazz.getName() + "] should return boolean.");
                 throw new ConfigurationException("Default validation method [name=" + method.getName() + ", " +
                         "class=" + clazz.getName() + "] should return boolean.");
             }
@@ -71,6 +77,8 @@ class ActionMap {
 
         if (!invalids.containsKey("") && "invalid".equals(method.getName()) && method.getParameterTypes().length == 0) {
             if (method.getReturnType() != void.class) {
+                logger.error("Default invalid method [name=" + method.getName() + ", " +
+                        "class=" + clazz.getName() + "] should return void.");
                 throw new ConfigurationException("Default invalid method [name=" + method.getName() + ", " +
                         "class=" + clazz.getName() + "] should return void.");
             }
@@ -80,6 +88,7 @@ class ActionMap {
 
     private static void ensureProperlyAnnotatedParameters(Method method) {
         if (method.getParameterTypes().length != method.getParameterAnnotations().length) {
+            logger.error("Expected \"method.getParameterTypes().length != method.getParameterAnnotations().length\".");
             throw new NocturneException("Expected \"method.getParameterTypes().length != method.getParameterAnnotations().length\".");
         }
 
@@ -94,10 +103,14 @@ class ActionMap {
                 }
             }
             if (!hasParameter) {
+                logger.error("Each parameter of the method " + method.getDeclaringClass().getName()
+                        + '#' + method.getName() + " should be annotated with @Parameter.");
                 throw new ConfigurationException("Each parameter of the method " + method.getDeclaringClass().getName()
                         + '#' + method.getName() + " should be annotated with @Parameter.");
             }
             if (!hasNamedParameter) {
+                logger.error("Each @Parameter in the method " + method.getDeclaringClass().getName()
+                        + '#' + method.getName() + " should have name.");
                 throw new ConfigurationException("Each @Parameter in the method " + method.getDeclaringClass().getName()
                         + '#' + method.getName() + " should have name.");
             }
@@ -109,6 +122,8 @@ class ActionMap {
 
         if (action != null) {
             if (actions.containsKey(action.value())) {
+                logger.error("There are two or more methods for " +
+                        clazz.getName() + " marked with @Action[" + action.value() + "].");
                 throw new ConfigurationException("There are two or more methods for " +
                         clazz.getName() + " marked with @Action[" + action.value() + "].");
             }
@@ -116,6 +131,8 @@ class ActionMap {
             ensureProperlyAnnotatedParameters(method);
 
             if (method.getReturnType() != void.class) {
+                logger.error("Method with annotation @Action [name=" + method.getName() + ", " +
+                        "class=" + clazz.getName() + "] should return void.");
                 throw new ConfigurationException("Method with annotation @Action [name=" + method.getName() + ", " +
                         "class=" + clazz.getName() + "] should return void.");
             }
@@ -127,6 +144,8 @@ class ActionMap {
 
         if (validate != null) {
             if (validators.containsKey(validate.value())) {
+                logger.error("There are two or more methods for " +
+                        clazz.getName() + " marked with @Validate[" + validate.value() + "].");
                 throw new ConfigurationException("There are two or more methods for " +
                         clazz.getName() + " marked with @Validate[" + validate.value() + "].");
             }
@@ -134,6 +153,8 @@ class ActionMap {
             ensureProperlyAnnotatedParameters(method);
 
             if (method.getReturnType() != boolean.class) {
+                logger.error("Method with annotation @Validate [name=" + method.getName() + ", " +
+                        "class=" + clazz.getName() + "] should return boolean.");
                 throw new ConfigurationException("Method with annotation @Validate [name=" + method.getName() + ", " +
                         "class=" + clazz.getName() + "] should return boolean.");
             }
@@ -145,6 +166,8 @@ class ActionMap {
 
         if (invalid != null) {
             if (invalids.containsKey(invalid.value())) {
+                logger.error("There are two or more methods for " +
+                        clazz.getName() + " marked with @Invalid[" + invalid.value() + "].");
                 throw new ConfigurationException("There are two or more methods for " +
                         clazz.getName() + " marked with @Invalid[" + invalid.value() + "].");
             }
@@ -152,6 +175,8 @@ class ActionMap {
             ensureProperlyAnnotatedParameters(method);
 
             if (method.getReturnType() != void.class) {
+                logger.error("Method with annotation @Invalid [name=" + method.getName() + ", " +
+                        "class=" + clazz.getName() + "] should return void.");
                 throw new ConfigurationException("Method with annotation @Invalid [name=" + method.getName() + ", " +
                         "class=" + clazz.getName() + "] should return void.");
             }
