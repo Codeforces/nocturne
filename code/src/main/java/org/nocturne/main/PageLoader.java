@@ -3,6 +3,7 @@
  */
 package org.nocturne.main;
 
+import com.google.common.base.Throwables;
 import org.apache.log4j.Logger;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.pool.PagePool;
