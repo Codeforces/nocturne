@@ -3,6 +3,7 @@
  */
 package org.nocturne.main;
 
+import org.apache.log4j.Logger;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.prometheus.Prometheus;
 
@@ -19,6 +20,8 @@ import java.util.regex.PatternSyntaxException;
  * @author Mike Mirzayanov
  */
 class ReloadingContextLoader {
+    private static final Logger logger = Logger.getLogger(ReloadingContextLoader.class);
+
     private static final Properties properties = new Properties();
 
     static void run() {
@@ -38,10 +41,12 @@ class ReloadingContextLoader {
             try {
                 int templatesUpdateDelay = Integer.parseInt(properties.getProperty("nocturne.templates-update-delay"));
                 if (templatesUpdateDelay < 0 || templatesUpdateDelay > 86400) {
+                    logger.error("Parameter nocturne.templates-update-delay should be non-negative integer not greater than 86400.");
                     throw new ConfigurationException("Parameter nocturne.templates-update-delay should be non-negative integer not greater than 86400.");
                 }
                 ReloadingContext.getInstance().setTemplatesUpdateDelay(templatesUpdateDelay);
             } catch (NumberFormatException e) {
+                logger.error("Parameter nocturne.templates-update-delay should be integer.");
                 throw new ConfigurationException("Parameter nocturne.templates-update-delay should be integer.");
             }
         }
@@ -72,6 +77,7 @@ class ReloadingContextLoader {
                 try {
                     ReloadingContext.getInstance().setSkipRegex(Pattern.compile(regex));
                 } catch (PatternSyntaxException e) {
+                    logger.error("Parameter nocturne.skip-regex contains invalid pattern.");
                     throw new ConfigurationException("Parameter nocturne.skip-regex contains invalid pattern.");
                 }
             }
@@ -105,6 +111,8 @@ class ReloadingContextLoader {
                     if (!dir.isEmpty()) {
                         File file = new File(dir);
                         if (!file.isDirectory() && ReloadingContext.getInstance().isDebug()) {
+                            logger.error("Each item in nocturne.reloading-class-paths should be a directory,"
+                                         + " but '" + file + "' isn't.");
                             throw new ConfigurationException("Each item in nocturne.reloading-class-paths should be a directory,"
                                                              + " but '" + file + "' isn't.");
                         }
@@ -123,6 +131,7 @@ class ReloadingContextLoader {
             try {
                 debug = Boolean.parseBoolean(properties.getProperty("nocturne.debug"));
             } catch (NullPointerException e) {
+                logger.error("Can't cast nocturne.debug to boolean.");
                 throw new ConfigurationException("Can't cast nocturne.debug to boolean.");
             }
         }
@@ -135,6 +144,7 @@ class ReloadingContextLoader {
         try (InputStream inputStream = ApplicationContextLoader.class.getResourceAsStream(Constants.CONFIGURATION_FILE)) {
             properties.load(inputStream);
         } catch (IOException e) {
+            logger.error("Can't load resource file " + Constants.CONFIGURATION_FILE + '.', e);
             throw new ConfigurationException("Can't load resource file " + Constants.CONFIGURATION_FILE + '.', e);
         }
     }

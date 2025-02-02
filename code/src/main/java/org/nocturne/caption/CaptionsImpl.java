@@ -4,6 +4,7 @@
 package org.nocturne.caption;
 
 import com.google.inject.Singleton;
+import org.apache.log4j.Logger;
 import org.nocturne.exception.ConfigurationException;
 import org.nocturne.main.ApplicationContext;
 
@@ -31,6 +32,8 @@ import java.util.regex.Pattern;
  */
 @Singleton
 public class CaptionsImpl implements Captions {
+    private static final Logger logger = Logger.getLogger(CaptionsImpl.class);
+
     private static final Pattern CAPTIONS_FILE_PATTERN = Pattern.compile("captions_[\\w]{2}\\.properties");
 
     /**
@@ -135,6 +138,7 @@ public class CaptionsImpl implements Captions {
             properties.store(writer, null);
             writer.close();
         } catch (IOException e) {
+            logger.error("Can't write into file " + file + '.', e);
             throw new ConfigurationException("Can't write into file " + file + '.', e);
         }
     }
@@ -166,6 +170,7 @@ public class CaptionsImpl implements Captions {
                         reader.close();
                         propertiesMap.put(language, properties);
                     } catch (IOException e) {
+                        logger.error("Can't load caption properties for language " + language + '.', e);
                         throw new ConfigurationException("Can't load caption properties for language " + language + '.', e);
                     }
                 }

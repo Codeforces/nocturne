@@ -43,6 +43,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Mike Mirzayanov
  */
 public class Links {
+    private static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(Links.class);
+
     private static final Lock addLinkLock = new ReentrantLock();
 
     private static final int INTERCEPTOR_MAX_PERMIT_COUNT = 8 * Runtime.getRuntime().availableProcessors();
@@ -107,6 +109,8 @@ public class Links {
         }
 
         if (clazz == null) {
+            logger.error("Page class should have @Link or @LinkSet annotation, but "
+                    + pageClass.getName() + " hasn't.");
             throw new NocturneException("Page class should have @Link or @LinkSet annotation, but "
                     + pageClass.getName() + " hasn't.");
         }
@@ -131,6 +135,7 @@ public class Links {
         try {
             String name = getLinkName(clazz);
             if (classesByName.containsKey(name) && !clazz.equals(classesByName.get(name))) {
+                logger.error("Can't add page which is not unique by it's name: " + clazz.getName() + '.');
                 throw new ConfigurationException("Can't add page which is not unique by it's name: "
                         + clazz.getName() + '.');
             }
@@ -151,10 +156,12 @@ public class Links {
 
                     for (Map<String, Link> linkMap : linksByPage.values()) {
                         if (linkMap.containsKey(pageLink)) {
+                            logger.error("Page link \"" + pageLink + "\" already registered.");
                             throw new ConfigurationException("Page link \"" + pageLink + "\" already registered.");
                         }
                     }
                     if (links.containsKey(pageLink)) {
+                        logger.error("Page link \"" + pageLink + "\" already registered.");
                         throw new ConfigurationException("Page link \"" + pageLink + "\" already registered.");
                     }
 
@@ -176,6 +183,7 @@ public class Links {
     public static void add(Class<? extends Page> clazz) {
         List<Link> linkSet = getLinksViaReflection(clazz);
         if (linkSet.isEmpty()) {
+            logger.error("Can't find link for page " + clazz.getName() + '.');
             throw new ConfigurationException("Can't find link for page " + clazz.getName() + '.');
         }
 
@@ -227,11 +235,12 @@ public class Links {
 
         if (bestMatchedLinkSections == null) {
             if (linkName == null || linkName.isEmpty()) {
+                logger.error("Can't find link for page " + clazz.getName() + '.');
                 throw new NoSuchLinkException("Can't find link for page " + clazz.getName() + '.');
             } else {
-                throw new NoSuchLinkException(
-                        "Can't find link with name \'" + linkName + "\' for page " + clazz.getName() + '.'
-                );
+                logger.error("Can't find link with name '" + linkName + "' for page " + clazz.getName() + '.');
+                throw new NoSuchLinkException("Can't find link with name '"
+                        + linkName + "' for page " + clazz.getName() + '.');
             }
         }
 
@@ -292,6 +301,7 @@ public class Links {
                 for (String skipInterceptor : bestMatchedLink.skipInterceptors()) {
                     if (skipInterceptor.equals(e.getKey())) {
                         skip = true;
+                        break;
                     }
                 }
                 if (!skip) {
@@ -360,6 +370,7 @@ public class Links {
             try {
                 item = sequence.get(i);
             } catch (TemplateModelException e) {
+                logger.error("Can't get item of Freemarker sequence.", e);
                 throw new NocturneException("Can't get item of Freemarker sequence.", e);
             }
 
@@ -387,6 +398,7 @@ public class Links {
         try {
             return sequence.size();
         } catch (TemplateModelException e) {
+            logger.error("Can't get size of Freemarker sequence.", e);
             throw new NocturneException("Can't get size of Freemarker sequence.", e);
         }
     }
@@ -416,6 +428,7 @@ public class Links {
         Class<? extends Page> clazz = classesByName.get(name);
 
         if (clazz == null) {
+            logger.error("Can't find link for page " + name + '.');
             throw new NoSuchLinkException("Can't find link for page " + name + '.');
         } else {
             return getLinkByMap(clazz, linkName, params);
@@ -462,6 +475,7 @@ public class Links {
         }
 
         if (paramCount % 2 != 0) {
+            logger.error("Params should contain even number of elements.");
             throw new IllegalArgumentException("Params should contain even number of elements.");
         }
 
@@ -480,7 +494,7 @@ public class Links {
      * @throws NoSuchLinkException if no such link exists
      */
     public static String getLink(Class<? extends Page> pageClass) {
-        return getLinkByMap(pageClass, null, Collections.<String, Object>emptyMap());
+        return getLinkByMap(pageClass, null, Collections.emptyMap());
     }
 
     /**
@@ -524,6 +538,7 @@ public class Links {
         }
 
         if (!link.startsWith("/")) {
+            logger.error("Link \"" + link + "\" doesn't start with '/'.");
             throw new IllegalArgumentException("Link \"" + link + "\" doesn't start with '/'.");
         }
 
@@ -559,6 +574,7 @@ public class Links {
     private static Map<String, String> match(String[] linkTokens, String linkText) {
         List<LinkSection> sections = sectionsByLinkText.get(linkText);
         if (sections == null) {
+            logger.error("Can't find sections for linkText=\"" + linkText + "\".");
             throw new NocturneException("Can't find sections for linkText=\"" + linkText + "\".");
         }
 
@@ -603,6 +619,8 @@ public class Links {
 
     private static List<LinkSection> parseLinkToLinkSections(String linkText) {
         if (linkText == null || linkText.startsWith("/") || linkText.endsWith("/")) {
+            logger.error("Page link has illegal format, use links like 'home', 'page/{index}', " +
+                    "'page/{index(long,positive):1,2,3}', 'section/{name(string,!blank):!a,b,c}'.");
             throw new ConfigurationException("Page link has illegal format, use links like 'home', 'page/{index}', " +
                     "'page/{index(long,positive):1,2,3}', 'section/{name(string,!blank):!a,b,c}'."
             );
@@ -755,6 +773,7 @@ public class Links {
 
         private void ensureValueSection(String fieldName) {
             if (parameter) {
+                logger.error("Can't read field '" + fieldName + "' of non-value section '" + section + "'.");
                 throw new IllegalStateException(String.format(
                         "Can't read field '%s' of non-value section '%s'.", fieldName, section
                 ));
@@ -763,6 +782,7 @@ public class Links {
 
         private void ensureParameterSection(String fieldName) {
             if (!parameter) {
+                logger.error("Can't read field '" + fieldName + "' of non-parameter section '" + section + "'.");
                 throw new IllegalStateException(String.format(
                         "Can't read field '%s' of non-parameter section '%s'.", fieldName, section
                 ));
@@ -988,6 +1008,8 @@ public class Links {
                     }
                 };
             } else {
+                logger.error("Link section '" + section + "' contains unsupported parameter restriction '"
+                        + restrictionRule + "'.");
                 throw new ConfigurationException(String.format(
                         "Link section '%s' contains unsupported parameter restriction '%s'.",
                         section, restrictionRule
@@ -1006,13 +1028,15 @@ public class Links {
         ensureInterceptorName(name);
 
         if (interceptor == null) {
-            throw new IllegalArgumentException("Argument \'interceptor\' is \'null\'.");
+            logger.error("Argument 'interceptor' is 'null'.");
+            throw new IllegalArgumentException("Argument 'interceptor' is 'null'.");
         }
 
         interceptorSemaphore.acquireUninterruptibly(INTERCEPTOR_MAX_PERMIT_COUNT);
         try {
             if (interceptorByNameMap.containsKey(name)) {
-                throw new IllegalStateException("Interceptor with name \'" + name + "\' already added.");
+                logger.error("Interceptor with name '" + name + "' already added.");
+                throw new IllegalStateException("Interceptor with name '" + name + "' already added.");
             }
             interceptorByNameMap.put(name, interceptor);
         } finally {
@@ -1055,7 +1079,8 @@ public class Links {
 
     private static void ensureInterceptorName(String name) {
         if (name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("Argument \'name\' is \'null\' or empty.");
+            logger.error("Argument 'name' is 'null' or empty.");
+            throw new IllegalArgumentException("Argument 'name' is 'null' or empty.");
         }
     }
 

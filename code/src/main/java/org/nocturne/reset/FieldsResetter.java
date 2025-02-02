@@ -17,6 +17,8 @@ import java.util.concurrent.ConcurrentMap;
  * @author Mike Mirzayanov
  */
 abstract class FieldsResetter {
+    private static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(FieldsResetter.class);
+
     private static final Map<Class<?>, Object> PRIMITIVES_DEFAULT_VALUES = new ConcurrentHashMap<>();
     private static final ConcurrentMap<AnnotatedElement, Boolean> RESET_ANNOTATIONS_CACHE = new ConcurrentHashMap<>();
     private static final ConcurrentMap<AnnotatedElement, Boolean> PERSIST_ANNOTATIONS_CACHE = new ConcurrentHashMap<>();
@@ -144,6 +146,7 @@ abstract class FieldsResetter {
     private static ResetStrategy getStrategy(
             ResetStrategy defaultStrategy, boolean hasReset, boolean hasPersist, String name) {
         if (hasPersist && hasReset) {
+            logger.error("It is impossible to use Reset and Persist at the same time [name=" + name + "].");
             throw new ConfigurationException("It is impossible to use " +
                     "Reset and Persist at the same time [name=" + name + "].");
         }

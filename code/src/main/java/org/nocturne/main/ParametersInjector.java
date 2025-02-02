@@ -5,6 +5,7 @@ package org.nocturne.main;
 
 import com.google.common.base.Preconditions;
 import net.sf.cglib.reflect.FastMethod;
+import org.apache.log4j.Logger;
 import org.jetbrains.annotations.Contract;
 import org.nocturne.annotation.Parameter;
 import org.nocturne.exception.ConfigurationException;
@@ -35,6 +36,8 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("WeakerAccess")
 public class ParametersInjector {
+    private static final Logger logger = Logger.getLogger(ParametersInjector.class);
+
     private static final Pattern INTEGRAL_VALUE_PATTERN = Pattern.compile("0|(-?[1-9][0-9]*)");
     private static final Pattern REAL_VALUE_PATTERN = Pattern.compile("(0|(-?[1-9][0-9]*))((\\.[0-9]+)?)");
 
@@ -87,6 +90,7 @@ public class ParametersInjector {
         Annotation[][] parameterAnnotations = method.getJavaMethod().getParameterAnnotations();
 
         if (parameterTypes.length != parameterAnnotations.length) {
+            logger.error("Expected the same number of parameters and annotations.");
             throw new NocturneException("Expected the same number of parameters and annotations.");
         }
 
@@ -101,10 +105,14 @@ public class ParametersInjector {
                 }
             }
             if (parameter == null) {
+                logger.error("Each parameter of the method " + method.getDeclaringClass().getName()
+                        + '#' + method.getName() + " should be annotated with @Parameter.");
                 throw new ConfigurationException("Each parameter of the method " + method.getDeclaringClass().getName()
                         + '#' + method.getName() + " should be annotated with @Parameter.");
             }
             if (StringUtil.isEmpty(parameter.name())) {
+                logger.error("Each @Parameter in the method " + method.getDeclaringClass().getName()
+                        + '#' + method.getName() + " should have name.");
                 throw new ConfigurationException("Each @Parameter in the method " + method.getDeclaringClass().getName()
                         + '#' + method.getName() + " should have name.");
             }
@@ -364,10 +372,12 @@ public class ParametersInjector {
             try {
                 field.field.set(component, assign);
             } catch (IllegalAccessException e) {
-                throw new IllegalArgumentException(String.format(
+                String message = String.format(
                         "Don't have access to set field %s of %s.",
                         field.field.getName(), field.field.getDeclaringClass().getName()
-                ), e);
+                );
+                logger.error(message, e);
+                throw new IllegalArgumentException(message, e);
             }
         }
     }
