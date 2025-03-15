@@ -235,10 +235,8 @@ public class Links {
 
         if (bestMatchedLinkSections == null) {
             if (linkName == null || linkName.isEmpty()) {
-                logger.error("Can't find link for page " + clazz.getName() + '.');
                 throw new NoSuchLinkException("Can't find link for page " + clazz.getName() + '.');
             } else {
-                logger.error("Can't find link with name '" + linkName + "' for page " + clazz.getName() + '.');
                 throw new NoSuchLinkException("Can't find link with name '"
                         + linkName + "' for page " + clazz.getName() + '.');
             }
