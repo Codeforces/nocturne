@@ -30,7 +30,6 @@ public class Less {
     private static final File tmpDir;
 
     // Replaces all var(--id) with nocturne-rpl-var--id
-    @SuppressWarnings("StringBufferMayBeStringBuilder")
     private static String preprocessCssVars(String lessCode) {
         Matcher m = BEFORE_REPL_CSS_VAR_PATTERN.matcher(lessCode);
         StringBuffer result = new StringBuffer();
@@ -42,7 +41,6 @@ public class Less {
     }
 
     // Replaces all nocturne-rpl-var--id with var(--id)
-    @SuppressWarnings("StringBufferMayBeStringBuilder")
     private static String postprocessCssVars(String cssCode) {
         Matcher m = AFTER_REPL_CSS_VAR_PATTERN.matcher(cssCode);
         StringBuffer result = new StringBuffer();
@@ -111,13 +109,14 @@ public class Less {
             LessCompiler compiler = new DefaultLessCompiler();
             try {
                 LessCompiler.CompilationResult compilationResult = compiler.compile(workMainFile);
-                String cachedResult = CACHE_OPEN_TAG + compilationResult.getCss() + CACHE_CLOSE_TAG;
+                String css = postprocessCssVars(compilationResult.getCss());
 
+                String cachedResult = CACHE_OPEN_TAG + css + CACHE_CLOSE_TAG;
                 File tmpCacheFile = new File(cacheDir, RandomStringUtils.randomAlphabetic(32));
                 writeFile(tmpCacheFile, cachedResult);
                 tmpCacheFile.renameTo(cacheFile);
 
-                return postprocessCssVars(compilationResult.getCss());
+                return css;
             } catch (Less4jException e) {
                 throw new IOException("Can't compile less code in \"" + source + "\": " + e.getMessage(), e);
             }
