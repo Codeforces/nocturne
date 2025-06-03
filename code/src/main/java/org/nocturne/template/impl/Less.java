@@ -3,13 +3,17 @@ package org.nocturne.template.impl;
 import com.github.sommeri.less4j.Less4jException;
 import com.github.sommeri.less4j.LessCompiler;
 import com.github.sommeri.less4j.core.DefaultLessCompiler;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.log4j.Logger;
 import org.nocturne.util.StringUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author MikeMirzayanov (mirzayanovmr@gmail.com)
@@ -17,15 +21,48 @@ import java.util.Objects;
 public class Less {
     private static final Logger logger = Logger.getLogger(Less.class);
 
+    // Matches var(--variable-name) where variable name uses valid identifier symbols
+    private static final Pattern BEFORE_REPL_CSS_VAR_PATTERN = Pattern.compile("var\\(--([\\w-]+)\\)");
+    private static final Pattern AFTER_REPL_CSS_VAR_PATTERN = Pattern.compile("nocturne-rpl-var--([\\w-]+)");
+
     private static final String CACHE_OPEN_TAG = "<cache>";
     private static final String CACHE_CLOSE_TAG = "</cache>";
-    private static File tmpDir;
+    private static final File tmpDir;
+
+    // Replaces all var(--id) with nocturne-rpl-var--id
+    @SuppressWarnings("StringBufferMayBeStringBuilder")
+    private static String preprocessCssVars(String lessCode) {
+        Matcher m = BEFORE_REPL_CSS_VAR_PATTERN.matcher(lessCode);
+        StringBuffer result = new StringBuffer();
+        while (m.find()) {
+            m.appendReplacement(result, "nocturne-rpl-var--" + m.group(1));
+        }
+        m.appendTail(result);
+        return result.toString();
+    }
+
+    // Replaces all nocturne-rpl-var--id with var(--id)
+    @SuppressWarnings("StringBufferMayBeStringBuilder")
+    private static String postprocessCssVars(String cssCode) {
+        Matcher m = AFTER_REPL_CSS_VAR_PATTERN.matcher(cssCode);
+        StringBuffer result = new StringBuffer();
+        while (m.find()) {
+            m.appendReplacement(result, "var(--" + m.group(1) + ")");
+        }
+        m.appendTail(result);
+        return result.toString();
+    }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public static synchronized String compile(@Nonnull Object source, @Nonnull String lessCode, @Nullable File commonsFile) throws IOException {
+    public static synchronized String compile(@Nonnull Object source,
+                                              @Nonnull String lessCode,
+                                              @Nullable File commonsFile) throws IOException {
         long commonsFileLastModified = commonsFile == null ? 0 : commonsFile.lastModified();
         long commonsFileLength = commonsFile == null ? 0 : commonsFile.length();
-        String cacheKey = getName(source).trim() + "_" + commonsFileLastModified + "_" + commonsFileLength + "_" + hash(lessCode);
+        String cacheKey = getName(source).trim()
+                + "_" + commonsFileLastModified
+                + "_" + commonsFileLength
+                + "_" + hash(lessCode);
 
         File cacheDir = new File(tmpDir, "cache");
         if (!cacheDir.isDirectory()) {
@@ -46,6 +83,7 @@ public class Less {
                 return css;
             }
         }
+
         if (cacheFile.exists()) {
             cacheFile.delete();
         }
@@ -59,10 +97,11 @@ public class Less {
         File workCommonsFile;
         if (commonsFile != null) {
             workCommonsFile = new File(workDir, commonsFile.getName());
-            writeFile(workCommonsFile, readFile(commonsFile));
-            lessCode = "@import \"" + commonsFile.getName() + "\";\n" + lessCode;
+            writeFile(workCommonsFile, preprocessCssVars(readFile(commonsFile)));
+            lessCode = "@import \"" + commonsFile.getName() + "\";\n" + preprocessCssVars(lessCode);
         } else {
             workCommonsFile = null;
+            lessCode = preprocessCssVars(lessCode);
         }
 
         File workMainFile = new File(workDir, "main.less");
@@ -73,8 +112,12 @@ public class Less {
             try {
                 LessCompiler.CompilationResult compilationResult = compiler.compile(workMainFile);
                 String cachedResult = CACHE_OPEN_TAG + compilationResult.getCss() + CACHE_CLOSE_TAG;
-                writeFile(cacheFile, cachedResult);
-                return compilationResult.getCss();
+
+                File tmpCacheFile = new File(cacheDir, RandomStringUtils.randomAlphabetic(32));
+                writeFile(tmpCacheFile, cachedResult);
+                tmpCacheFile.renameTo(cacheFile);
+
+                return postprocessCssVars(compilationResult.getCss());
             } catch (Less4jException e) {
                 throw new IOException("Can't compile less code in \"" + source + "\": " + e.getMessage(), e);
             }
@@ -113,14 +156,14 @@ public class Less {
         return a ^ b;
     }
 
-    private static void writeFile(File file, String content) throws FileNotFoundException {
-        try (PrintWriter writer = new PrintWriter(file)) {
-            writer.print(content);
+    private static void writeFile(File file, String content) throws IOException {
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
+            writer.write(content);
         }
     }
 
     private static String readFile(File file) throws IOException {
-        try (FileReader reader = new FileReader(file)) {
+        try (Reader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
             StringBuilder result = new StringBuilder((int) file.length());
             char[] buffer = new char[65536];
             int len;
@@ -140,11 +183,19 @@ public class Less {
             tmpDir = new File(tmpFile.getParentFile(), "nocturne-less-tmp");
             if (!tmpDir.isDirectory()) {
                 if (!tmpDir.mkdirs()) {
-                    throw new IOException("Can't create " + tmpFile + ".");
+                    throw new IOException("Can't create " + tmpDir + ".");
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            String message = "Unable to validate temp directory before using Less engine: " + e.getMessage();
+
+            System.out.println(message);
+            e.printStackTrace(System.out);
+
+            System.err.println(message);
+            e.printStackTrace(System.err);
+
+            throw new RuntimeException(message, e);
         }
     }
 }
