@@ -1,8 +1,8 @@
 setlocal enabledelayedexpansion
 
-if not "!JAVA8_64_HOME!"=="" (
-    set PATH=!JAVA8_64_HOME!\bin;!PATH!
-    set JAVA_HOME=!JAVA8_64_HOME!
+if not "!JAVA17_64_HOME!"=="" (
+    set PATH=!JAVA17_64_HOME!\bin;!PATH!
+    set JAVA_HOME=!JAVA17_64_HOME!
 )
 
 call mvn.cmd validate --batch-mode
