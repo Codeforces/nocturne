@@ -21,6 +21,7 @@ public class Entity implements Serializable {
         this.id = id;
     }
 
+    @SuppressWarnings("unused")
     public Date getUpdateTime() {
         return updateTime;
     }
@@ -29,6 +30,7 @@ public class Entity implements Serializable {
         this.updateTime = TimeUtil.toDate(updateTime);
     }
 
+    @SuppressWarnings("unused")
     public Date getCreationTime() {
         return creationTime;
     }

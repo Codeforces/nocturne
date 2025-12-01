@@ -3,8 +3,8 @@
  */
 package bloggy.database;
 
-import org.apache.log4j.Logger;
 import bloggy.exception.ApplicationException;
+import org.apache.log4j.Logger;
 import org.mariadb.jdbc.MariaDbDataSource;
 
 import javax.annotation.Nonnull;

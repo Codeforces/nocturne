@@ -1,5 +1,7 @@
 package bloggy.web.page;
 
+import bloggy.dao.UserDao;
+import bloggy.web.annotation.PostOnly;
 import com.google.inject.Inject;
 import org.nocturne.annotation.Action;
 import org.nocturne.annotation.Parameter;
@@ -8,8 +10,6 @@ import org.nocturne.link.Link;
 import org.nocturne.validation.RequiredValidator;
 import org.nocturne.validation.ValidationException;
 import org.nocturne.validation.Validator;
-import bloggy.dao.UserDao;
-import bloggy.web.annotation.PostOnly;
 
 @Link("enter")
 public class EnterPage extends WebPage {

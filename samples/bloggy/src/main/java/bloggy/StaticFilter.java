@@ -2,7 +2,6 @@ package bloggy;
 
 import com.codeforces.commons.properties.PropertiesUtil;
 import com.codeforces.commons.text.StringUtil;
-import org.nocturne.main.ApplicationContext;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -38,10 +37,9 @@ public class StaticFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        if (ENABLED && request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
-            HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-            HttpServletResponse httpServletResponse = (HttpServletResponse) response;
-
+        if (ENABLED
+                && request instanceof HttpServletRequest httpServletRequest
+                && response instanceof HttpServletResponse httpServletResponse) {
             String requestURI = httpServletRequest.getRequestURI();
             if (isResourceRequestUri(requestURI)) {
                 File file = new File(STATIC_SRC_PATH, requestURI);

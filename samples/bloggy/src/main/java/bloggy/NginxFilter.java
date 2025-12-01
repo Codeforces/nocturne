@@ -20,9 +20,7 @@ public class NginxFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
-        if (request instanceof HttpServletRequest) {
-            HttpServletRequest httpRequest = (HttpServletRequest) request;
-
+        if (request instanceof HttpServletRequest httpRequest) {
             String ip = httpRequest.getHeader(X_REAL_IP);
             String host = httpRequest.getHeader(X_FORWARDED_FOR);
 

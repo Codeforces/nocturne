@@ -1,8 +1,8 @@
 package bloggy.web.page;
 
+import bloggy.web.frame.PostsViewFrame;
 import com.google.inject.Inject;
 import org.nocturne.link.Link;
-import bloggy.web.frame.PostsViewFrame;
 
 @Link(";index")
 public class IndexPage extends WebPage {

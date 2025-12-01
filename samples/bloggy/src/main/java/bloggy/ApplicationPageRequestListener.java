@@ -3,13 +3,13 @@
  */
 package bloggy;
 
+import bloggy.web.page.WebPage;
 import com.codeforces.commons.exception.ExceptionUtil;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import org.apache.log4j.Logger;
 import org.nocturne.listener.PageRequestListener;
 import org.nocturne.main.Page;
-import bloggy.web.page.WebPage;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -50,7 +50,8 @@ public class ApplicationPageRequestListener implements PageRequestListener {
             addRequestParameters(page, paramsDump);
             addRequestAttributes(page, paramsDump);
 
-            t.printStackTrace();
+            t.printStackTrace(System.out);
+            t.printStackTrace(System.err);
         }
 
         if (t != null && page instanceof WebPage) {

@@ -1,9 +1,9 @@
 package bloggy.dao.impl;
 
-import com.google.inject.Singleton;
 import bloggy.dao.PostDao;
 import bloggy.model.Post;
 import bloggy.model.User;
+import com.google.inject.Singleton;
 
 import java.util.List;
 

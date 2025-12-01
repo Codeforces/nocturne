@@ -3,12 +3,12 @@
  */
 package bloggy.captions;
 
+import bloggy.captions.dao.CaptionDao;
+import bloggy.captions.model.Caption;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import org.nocturne.caption.Captions;
 import org.nocturne.main.ApplicationContext;
-import bloggy.captions.dao.CaptionDao;
-import bloggy.captions.model.Caption;
 
 import java.text.MessageFormat;
 import java.util.Locale;
