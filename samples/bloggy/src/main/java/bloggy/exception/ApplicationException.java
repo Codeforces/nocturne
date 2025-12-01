@@ -1,5 +1,6 @@
 package bloggy.exception;
 
+@SuppressWarnings("unused")
 public class ApplicationException extends RuntimeException {
     public ApplicationException(String message) {
         super(message);

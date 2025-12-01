@@ -1,8 +1,8 @@
 package bloggy;
 
+import bloggy.web.page.*;
 import org.nocturne.link.Links;
 import org.nocturne.main.LinkedRequestRouter;
-import bloggy.web.page.*;
 
 /**
  * @author Mike Mirzayanov

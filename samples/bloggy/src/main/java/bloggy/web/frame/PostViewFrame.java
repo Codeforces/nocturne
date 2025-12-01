@@ -1,9 +1,9 @@
 package bloggy.web.frame;
 
-import com.google.inject.Inject;
 import bloggy.dao.UserDao;
 import bloggy.model.Post;
 import bloggy.model.User;
+import com.google.inject.Inject;
 
 public class PostViewFrame extends ApplicationFrame {
     @Inject

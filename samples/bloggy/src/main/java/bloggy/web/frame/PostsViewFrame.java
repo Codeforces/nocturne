@@ -1,9 +1,9 @@
 package bloggy.web.frame;
 
-import com.google.inject.Inject;
 import bloggy.dao.PostDao;
 import bloggy.model.Post;
 import bloggy.model.User;
+import com.google.inject.Inject;
 
 import java.util.List;
 import java.util.stream.Collectors;

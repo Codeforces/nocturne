@@ -1,10 +1,9 @@
 package bloggy.web.page;
 
-import com.google.inject.Inject;
-import org.nocturne.link.Link;
-import bloggy.dao.PostDao;
 import bloggy.model.User;
 import bloggy.web.frame.PostsViewFrame;
+import com.google.inject.Inject;
+import org.nocturne.link.Link;
 
 @Link("my")
 public class MyPostsPage extends WebPage {

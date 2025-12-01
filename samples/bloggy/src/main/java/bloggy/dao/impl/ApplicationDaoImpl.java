@@ -1,8 +1,8 @@
 package bloggy.dao.impl;
 
-import org.jacuzzi.core.GenericDaoImpl;
 import bloggy.database.ApplicationDataSource;
 import bloggy.model.Entity;
+import org.jacuzzi.core.GenericDaoImpl;
 
 import java.util.Date;
 import java.util.List;

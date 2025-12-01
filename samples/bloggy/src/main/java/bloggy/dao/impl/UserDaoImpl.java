@@ -1,8 +1,8 @@
 package bloggy.dao.impl;
 
-import com.google.inject.Singleton;
 import bloggy.dao.UserDao;
 import bloggy.model.User;
+import com.google.inject.Singleton;
 
 @Singleton
 public class UserDaoImpl extends ApplicationDaoImpl<User> implements UserDao {

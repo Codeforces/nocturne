@@ -1,11 +1,11 @@
 package bloggy.web.page;
 
-import com.google.inject.Inject;
-import org.nocturne.annotation.Parameter;
-import org.nocturne.link.Link;
 import bloggy.dao.PostDao;
 import bloggy.model.Post;
 import bloggy.web.frame.PostViewFrame;
+import com.google.inject.Inject;
+import org.nocturne.annotation.Parameter;
+import org.nocturne.link.Link;
 
 @Link("post/{postId}")
 public class PostViewPage extends WebPage {

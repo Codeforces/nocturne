@@ -1,10 +1,10 @@
 package bloggy.web.page;
 
+import bloggy.dao.DateDao;
+import bloggy.model.User;
 import com.google.inject.Inject;
 import org.nocturne.main.ApplicationContext;
 import org.nocturne.main.Page;
-import bloggy.dao.DateDao;
-import bloggy.model.User;
 
 public abstract class ApplicationPage extends Page {
     private static final String USER_SESSION_KEY = "user";

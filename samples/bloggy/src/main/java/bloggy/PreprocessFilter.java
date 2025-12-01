@@ -3,8 +3,8 @@
  */
 package bloggy;
 
-import org.jacuzzi.core.Jacuzzi;
 import bloggy.database.ApplicationDataSource;
+import org.jacuzzi.core.Jacuzzi;
 
 import javax.servlet.*;
 import java.io.IOException;

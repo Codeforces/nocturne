@@ -8,6 +8,7 @@ public class User extends Entity {
         return login;
     }
 
+    @SuppressWarnings("unused")
     public void setLogin(String login) {
         this.login = login;
     }

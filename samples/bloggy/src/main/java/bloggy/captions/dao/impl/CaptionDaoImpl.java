@@ -3,6 +3,10 @@
  */
 package bloggy.captions.dao.impl;
 
+import bloggy.captions.TemplateEngineConfigurations;
+import bloggy.captions.dao.CaptionDao;
+import bloggy.captions.model.Caption;
+import bloggy.dao.impl.ApplicationDaoImpl;
 import com.codeforces.commons.text.StringUtil;
 import com.google.inject.Singleton;
 import freemarker.cache.SoftCacheStorage;
@@ -10,10 +14,6 @@ import freemarker.template.Configuration;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.Logger;
 import org.nocturne.main.ApplicationContext;
-import bloggy.captions.TemplateEngineConfigurations;
-import bloggy.captions.dao.CaptionDao;
-import bloggy.captions.model.Caption;
-import bloggy.dao.impl.ApplicationDaoImpl;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
