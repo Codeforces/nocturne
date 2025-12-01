@@ -14,7 +14,6 @@ import org.nocturne.template.TemplatePreprocessor;
 import org.nocturne.template.impl.ComponentTemplatePreprocessor;
 import org.nocturne.util.StringUtil;
 
-import javax.security.auth.login.AppConfigurationEntry;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
@@ -40,11 +39,21 @@ public class PreprocessFreemarkerFileTemplateLoader extends MultiTemplateLoader 
     public PreprocessFreemarkerFileTemplateLoader(File... templateDirs) throws IOException {
         super(getTemplateLoaders(templateDirs));
         this.templateDirCount = templateDirs.length;
+
+        StringBuilder sb = new StringBuilder();
+        for (File templateDir : templateDirs) {
+            if (sb.length() > 0) {
+                sb.append(", ");
+            }
+            sb.append("\"").append(templateDir).append("\"");
+        }
+
+        logger.info("PreprocessFreemarkerFileTemplateLoader has been constructed [templateDirs=" + sb + "].");
     }
 
     private static TemplateLoader[] getTemplateLoaders(File[] templateDirs) throws IOException {
         int templateDirCount = templateDirs.length;
-        if (templateDirCount <= 0) {
+        if (templateDirCount == 0) {
             logger.error("Please specify at least one template directory.");
             throw new ConfigurationException("Please specify at least one template directory.");
         }
