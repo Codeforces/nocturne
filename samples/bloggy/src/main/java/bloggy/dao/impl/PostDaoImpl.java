@@ -16,16 +16,11 @@ public class PostDaoImpl extends ApplicationDaoImpl<Post> implements PostDao {
 
     @Override
     public List<Post> findAll() {
-        return findBy("NOT deleted ORDER BY updateTime DESC");
+        return findBy("NOT deleted ORDER BY updateTime DESC, id DESC");
     }
 
     @Override
     public List<Post> findByUser(User user) {
-        return findBy("userId=? AND NOT deleted ORDER BY updateTime DESC", user.getId());
-    }
-
-    @Override
-    public String findNote() {
-        return "note11";
+        return findBy("userId=? AND NOT deleted ORDER BY updateTime DESC, id DESC", user.getId());
     }
 }
