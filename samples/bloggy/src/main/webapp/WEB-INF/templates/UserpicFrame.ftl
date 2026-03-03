@@ -11,11 +11,6 @@
 </template>
 
 <script>
-    $("._full").css("cursor", "pointer").click(function () {
-        var $post = $(this).closest("article._post");
-        $post.find("._preview").hide();
-        $post.find("._complete").show();
-    });
 </script>
 
 <#--noinspection HtmlDeprecatedAttribute-->
