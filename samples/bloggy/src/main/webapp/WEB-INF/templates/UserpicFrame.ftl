@@ -18,10 +18,11 @@
     });
 </script>
 
+<#--noinspection HtmlDeprecatedAttribute-->
 <style type="text/less">
     ._userpic {
         text-align: center;
-        margin: @smallest-gap-size;
+        margin: var(--smallest-gap-size);
 
         img {
             display: block;

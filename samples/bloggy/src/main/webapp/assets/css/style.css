@@ -8,6 +8,12 @@
     --datatable-dark-cell-color: #f8f8f8;
     --muted-color: gray;
     --highlight-color: #B3E5FC;
+    --title-font-size: 24px;
+    --smaller-font-size: 14px;
+    --smallest-gap-size: 10px;
+    --smaller-gap-size: 15px;
+    --gap-size: 20px;
+    --larger-gap-size: 30px;
     color: var(--black-color);
     font-family: Verdana, sans-serif;
     font-size: 16px;

@@ -40,26 +40,27 @@
     });
 </script>
 
+<#--noinspection HtmlDeprecatedAttribute-->
 <style type="text/less">
     ._post {
-        margin-bottom: @larger-gap-size;
+        margin-bottom: var(--larger-gap-size);
 
         header {
-            font-size: @smaller-font-size;
-            color: @muted-color;
+            font-size: var(--smaller-font-size);
+            color: var(--muted-color);
         }
 
         ._title {
-            font-size: @title-font-size;
+            font-size: var(--title-font-size);
 
             a {
-                color: @caption-color;
+                color: var(--caption-color);
                 text-decoration: none;
             }
         }
 
         ._full {
-            font-size: @smaller-font-size;
+            font-size: var(--smaller-font-size);
         }
 
         ._complete {
