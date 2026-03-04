@@ -63,7 +63,7 @@
     };
 
     $(function () {
-        var message = getMessage();
+        let message = getMessage();
         if (!message) {
             <#if message??>
                 message = "${message?js_string}";
@@ -71,7 +71,7 @@
         }
         if (message) {
             removeMessage();
-            var $message = $(".middle .message").text(message).show();
+            const $message = $(".middle .message").text(message).show();
             setTimeout(function () {
                 $message.fadeOut("slow");
             }, 5000);

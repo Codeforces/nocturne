@@ -11,5 +11,4 @@ public interface PostDao {
     List<Post> findByUser(User user);
     void insert(Post post);
     void update(Post post);
-    String findNote();
 }

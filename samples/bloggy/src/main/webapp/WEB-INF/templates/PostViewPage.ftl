@@ -10,5 +10,6 @@
 <script>
 </script>
 
+<#--noinspection HtmlDeprecatedAttribute-->
 <style type="text/less">
 </style>

@@ -35,6 +35,5 @@ public class PostsViewFrame extends ApplicationFrame {
 
     private void putPostIds(List<Post> posts) {
         put("postIds", posts.stream().map(Post::getId).collect(Collectors.toList()));
-        put("note", postDao.findNote());
     }
 }

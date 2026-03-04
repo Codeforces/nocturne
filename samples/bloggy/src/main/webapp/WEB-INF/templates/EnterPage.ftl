@@ -41,6 +41,7 @@
 <script>
 </script>
 
+<#--noinspection HtmlDeprecatedAttribute-->
 <style type="text/less">
     ._enter-box {
         margin: 3em auto;
