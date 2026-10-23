@@ -12,7 +12,7 @@ import java.util.Set;
 
 /**
  * <p>
- * Use it to listen events and fire them. Any object can be event. Listeners
+ * Use it to listen to events and fire them. Any object can be event. Listeners
  * are subscribed to class. When executed {@code fire(event)} all listeners for class
  * event.getClass() will be notified. Also all listeners
  * for event.getClass().getSuperclass() (and so on) will be notified.
@@ -20,8 +20,8 @@ import java.util.Set;
  * <p>
  * Use pair of methods beforeAction() and afterAction() to listen components.
  * Any component will notify all listeners registered with beforeAction()
- * before process action and will notify all listeners registered with afterAction()
- * after process action.
+ * before processing action and will notify all listeners registered with afterAction()
+ * after processing action.
  * </p>
  * <p>
  * See also <a href="http://code.google.com/p/nocturne/wiki/RequestLifeCycle_RU">http://code.google.com/p/nocturne/wiki/RequestLifeCycle_RU</a>
