@@ -1,0 +1,27 @@
+### Introduction
+
+Parameters description
+
+### Details
+
+| Parameter name | Default | Values / example | Meaning | Type in Java |
+| :------------------- | :------------ | :--------------------- | :------------ | :----------------- |
+| nocturne.debug | Default value is "false" | "true" or "false" | Use it in the development mode to switch on nocturne main feature: class reloading | boolean |
+| nocturne.templates-update-delay | Default value is 60 | 0 | Delay between checks of template files to be changed (in seconds) | int |
+| nocturne.templates-path | Required | WEB-INF/templates | Directory where to find templates in the deployed application, all the freemarker templates for view layer should be in it. Deprecated since Nocturne version 1.2.6: use nocturne.template-paths | String |
+| nocturne.template-paths | Required | /opt/templates;WEB-INF/templates | Directory list where to find templates in the deployed application, all the freemarker templates for view layer should be in it | List<String> |
+| nocturne.sticky-template-paths | Default value is "true" | "true" or "false" | Indicates if template loader should stick to last successful template path or always check template paths in the configured order | boolean |
+| nocturne.reloading-class-paths | Default value is empty string (no directories for class reloading) | Values depends on development home directory and IDE you are using | In the debug mode the application will load classes from specified directories on each request | List<File> |
+| nocturne.page-request-listeners | Default value is empty string (no request listeners) | Classes separated with ";" | Listener classes for requests dispatching by nocturne | List<String> |
+| nocturne.guice-module-class-name | Required | Class name (implements com.google.inject.Module) | Nocturne uses google-guice as default IoC container | String |
+| nocturne.skip-regex | Default value is empty string (do not skip) | Example: `/(css\|image\|js)/.` | Regex to describe URLs to be skipped by nocturne | Pattern |
+| nocturne.class-reloading-packages | Default value is empty string (do not reload) | You can specify several packages separated with ";" | All classes in specified packages will be reloaded | List<String> |
+| nocturne.class-reloading-exceptions | Default value is empty string (no exceptions) | You can specify several packages or class names separated with ";" | Exceptions for nocturne.class-reloading-package: specified classes (or classes in specified directories) will not be reloaded | List<String> |
+| nocturne.request-router | Required | Class name (extends org.nocturne.main.RequestRouter) | Class to route request to page | String |
+| nocturne.debug-captions-dir | Optional | Example: `${development.home}/web/src/main/resources` | Directory where to store property files for captions if you are using org.nocturne.caption.CaptionsImpl as Captions backend | String |
+| nocturne.debug-web-resources-dir | Optional | Example: `${development.home}/web/src/main/webapp` | Directory where to locate web resources (such as css, js, images) which can be modified during the development and which should be processed by DebugResourceFilter | String |
+| nocturne.nocturne.captions-impl-class | Default value is org.nocturne.caption.CaptionsImpl | Example: your.application.DatabaseCaptions | Class implemented org.nocturne.caption.Captions | String |
+| nocturne.caption-files-encoding | Default value is UTF-8 | Example: windows-1251 | How to store caption properties files if you are using org.nocturne.caption.CaptionsImpl as Captions backend | String |
+| nocturne.allowed-languages | Default value is "en" | Example: "en,ru" | Application can set language only to one of the listed languages. Application uses lang, language, locale parameters to find 2-letters language code. If it specified once, stores current locale in the session. | String |
+| nocturne.default-language | Default value is "en" | Example: "ru" | Default language if no language specified, should be in nocturne.allowed-languages | String |
+
