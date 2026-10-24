@@ -18,10 +18,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Often there are small pieces of logic+view exist. For example, panel
+ * Often small pieces of logic+view exist. For example, panel
  * with recent news can be on many pages. You can code it as Frame. Frame is
  * a special component which injects into some page or other component and has
- * own template.
+ * its own template.
  *
  * @author Mike Mirzayanov
  */
